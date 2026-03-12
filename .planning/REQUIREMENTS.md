@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Video Input
 
-- [ ] **VINP-01**: User can paste a Loom share URL and submit it for processing
+- [x] **VINP-01**: User can paste a Loom share URL and submit it for processing
 - [ ] **VINP-02**: User can paste a YouTube URL (including unlisted videos) and submit it for processing
 - [ ] **VINP-03**: User can paste a Google Drive URL (MP4, MOV sharing link) and submit it for processing
 - [ ] **VINP-04**: System validates URL format and video accessibility before starting the pipeline
@@ -18,8 +18,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Transcription
 
-- [ ] **TRNS-01**: System transcribes video audio via AssemblyAI with timestamps
-- [ ] **TRNS-02**: System preprocesses transcript (strips filler words, collapses to paragraph-level timestamps)
+- [x] **TRNS-01**: System transcribes video audio via AssemblyAI with timestamps
+- [x] **TRNS-02**: System preprocesses transcript (strips filler words, collapses to paragraph-level timestamps)
 - [ ] **TRNS-03**: System supports speaker diarization when multiple speakers are detected
 
 ### Article Generation
@@ -32,9 +32,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Processing UX
 
-- [ ] **PRUX-01**: User sees step-by-step progress during processing (Resolving → Transcribing → Generating → Done)
-- [ ] **PRUX-02**: System streams progress via SSE so user gets real-time feedback
-- [ ] **PRUX-03**: System shows specific, actionable error messages at each pipeline stage
+- [x] **PRUX-01**: User sees step-by-step progress during processing (Resolving → Transcribing → Generating → Done)
+- [x] **PRUX-02**: System streams progress via SSE so user gets real-time feedback
+- [x] **PRUX-03**: System shows specific, actionable error messages at each pipeline stage
 
 ### Output & Export
 
@@ -104,23 +104,23 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VINP-01 | Phase 1 | Pending |
+| VINP-01 | Phase 1 | Complete |
 | VINP-02 | Phase 2 | Pending |
 | VINP-03 | Phase 2 | Pending |
 | VINP-04 | Phase 2 | Pending |
 | VINP-05 | Phase 2 | Pending |
 | VINP-06 | Phase 2 | Pending |
-| TRNS-01 | Phase 1 | Pending |
-| TRNS-02 | Phase 1 | Pending |
+| TRNS-01 | Phase 1 | Complete |
+| TRNS-02 | Phase 1 | Complete |
 | TRNS-03 | Phase 2 | Pending |
 | GENR-01 | Phase 3 | Pending |
 | GENR-02 | Phase 1 | Complete |
 | GENR-03 | Phase 3 | Pending |
 | GENR-04 | Phase 3 | Pending |
 | GENR-05 | Phase 3 | Pending |
-| PRUX-01 | Phase 1 | Pending |
-| PRUX-02 | Phase 1 | Pending |
-| PRUX-03 | Phase 1 | Pending |
+| PRUX-01 | Phase 1 | Complete |
+| PRUX-02 | Phase 1 | Complete |
+| PRUX-03 | Phase 1 | Complete |
 | OUTP-01 | Phase 1 | Pending |
 | OUTP-02 | Phase 4 | Pending |
 | OUTP-03 | Phase 4 | Pending |

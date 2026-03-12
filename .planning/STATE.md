@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: executing
+stopped_at: Completed 01-02-PLAN.md (backend pipeline services)
+last_updated: "2026-03-12T21:47:18.570Z"
+last_activity: 2026-03-12 -- Completed 01-02-PLAN.md
+progress:
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 2
+  percent: 50
+---
+
 # Project State
 
 ## Project Reference
@@ -10,24 +26,24 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 ## Current Position
 
 Phase: 1 of 5 (End-to-End Pipeline)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: Executing
-Last activity: 2026-03-12 -- Completed 01-01-PLAN.md
+Last activity: 2026-03-12 -- Completed 01-02-PLAN.md
 
-Progress: [#.........] 5%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 9min
-- Total execution time: 0.15 hours
+- Total plans completed: 2
+- Average duration: 7min
+- Total execution time: 0.22 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-end-to-end-pipeline | 1 | 9min | 9min |
+| 01-end-to-end-pipeline | 2 | 13min | 7min |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -47,6 +63,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Template selection exists from Phase 1 UI but only one template functional; all 4 distinct templates ship in Phase 3
 - [01-01]: Used create-next-app in temp directory to work around directory name casing restriction
 - [01-01]: Added .env.local.example exception to .gitignore
+- [01-02]: Lazy SDK instantiation (inside function body) for Vitest 4.x mock constructor compatibility
+- [01-02]: Used [\s\S] instead of dotAll regex flag for ES2017 target compatibility
 
 ### Pending Todos
 
@@ -61,5 +79,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Completed 01-01-PLAN.md (project scaffolding, types, test infrastructure)
+Stopped at: Completed 01-02-PLAN.md (backend pipeline: loom resolver, transcription, article generator, pipeline orchestrator, SSE route)
 Resume file: None
