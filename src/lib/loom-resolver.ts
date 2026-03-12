@@ -52,7 +52,7 @@ export async function resolveLoomUrl(shareUrl: string): Promise<LoomVideoInfo> {
 
   // Fallback: parse Apollo state for transcoded URL
   const apolloMatch = html.match(
-    /window\.__APOLLO_STATE__\s*=\s*(\{.+?\});?\s*<\/script>/s
+    /window\.__APOLLO_STATE__\s*=\s*(\{[\s\S]+?\});?\s*<\/script>/
   );
   if (apolloMatch) {
     try {
