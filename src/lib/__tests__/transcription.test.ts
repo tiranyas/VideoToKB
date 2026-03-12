@@ -6,12 +6,14 @@ vi.mock('assemblyai', () => {
   const mockTranscribe = vi.fn();
   const mockParagraphs = vi.fn();
   return {
-    AssemblyAI: vi.fn().mockImplementation(() => ({
-      transcripts: {
-        transcribe: mockTranscribe,
-        paragraphs: mockParagraphs,
-      },
-    })),
+    AssemblyAI: vi.fn().mockImplementation(function () {
+      return {
+        transcripts: {
+          transcribe: mockTranscribe,
+          paragraphs: mockParagraphs,
+        },
+      };
+    }),
     __mockTranscribe: mockTranscribe,
     __mockParagraphs: mockParagraphs,
   };

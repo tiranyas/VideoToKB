@@ -5,11 +5,13 @@ import { generateArticle } from '@/lib/article-generator';
 const mockCreate = vi.fn();
 vi.mock('@anthropic-ai/sdk', () => {
   return {
-    default: vi.fn().mockImplementation(() => ({
-      messages: {
-        create: mockCreate,
-      },
-    })),
+    default: vi.fn().mockImplementation(function () {
+      return {
+        messages: {
+          create: mockCreate,
+        },
+      };
+    }),
   };
 });
 
