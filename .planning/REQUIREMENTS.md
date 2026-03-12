@@ -38,7 +38,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Output & Export
 
-- [ ] **OUTP-01**: User can view generated article in an editable text area
+- [x] **OUTP-01**: User can view generated article in an editable text area
 - [ ] **OUTP-02**: User can copy article as Markdown to clipboard
 - [ ] **OUTP-03**: User can copy article as HTML to clipboard
 - [ ] **OUTP-04**: User can copy article as code-only format to clipboard
@@ -52,7 +52,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI / Landing
 
-- [ ] **UILP-01**: Homepage is a single centered input field ("Paste your Loom / YouTube / Google Drive URL") with template dropdown and "Create Article" button
+- [x] **UILP-01**: Homepage is a single centered input field ("Paste your Loom / YouTube / Google Drive URL") with template dropdown and "Create Article" button
 - [x] **UILP-02**: No login, no dashboard, no navigation — the URL input IS the homepage
 - [ ] **UILP-03**: App is mobile-responsive
 
@@ -121,7 +121,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | PRUX-01 | Phase 1 | Complete |
 | PRUX-02 | Phase 1 | Complete |
 | PRUX-03 | Phase 1 | Complete |
-| OUTP-01 | Phase 1 | Pending |
+| OUTP-01 | Phase 1 | Complete |
 | OUTP-02 | Phase 4 | Pending |
 | OUTP-03 | Phase 4 | Pending |
 | OUTP-04 | Phase 4 | Pending |
@@ -129,7 +129,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | OUTP-06 | Phase 5 | Pending |
 | USAG-01 | Phase 5 | Pending |
 | USAG-02 | Phase 5 | Pending |
-| UILP-01 | Phase 1 | Pending |
+| UILP-01 | Phase 1 | Complete |
 | UILP-02 | Phase 1 | Complete |
 | UILP-03 | Phase 5 | Pending |
 
