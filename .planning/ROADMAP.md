@@ -30,12 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User sees a specific, actionable error message if any pipeline stage fails
   4. User can view the generated article in an editable text area after processing completes
   5. The entire pipeline works on a Vercel deployment (not just localhost)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Project scaffolding, shared types, test infrastructure (Wave 0)
+- [ ] 01-02-PLAN.md — Backend pipeline services (Loom resolver, transcription, article generator, SSE API)
+- [ ] 01-03-PLAN.md — Frontend UI (URL form, progress display, article view, homepage wiring)
+- [ ] 01-04-PLAN.md — Vercel deployment and end-to-end verification
 
 ### Phase 2: Multi-Source Video Input
 **Goal**: Users can submit videos from YouTube and Google Drive in addition to Loom, with clear validation and error messages for all sources
@@ -102,7 +103,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. End-to-End Pipeline | 0/? | Not started | - |
+| 1. End-to-End Pipeline | 0/4 | Planning complete | - |
 | 2. Multi-Source Video Input | 0/? | Not started | - |
 | 3. Templates and Generation Quality | 0/? | Not started | - |
 | 4. Export Formats | 0/? | Not started | - |
