@@ -25,7 +25,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Article Generation
 
 - [ ] **GENR-01**: User can select one of 4 article templates: How-to, Feature Explainer, Troubleshooting, Onboarding
-- [ ] **GENR-02**: System generates structured KB article via Claude API (claude-sonnet-4-5) based on transcript + selected template
+- [x] **GENR-02**: System generates structured KB article via Claude API (claude-sonnet-4-5) based on transcript + selected template
 - [ ] **GENR-03**: Each template produces a genuinely different article structure (not just heading changes)
 - [ ] **GENR-04**: System auto-generates suggested article title and metadata (tags, description) in the same generation pass
 - [ ] **GENR-05**: User can provide adjustment instructions and regenerate the article without re-transcribing
@@ -53,7 +53,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### UI / Landing
 
 - [ ] **UILP-01**: Homepage is a single centered input field ("Paste your Loom / YouTube / Google Drive URL") with template dropdown and "Create Article" button
-- [ ] **UILP-02**: No login, no dashboard, no navigation — the URL input IS the homepage
+- [x] **UILP-02**: No login, no dashboard, no navigation — the URL input IS the homepage
 - [ ] **UILP-03**: App is mobile-responsive
 
 ## v2 Requirements
@@ -114,7 +114,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | TRNS-02 | Phase 1 | Pending |
 | TRNS-03 | Phase 2 | Pending |
 | GENR-01 | Phase 3 | Pending |
-| GENR-02 | Phase 1 | Pending |
+| GENR-02 | Phase 1 | Complete |
 | GENR-03 | Phase 3 | Pending |
 | GENR-04 | Phase 3 | Pending |
 | GENR-05 | Phase 3 | Pending |
@@ -130,7 +130,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | USAG-01 | Phase 5 | Pending |
 | USAG-02 | Phase 5 | Pending |
 | UILP-01 | Phase 1 | Pending |
-| UILP-02 | Phase 1 | Pending |
+| UILP-02 | Phase 1 | Complete |
 | UILP-03 | Phase 5 | Pending |
 
 **Coverage:**
