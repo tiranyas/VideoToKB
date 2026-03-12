@@ -104,40 +104,40 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VINP-01 | — | Pending |
-| VINP-02 | — | Pending |
-| VINP-03 | — | Pending |
-| VINP-04 | — | Pending |
-| VINP-05 | — | Pending |
-| VINP-06 | — | Pending |
-| TRNS-01 | — | Pending |
-| TRNS-02 | — | Pending |
-| TRNS-03 | — | Pending |
-| GENR-01 | — | Pending |
-| GENR-02 | — | Pending |
-| GENR-03 | — | Pending |
-| GENR-04 | — | Pending |
-| GENR-05 | — | Pending |
-| PRUX-01 | — | Pending |
-| PRUX-02 | — | Pending |
-| PRUX-03 | — | Pending |
-| OUTP-01 | — | Pending |
-| OUTP-02 | — | Pending |
-| OUTP-03 | — | Pending |
-| OUTP-04 | — | Pending |
-| OUTP-05 | — | Pending |
-| OUTP-06 | — | Pending |
-| USAG-01 | — | Pending |
-| USAG-02 | — | Pending |
-| UILP-01 | — | Pending |
-| UILP-02 | — | Pending |
-| UILP-03 | — | Pending |
+| VINP-01 | Phase 1 | Pending |
+| VINP-02 | Phase 2 | Pending |
+| VINP-03 | Phase 2 | Pending |
+| VINP-04 | Phase 2 | Pending |
+| VINP-05 | Phase 2 | Pending |
+| VINP-06 | Phase 2 | Pending |
+| TRNS-01 | Phase 1 | Pending |
+| TRNS-02 | Phase 1 | Pending |
+| TRNS-03 | Phase 2 | Pending |
+| GENR-01 | Phase 3 | Pending |
+| GENR-02 | Phase 1 | Pending |
+| GENR-03 | Phase 3 | Pending |
+| GENR-04 | Phase 3 | Pending |
+| GENR-05 | Phase 3 | Pending |
+| PRUX-01 | Phase 1 | Pending |
+| PRUX-02 | Phase 1 | Pending |
+| PRUX-03 | Phase 1 | Pending |
+| OUTP-01 | Phase 1 | Pending |
+| OUTP-02 | Phase 4 | Pending |
+| OUTP-03 | Phase 4 | Pending |
+| OUTP-04 | Phase 4 | Pending |
+| OUTP-05 | Phase 4 | Pending |
+| OUTP-06 | Phase 5 | Pending |
+| USAG-01 | Phase 5 | Pending |
+| USAG-02 | Phase 5 | Pending |
+| UILP-01 | Phase 1 | Pending |
+| UILP-02 | Phase 1 | Pending |
+| UILP-03 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28 ⚠️
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-12*
-*Last updated: 2026-03-12 after initial definition*
+*Last updated: 2026-03-12 after roadmap creation*
