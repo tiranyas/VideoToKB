@@ -41,6 +41,7 @@ export async function transcribeVideo(
   const transcript = await client.transcripts.transcribe({
     audio: audioUrl,
     auto_chapters: true,
+    language_detection: true,
   });
 
   if (transcript.status === 'error') {
