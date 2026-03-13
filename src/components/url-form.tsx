@@ -1,25 +1,46 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import { cn } from '@/utils/cn';
+import type { ArticleType, PlatformProfile } from '@/types';
 
 type InputMode = 'url' | 'transcript';
 
 interface UrlFormProps {
-  onSubmit: (input: { videoUrl?: string; transcript?: string; template: string }) => void;
+  onSubmit: (input: { videoUrl?: string; transcript?: string }) => void;
   isProcessing: boolean;
+  articleTypes: ArticleType[];
+  platforms: PlatformProfile[];
+  selectedTypeId: string;
+  selectedPlatformId: string;
+  onTypeChange: (id: string) => void;
+  onPlatformChange: (id: string) => void;
 }
 
-export function UrlForm({ onSubmit, isProcessing }: UrlFormProps) {
+export function UrlForm({
+  onSubmit,
+  isProcessing,
+  articleTypes,
+  platforms,
+  selectedTypeId,
+  selectedPlatformId,
+  onTypeChange,
+  onPlatformChange,
+}: UrlFormProps) {
   const [mode, setMode] = useState<InputMode>('url');
   const [videoUrl, setVideoUrl] = useState('');
   const [transcript, setTranscript] = useState('');
-  const [template, setTemplate] = useState('how-to-guide');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!selectedTypeId) {
+      toast.error('Please select an article type (or configure one in Settings)');
+      return;
+    }
 
     if (mode === 'url') {
       const isLoom = videoUrl.includes('loom.com/share/');
@@ -28,13 +49,13 @@ export function UrlForm({ onSubmit, isProcessing }: UrlFormProps) {
         toast.error('Please enter a Loom or Google Drive URL');
         return;
       }
-      onSubmit({ videoUrl, template });
+      onSubmit({ videoUrl });
     } else {
       if (transcript.trim().length < 20) {
         toast.error('Please paste a longer transcript (at least 20 characters)');
         return;
       }
-      onSubmit({ transcript: transcript.trim(), template });
+      onSubmit({ transcript: transcript.trim() });
     }
   }
 
@@ -43,8 +64,52 @@ export function UrlForm({ onSubmit, isProcessing }: UrlFormProps) {
     (mode === 'url' && videoUrl.trim() === '') ||
     (mode === 'transcript' && transcript.trim() === '');
 
+  const noConfig = articleTypes.length === 0;
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-xl space-y-4">
+      {/* Config selectors */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Article Type</label>
+          <select
+            value={selectedTypeId}
+            onChange={(e) => onTypeChange(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            disabled={isProcessing}
+          >
+            {articleTypes.length === 0 && <option value="">No article types configured</option>}
+            {articleTypes.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Output Platform</label>
+          <select
+            value={selectedPlatformId}
+            onChange={(e) => onPlatformChange(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            disabled={isProcessing}
+          >
+            {platforms.length === 0 && <option value="">No platforms configured</option>}
+            {platforms.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {noConfig && (
+        <Link
+          href="/settings"
+          className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-700 hover:bg-amber-100"
+        >
+          <Settings className="h-4 w-4" />
+          Configure article types and platforms in Settings
+        </Link>
+      )}
+
       {/* Mode toggle */}
       <div className="flex rounded-lg border border-gray-300 p-1">
         <button
@@ -108,30 +173,12 @@ export function UrlForm({ onSubmit, isProcessing }: UrlFormProps) {
         </div>
       )}
 
-      <div>
-        <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-1">
-          Article Template
-        </label>
-        <select
-          id="template"
-          value={template}
-          onChange={(e) => setTemplate(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          disabled={isProcessing}
-        >
-          <option value="how-to-guide">How-to Guide</option>
-          <option value="feature-explainer" disabled>Feature Explainer (Coming soon)</option>
-          <option value="troubleshooting-guide" disabled>Troubleshooting Guide (Coming soon)</option>
-          <option value="onboarding-guide" disabled>Onboarding Guide (Coming soon)</option>
-        </select>
-      </div>
-
       <button
         type="submit"
-        disabled={isDisabled}
+        disabled={isDisabled || noConfig}
         className={cn(
           'w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors',
-          isDisabled
+          isDisabled || noConfig
             ? 'cursor-not-allowed bg-blue-300'
             : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
         )}

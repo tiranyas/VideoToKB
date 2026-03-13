@@ -2,30 +2,86 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const MODEL = 'claude-sonnet-4-6';
 
-export async function generateArticle(
-  cleanedTranscript: string,
-  templatePrompt: string
+function getClient() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+}
+
+async function callClaude(
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens = 4000
 ): Promise<string> {
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY!,
-  });
+  const anthropic = getClient();
 
   const message = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 4000,
-    system: templatePrompt,
-    messages: [
-      {
-        role: 'user',
-        content: `Generate a KB article from the following video transcript:\n\n${cleanedTranscript}`,
-      },
-    ],
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
   });
 
   const textBlock = message.content.find((b) => b.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('Article generation returned no text content');
+    throw new Error('Claude returned no text content');
   }
 
   return textBlock.text;
+}
+
+/**
+ * Legacy single-step generation (kept for backward compatibility)
+ */
+export async function generateArticle(
+  cleanedTranscript: string,
+  templatePrompt: string
+): Promise<string> {
+  return callClaude(
+    templatePrompt,
+    `Generate a KB article from the following video transcript:\n\n${cleanedTranscript}`
+  );
+}
+
+/**
+ * Agent 2 — Draft Generator
+ * Takes a transcript and produces a comprehensive draft article.
+ */
+export async function generateDraft(
+  transcript: string,
+  draftSystemPrompt: string
+): Promise<string> {
+  return callClaude(
+    draftSystemPrompt,
+    `Create a comprehensive draft article from the following transcript:\n\n${transcript}`,
+    4000
+  );
+}
+
+/**
+ * Agent 3 — Structure Formatter
+ * Takes a draft and structures it according to the article type template.
+ */
+export async function generateStructured(
+  draft: string,
+  structureSystemPrompt: string
+): Promise<string> {
+  return callClaude(
+    structureSystemPrompt,
+    `Transform the following draft article into a professionally structured article according to the template:\n\n${draft}`,
+    4000
+  );
+}
+
+/**
+ * Agent 4 — HTML Generator
+ * Takes a structured article and converts it to platform-specific HTML.
+ */
+export async function generateHTML(
+  structuredArticle: string,
+  htmlSystemPrompt: string
+): Promise<string> {
+  return callClaude(
+    htmlSystemPrompt,
+    `Convert the following structured article into HTML code that matches the reference template exactly:\n\n${structuredArticle}`,
+    8000
+  );
 }

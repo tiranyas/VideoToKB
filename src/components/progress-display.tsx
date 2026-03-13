@@ -18,7 +18,10 @@ interface ProgressDisplayProps {
 const STEP_LABELS: Record<PipelineStep, string> = {
   resolve: 'Resolving video URL',
   transcribe: 'Transcribing audio',
-  generate: 'Generating article',
+  draft: 'Creating draft (Agent 2)',
+  structure: 'Structuring article (Agent 3)',
+  review: 'Ready for review',
+  html: 'Generating HTML (Agent 4)',
   done: 'Complete',
 };
 

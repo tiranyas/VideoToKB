@@ -1,11 +1,28 @@
-import { runPipeline } from '@/lib/pipeline';
+import { runPhaseA, runPhaseB } from '@/lib/pipeline';
 import type { ProgressEvent } from '@/types';
 
 export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
+interface RequestBody {
+  // Phase indicator
+  phase: 'generate' | 'html';
+
+  // Phase A inputs
+  videoUrl?: string;
+  transcript?: string;
+  draftPrompt?: string;
+  structurePrompt?: string;
+  companyContext?: string;
+
+  // Phase B inputs
+  article?: string;
+  htmlPrompt?: string;
+  htmlTemplate?: string;
+}
+
 export async function POST(req: Request) {
-  let body: { videoUrl?: string; transcript?: string; template?: string };
+  let body: RequestBody;
 
   try {
     body = await req.json();
@@ -16,20 +33,41 @@ export async function POST(req: Request) {
     );
   }
 
-  const { videoUrl, transcript, template } = body;
+  const { phase = 'generate' } = body;
 
-  if (!videoUrl && !transcript) {
-    return new Response(
-      JSON.stringify({ error: 'Either videoUrl or transcript is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+  // Validate inputs based on phase
+  if (phase === 'generate') {
+    if (!body.videoUrl && !body.transcript) {
+      return new Response(
+        JSON.stringify({ error: 'Either videoUrl or transcript is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!body.draftPrompt || !body.structurePrompt) {
+      return new Response(
+        JSON.stringify({ error: 'draftPrompt and structurePrompt are required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+  } else if (phase === 'html') {
+    if (!body.article) {
+      return new Response(
+        JSON.stringify({ error: 'article is required for HTML generation' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!body.htmlPrompt) {
+      return new Response(
+        JSON.stringify({ error: 'htmlPrompt is required for HTML generation' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   }
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
-      // Non-awaited async IIFE -- returns immediately so Response is sent
       (async () => {
         const send = (event: ProgressEvent) => {
           controller.enqueue(
@@ -38,10 +76,27 @@ export async function POST(req: Request) {
         };
 
         try {
-          await runPipeline(
-            { videoUrl, transcript, template: template ?? 'how-to' },
-            send
-          );
+          if (phase === 'generate') {
+            await runPhaseA(
+              {
+                videoUrl: body.videoUrl,
+                transcript: body.transcript,
+                draftPrompt: body.draftPrompt!,
+                structurePrompt: body.structurePrompt!,
+                companyContext: body.companyContext,
+              },
+              send
+            );
+          } else {
+            await runPhaseB(
+              {
+                article: body.article!,
+                htmlPrompt: body.htmlPrompt!,
+                htmlTemplate: body.htmlTemplate ?? '',
+              },
+              send
+            );
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           send({
