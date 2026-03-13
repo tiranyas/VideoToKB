@@ -14,52 +14,58 @@ function extractFileId(url: string): string | null {
 }
 
 /**
- * Google Drive serves a virus-scan confirmation page for larger files
- * instead of the actual file. This function detects that and extracts
- * the real download URL by requesting with the confirm token.
+ * Google Drive has multiple download URL patterns. We try them in order
+ * until one returns actual media content (not an HTML confirmation page).
  */
 async function resolveDirectDownloadUrl(fileId: string): Promise<string> {
-  const baseUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  const candidates = [
+    // New usercontent domain (current Google behavior)
+    `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`,
+    // Legacy direct download with confirm bypass
+    `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`,
+    // Legacy without confirm
+    `https://drive.google.com/uc?export=download&id=${fileId}`,
+  ];
 
-  // First request — might return the file directly or a confirmation page
-  const response = await fetch(baseUrl, { redirect: 'follow' });
+  for (const url of candidates) {
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+          // Mimic a browser request to avoid being served the confirmation page
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      });
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Google Drive file not found. Check the URL.');
+      if (!response.ok) continue;
+
+      const contentType = response.headers.get('content-type') ?? '';
+
+      // If it's not HTML, we got the real file — this URL works
+      if (!contentType.includes('text/html')) {
+        return url;
+      }
+
+      // It's HTML — try to extract a redirect/download URL from the page
+      const html = await response.text();
+
+      // Look for the download form action URL
+      const formActionMatch = html.match(/action="(https:\/\/drive\.usercontent\.google\.com\/download[^"]+)"/);
+      if (formActionMatch) {
+        const decoded = formActionMatch[1].replace(/&amp;/g, '&');
+        return decoded;
+      }
+    } catch {
+      // Try next candidate
+      continue;
     }
-    if (response.status === 403) {
-      throw new Error(
-        'This Google Drive file is not publicly shared. Set sharing to "Anyone with the link".'
-      );
-    }
-    throw new Error(`Could not access Google Drive file (HTTP ${response.status})`);
   }
 
-  const contentType = response.headers.get('content-type') ?? '';
-
-  // If we got the actual file (not HTML), the base URL works fine
-  if (!contentType.includes('text/html')) {
-    return baseUrl;
-  }
-
-  // We got the confirmation page — extract the confirm token from cookies
-  const cookies = response.headers.get('set-cookie') ?? '';
-  const downloadWarningMatch = cookies.match(/download_warning_\w+=([^;]+)/);
-
-  if (downloadWarningMatch) {
-    return `${baseUrl}&confirm=${downloadWarningMatch[1]}`;
-  }
-
-  // Alternative: parse the HTML for the confirm link
-  const html = await response.text();
-  const confirmMatch = html.match(/confirm=([a-zA-Z0-9_-]+)/);
-  if (confirmMatch) {
-    return `${baseUrl}&confirm=${confirmMatch[1]}`;
-  }
-
-  // Last resort: try with confirm=t (works for many files)
-  return `${baseUrl}&confirm=t`;
+  throw new Error(
+    'Could not get a direct download URL from Google Drive. The file may be too large, not publicly shared, or Google is blocking automated downloads. Try sharing it as "Anyone with the link" with Viewer access.'
+  );
 }
 
 export async function resolveGoogleDriveUrl(shareUrl: string): Promise<VideoInfo> {
@@ -72,24 +78,19 @@ export async function resolveGoogleDriveUrl(shareUrl: string): Promise<VideoInfo
 
   const videoUrl = await resolveDirectDownloadUrl(fileId);
 
-  // Verify the resolved URL returns actual media, not HTML
-  const verifyResponse = await fetch(videoUrl, { method: 'HEAD', redirect: 'follow' });
-  const verifyContentType = verifyResponse.headers.get('content-type') ?? '';
-
-  if (verifyContentType.includes('text/html')) {
-    throw new Error(
-      'Google Drive is still returning an HTML page instead of the video file. The file may be too large or not properly shared. Try sharing it as "Anyone with the link" with Viewer access.'
-    );
-  }
-
-  // Try to get filename from Content-Disposition header
-  const disposition = verifyResponse.headers.get('content-disposition');
+  // Try to get filename via metadata endpoint (doesn't require auth for public files)
   let title = 'Google Drive Video';
-  if (disposition) {
-    const filenameMatch = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
-    if (filenameMatch) {
-      title = decodeURIComponent(filenameMatch[1]).replace(/\.[^.]+$/, '');
+  try {
+    const metaResponse = await fetch(videoUrl, { method: 'HEAD', redirect: 'follow' });
+    const disposition = metaResponse.headers.get('content-disposition');
+    if (disposition) {
+      const filenameMatch = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+      if (filenameMatch) {
+        title = decodeURIComponent(filenameMatch[1]).replace(/\.[^.]+$/, '');
+      }
     }
+  } catch {
+    // Keep default title
   }
 
   return { videoUrl, title };
