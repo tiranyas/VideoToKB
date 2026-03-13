@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const MODEL = 'claude-sonnet-4-5-20241022';
+const MODEL = 'claude-3-5-sonnet-20241022';
 
 export async function generateArticle(
   cleanedTranscript: string,
