@@ -5,7 +5,7 @@ export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  let body: { videoUrl?: string; template?: string };
+  let body: { videoUrl?: string; transcript?: string; template?: string };
 
   try {
     body = await req.json();
@@ -16,11 +16,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const { videoUrl, template } = body;
+  const { videoUrl, transcript, template } = body;
 
-  if (!videoUrl) {
+  if (!videoUrl && !transcript) {
     return new Response(
-      JSON.stringify({ error: 'videoUrl is required' }),
+      JSON.stringify({ error: 'Either videoUrl or transcript is required' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -38,7 +38,10 @@ export async function POST(req: Request) {
         };
 
         try {
-          await runPipeline(videoUrl, template ?? 'how-to', send);
+          await runPipeline(
+            { videoUrl, transcript, template: template ?? 'how-to' },
+            send
+          );
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           send({

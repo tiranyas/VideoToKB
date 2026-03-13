@@ -20,11 +20,47 @@ async function resolveVideoUrl(url: string, provider: 'loom' | 'gdrive'): Promis
   }
 }
 
+export interface PipelineInput {
+  videoUrl?: string;
+  transcript?: string;
+  template: string;
+}
+
 export async function runPipeline(
-  videoUrl: string,
-  template: string,
+  input: PipelineInput,
   onProgress: (event: ProgressEvent) => void
 ): Promise<void> {
+  const { videoUrl, transcript, template } = input;
+
+  // Direct transcript mode — skip resolve and transcribe
+  if (transcript) {
+    onProgress({ step: 'resolve', status: 'complete', message: 'Skipped — using pasted transcript' });
+    onProgress({ step: 'transcribe', status: 'complete', message: 'Skipped — using pasted transcript' });
+
+    try {
+      onProgress({ step: 'generate', status: 'in_progress', message: 'Generating KB article...' });
+
+      const article = await generateArticle(transcript, HOW_TO_TEMPLATE);
+
+      onProgress({ step: 'generate', status: 'complete', message: 'Article generated' });
+      onProgress({ step: 'done', status: 'complete', article });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      onProgress({
+        step: 'error',
+        status: 'error',
+        message: `Article generation failed: ${message}`,
+      });
+    }
+    return;
+  }
+
+  // Video URL mode — full pipeline
+  if (!videoUrl) {
+    onProgress({ step: 'error', status: 'error', message: 'No video URL or transcript provided' });
+    return;
+  }
+
   // Step 1: Resolve video URL
   try {
     const provider = detectProvider(videoUrl);

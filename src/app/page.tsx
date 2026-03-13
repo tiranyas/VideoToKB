@@ -28,7 +28,7 @@ export default function Home() {
 
   const hasActivity = steps.some((s) => s.status !== 'pending');
 
-  const handleSubmit = useCallback(async (videoUrl: string, template: string) => {
+  const handleSubmit = useCallback(async (input: { videoUrl?: string; transcript?: string; template: string }) => {
     setIsProcessing(true);
     setError(null);
     setSteps(INITIAL_STEPS.map((s) => ({ ...s })));
@@ -39,7 +39,7 @@ export default function Home() {
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoUrl, template }),
+        body: JSON.stringify(input),
       });
 
       if (!response.ok) {
