@@ -13,19 +13,42 @@ async function callClaude(
 ): Promise<string> {
   const anthropic = getClient();
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: maxTokens,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userMessage }],
-  });
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
 
-  const textBlock = message.content.find((b) => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('Claude returned no text content');
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const message = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }],
+      });
+
+      const textBlock = message.content.find((b) => b.type === 'text');
+      if (!textBlock || textBlock.type !== 'text') {
+        throw new Error('Claude returned no text content');
+      }
+
+      return textBlock.text;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const isServerError =
+        lastError.message.includes('500') ||
+        lastError.message.includes('529') ||
+        lastError.message.includes('Internal server error') ||
+        lastError.message.includes('overloaded');
+
+      if (!isServerError || attempt === MAX_RETRIES) {
+        throw lastError;
+      }
+
+      // Wait before retrying: 2s, 4s
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+    }
   }
 
-  return textBlock.text;
+  throw lastError ?? new Error('Failed after retries');
 }
 
 /**
