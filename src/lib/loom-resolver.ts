@@ -1,4 +1,4 @@
-import type { LoomVideoInfo } from '@/types';
+import type { VideoInfo } from '@/types';
 
 const LOOM_URL_PATTERN = /loom\.com\/share\/([a-f0-9]{32})/;
 
@@ -14,7 +14,7 @@ function extractTitle(html: string): string {
   return 'Untitled Loom Video';
 }
 
-export async function resolveLoomUrl(shareUrl: string): Promise<LoomVideoInfo> {
+export async function resolveLoomUrl(shareUrl: string): Promise<VideoInfo> {
   const match = shareUrl.match(LOOM_URL_PATTERN);
   if (!match) {
     throw new Error(

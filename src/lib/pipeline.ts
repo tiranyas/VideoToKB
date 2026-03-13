@@ -1,19 +1,37 @@
-import type { ProgressEvent } from '@/types';
+import type { ProgressEvent, VideoInfo } from '@/types';
 import { resolveLoomUrl } from '@/lib/loom-resolver';
+import { resolveGoogleDriveUrl } from '@/lib/gdrive-resolver';
 import { transcribeVideo, preprocessTranscript } from '@/lib/transcription';
 import { generateArticle } from '@/lib/article-generator';
 import { HOW_TO_TEMPLATE } from '@/lib/templates/how-to';
+
+function detectProvider(url: string): 'loom' | 'gdrive' {
+  if (url.includes('drive.google.com')) return 'gdrive';
+  return 'loom';
+}
+
+async function resolveVideoUrl(url: string, provider: 'loom' | 'gdrive'): Promise<VideoInfo> {
+  switch (provider) {
+    case 'gdrive':
+      return resolveGoogleDriveUrl(url);
+    case 'loom':
+    default:
+      return resolveLoomUrl(url);
+  }
+}
 
 export async function runPipeline(
   videoUrl: string,
   template: string,
   onProgress: (event: ProgressEvent) => void
 ): Promise<void> {
-  // Step 1: Resolve Loom URL
+  // Step 1: Resolve video URL
   try {
-    onProgress({ step: 'resolve', status: 'in_progress', message: 'Resolving Loom video URL...' });
+    const provider = detectProvider(videoUrl);
+    const providerLabel = provider === 'gdrive' ? 'Google Drive' : 'Loom';
+    onProgress({ step: 'resolve', status: 'in_progress', message: `Resolving ${providerLabel} video URL...` });
 
-    const videoInfo = await resolveLoomUrl(videoUrl);
+    const videoInfo = await resolveVideoUrl(videoUrl, provider);
 
     onProgress({ step: 'resolve', status: 'complete', message: 'Video URL resolved' });
 
@@ -58,7 +76,7 @@ export async function runPipeline(
     onProgress({
       step: 'error',
       status: 'error',
-      message: `Failed to resolve Loom video: ${message}`,
+      message: `Failed to resolve video URL: ${message}`,
     });
   }
 }

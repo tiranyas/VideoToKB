@@ -17,8 +17,10 @@ export function UrlForm({ onSubmit, isProcessing }: UrlFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!videoUrl.includes('loom.com/share/')) {
-      toast.error('Please enter a valid Loom share URL (e.g. https://www.loom.com/share/...)');
+    const isLoom = videoUrl.includes('loom.com/share/');
+    const isGDrive = videoUrl.includes('drive.google.com');
+    if (!isLoom && !isGDrive) {
+      toast.error('Please enter a Loom or Google Drive URL');
       return;
     }
 
@@ -38,7 +40,7 @@ export function UrlForm({ onSubmit, isProcessing }: UrlFormProps) {
           type="url"
           value={videoUrl}
           onChange={(e) => setVideoUrl(e.target.value)}
-          placeholder="Paste your Loom URL here..."
+          placeholder="Paste your Loom or Google Drive URL here..."
           className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           disabled={isProcessing}
         />

@@ -8,10 +8,13 @@ export interface ProgressEvent {
   article?: string;
 }
 
-export interface LoomVideoInfo {
+export interface VideoInfo {
   videoUrl: string;
   title: string;
 }
+
+/** @deprecated Use VideoInfo instead */
+export type LoomVideoInfo = VideoInfo;
 
 export interface TranscriptResult {
   text: string;
