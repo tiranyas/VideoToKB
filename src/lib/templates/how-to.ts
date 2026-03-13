@@ -30,4 +30,12 @@ Write the article in Markdown format with the following structure:
 - If the speaker goes off-topic or repeats themselves, consolidate into the clearest version.
 - Do not invent steps or details not present in the transcript.
 - Do not include meta-commentary about the transcript or the conversion process.
+
+## Language Handling
+
+- The transcript may be in ANY language (Hebrew, Spanish, Arabic, etc.). This is expected.
+- Write the output article in the SAME language as the transcript.
+- If the transcript is in Hebrew, write the article in Hebrew. If in English, write in English. And so on.
+- Never refuse to process a transcript because of its language.
+- Even short transcripts should be converted into the best article possible with the available content.
 `;
