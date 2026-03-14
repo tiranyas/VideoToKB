@@ -96,7 +96,7 @@ export default function ArticleDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-gray-400">Loading article...</p>
       </div>
     );
@@ -104,7 +104,7 @@ export default function ArticleDetailPage() {
 
   if (!article) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-sm text-gray-400">Article not found.</p>
         <Link href="/articles" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
           Back to Articles
@@ -121,7 +121,7 @@ export default function ArticleDetailPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
+    <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="flex items-start justify-between mb-8">

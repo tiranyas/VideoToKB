@@ -242,7 +242,7 @@ export default function Home() {
   const isMarkdownOnly = selectedPlatform?.id === 'markdown-only' || !selectedPlatform?.htmlTemplate;
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center px-6 py-12">
+    <div className="flex min-h-screen flex-col items-center px-6 py-12">
       {phase === 'input' && (
         <div className="flex w-full flex-col items-center mt-8">
           <div className="mb-8 text-center">

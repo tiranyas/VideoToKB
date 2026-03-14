@@ -49,14 +49,14 @@ export default function ArticlesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-gray-400">Loading articles...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
+    <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Articles</h1>

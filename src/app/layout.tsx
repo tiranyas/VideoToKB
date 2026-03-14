@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { UserMenu } from "@/components/user-menu";
+import { Sidebar } from "@/components/sidebar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,30 +40,18 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-          <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
-            <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
-              VideoToKB
-            </Link>
-            <div className="flex items-center gap-6">
-              {userEmail && (
-                <>
-                  <Link href="/" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-                    Generate
-                  </Link>
-                  <Link href="/articles" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-                    Articles
-                  </Link>
-                  <Link href="/settings" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
-                    Settings
-                  </Link>
-                  <UserMenu email={userEmail} />
-                </>
-              )}
-            </div>
+        {userEmail ? (
+          <div className="flex min-h-screen bg-grid">
+            <Sidebar email={userEmail} />
+            <main className="flex-1 min-w-0">
+              {children}
+            </main>
           </div>
-        </nav>
-        {children}
+        ) : (
+          <div className="bg-grid min-h-screen">
+            {children}
+          </div>
+        )}
         <Toaster />
       </body>
     </html>
