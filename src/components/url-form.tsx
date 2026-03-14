@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Loader2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -8,6 +8,39 @@ import { cn } from '@/utils/cn';
 import type { ArticleType, PlatformProfile } from '@/types';
 
 type InputMode = 'url' | 'transcript';
+type VideoProvider = 'youtube' | 'loom' | 'gdrive' | null;
+
+function detectProvider(url: string): VideoProvider {
+  if (!url.trim()) return null;
+  if (url.includes('youtube.com/') || url.includes('youtu.be/')) return 'youtube';
+  if (url.includes('loom.com/share/')) return 'loom';
+  if (url.includes('drive.google.com')) return 'gdrive';
+  return null;
+}
+
+function YouTubeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+    </svg>
+  );
+}
+
+function LoomIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.16 12.6l-4.73-2.73 4.73-2.73a.87.87 0 000-1.5L12.6.84a1.18 1.18 0 00-1.2 0L.84 7.14a.87.87 0 000 1.5l4.73 2.73L.84 14.1a.87.87 0 000 1.5l10.56 6.3a1.18 1.18 0 001.2 0l10.56-6.3a.87.87 0 000-1.5zM12 2.42l8.4 5.01L12 12.44 3.6 7.43 12 2.42zm0 19.16l-8.4-5.01 3.93-2.27L12 17.03l4.47-2.73 3.93 2.27L12 21.58z"/>
+    </svg>
+  );
+}
+
+function GDriveIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M7.71 0l-7.71 13.5h4.29L12 0H7.71zm0.79 15.5L4.79 22.5h14.42l3.71-7H8.5zm7.79-1.5L24 0H16.29l-7.71 14h7.71z"/>
+    </svg>
+  );
+}
 
 interface UrlFormProps {
   onSubmit: (input: { videoUrl?: string; transcript?: string }) => void;
@@ -33,6 +66,8 @@ export function UrlForm({
   const [mode, setMode] = useState<InputMode>('url');
   const [videoUrl, setVideoUrl] = useState('');
   const [transcript, setTranscript] = useState('');
+
+  const detectedProvider = useMemo(() => detectProvider(videoUrl), [videoUrl]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -143,19 +178,42 @@ export function UrlForm({
 
       {/* Input area */}
       {mode === 'url' ? (
-        <div>
-          <label htmlFor="video-url" className="block text-xs font-medium text-gray-400 mb-1.5">
-            Video URL
-          </label>
-          <input
-            id="video-url"
-            type="url"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="Paste a YouTube, Loom, or Google Drive URL..."
-            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-            disabled={isProcessing}
-          />
+        <div className="space-y-3">
+          <div>
+            <label htmlFor="video-url" className="block text-xs font-medium text-gray-400 mb-1.5">
+              Video URL
+            </label>
+            <input
+              id="video-url"
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="Paste a YouTube, Loom, or Google Drive URL..."
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+              disabled={isProcessing}
+            />
+          </div>
+
+          {/* Provider icons */}
+          <div className="flex items-center justify-center gap-6">
+            {([
+              { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', Icon: YouTubeIcon },
+              { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', Icon: LoomIcon },
+              { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-500', Icon: GDriveIcon },
+            ]).map(({ id, label, activeColor, Icon }) => {
+              const isActive = detectedProvider === id;
+              const isDimmed = detectedProvider !== null && !isActive;
+              return (
+                <div key={id} className={cn(
+                  'flex items-center gap-1.5 transition-all duration-200',
+                  isActive ? `${activeColor} scale-110` : isDimmed ? 'text-gray-200' : 'text-gray-300'
+                )}>
+                  <Icon className="h-5 w-5" />
+                  <span className="text-xs font-medium">{label}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div>

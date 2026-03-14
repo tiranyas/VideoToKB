@@ -106,7 +106,7 @@ export async function runPhaseA(
     if (companyContext) {
       fullDraftPrompt += `\n\n## Company Context\n${companyContext}`;
     }
-    fullDraftPrompt += `\n\n## Language Handling\n- Write the output in the SAME language as the transcript.\n- Never refuse to process a transcript because of its language.`;
+    fullDraftPrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- DETECT the language of the transcript below.\n- Write the ENTIRE output in that SAME language — every heading, sentence, and bullet point.\n- If the transcript is in English, write in English. If in Hebrew, write in Hebrew. If in Spanish, write in Spanish. Etc.\n- The Company Context may be in a DIFFERENT language — that's fine, still write the output in the transcript's language.\n- Never refuse to process a transcript because of its language.`;
 
     const draft = await generateDraft(cleanedTranscript, fullDraftPrompt);
     onProgress({ step: 'draft', status: 'complete', message: 'Draft created' });
@@ -118,7 +118,7 @@ export async function runPhaseA(
     if (companyContext) {
       fullStructurePrompt += `\n\n## Company Context\n${companyContext}`;
     }
-    fullStructurePrompt += `\n\n## Language Handling\n- Maintain the SAME language as the input draft.`;
+    fullStructurePrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- The output MUST be in the SAME language as the input draft.\n- Do NOT switch languages. If the draft is in English, output in English. If in Hebrew, output in Hebrew.\n- The Company Context may be in a different language — ignore that, match the draft's language.`;
 
     const structuredArticle = await generateStructured(draft, fullStructurePrompt);
     onProgress({ step: 'structure', status: 'complete', message: 'Article structured' });
