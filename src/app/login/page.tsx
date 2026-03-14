@@ -23,16 +23,13 @@ export default function LoginPage() {
     setError('');
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
+      const { error } = await supabase.auth.signUp({ email, password });
       setLoading(false);
       if (error) {
         setError(error.message);
       } else {
-        setSent(true);
+        router.push('/');
+        router.refresh();
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
