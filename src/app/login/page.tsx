@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 type Mode = 'password' | 'magic-link';
@@ -165,6 +166,15 @@ export default function LoginPage() {
               {error && <p className="text-sm text-red-500">{error}</p>}
             </>
           )}
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <Link href="/privacy" className="text-xs text-gray-300 hover:text-gray-500 transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="text-gray-200">|</span>
+          <Link href="/terms" className="text-xs text-gray-300 hover:text-gray-500 transition-colors">
+            Terms of Service
+          </Link>
         </div>
       </div>
     </div>

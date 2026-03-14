@@ -22,12 +22,16 @@ export default function ArticleDetailPage() {
   const [copied, setCopied] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     (async () => {
-      const data = await getArticle(supabase, id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+      const data = await getArticle(supabase, id, user.id);
       setArticle(data);
       setLoading(false);
       if (data?.html) setTab('preview');
@@ -78,7 +82,7 @@ export default function ArticleDetailPage() {
       return;
     }
     try {
-      await updateArticleTitle(supabase, article.id, titleDraft.trim());
+      await updateArticleTitle(supabase, article.id, titleDraft.trim(), userId!);
       setArticle({ ...article, title: titleDraft.trim() });
       toast.success('Title updated');
     } catch {
@@ -89,7 +93,7 @@ export default function ArticleDetailPage() {
 
   async function handleDelete() {
     if (!article) return;
-    await deleteArticle(supabase, article.id);
+    await deleteArticle(supabase, article.id, userId!);
     toast.success('Article deleted');
     router.push('/articles');
   }

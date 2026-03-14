@@ -1,9 +1,12 @@
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rate-limit';
 import type { ProgressEvent } from '@/types';
 
 export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
+
+const limiter = rateLimit({ tokens: 10, interval: 60_000 });
 
 interface RequestBody {
   // Phase indicator
@@ -30,6 +33,21 @@ export async function POST(req: Request) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Rate limit
+  const rl = limiter.check(user.id);
+  if (!rl.ok) {
+    return new Response(
+      JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)),
+        },
+      }
     );
   }
 
@@ -108,12 +126,11 @@ export async function POST(req: Request) {
               send
             );
           }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
+        } catch {
           send({
             step: 'error',
             status: 'error',
-            message: `Pipeline error: ${message}`,
+            message: 'An unexpected error occurred during processing.',
           });
         } finally {
           controller.close();

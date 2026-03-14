@@ -260,12 +260,14 @@ export async function saveArticle(
 export async function updateArticleTitle(
   supabase: SupabaseClient,
   articleId: string,
-  title: string
+  title: string,
+  userId: string
 ): Promise<void> {
   const { error } = await supabase
     .from('articles')
     .update({ title })
-    .eq('id', articleId);
+    .eq('id', articleId)
+    .eq('user_id', userId);
 
   if (error) throw new Error(`Failed to update article title: ${error.message}`);
 }
@@ -273,12 +275,14 @@ export async function updateArticleTitle(
 export async function updateArticleHtml(
   supabase: SupabaseClient,
   articleId: string,
-  html: string
+  html: string,
+  userId: string
 ): Promise<void> {
   const { error } = await supabase
     .from('articles')
     .update({ html })
-    .eq('id', articleId);
+    .eq('id', articleId)
+    .eq('user_id', userId);
 
   if (error) throw new Error(`Failed to update article HTML: ${error.message}`);
 }
@@ -313,12 +317,14 @@ export async function getArticles(
 
 export async function getArticle(
   supabase: SupabaseClient,
-  articleId: string
+  articleId: string,
+  userId: string
 ): Promise<Article | null> {
   const { data, error } = await supabase
     .from('articles')
     .select('*')
     .eq('id', articleId)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -339,12 +345,14 @@ export async function getArticle(
 
 export async function deleteArticle(
   supabase: SupabaseClient,
-  articleId: string
+  articleId: string,
+  userId: string
 ): Promise<void> {
   const { error } = await supabase
     .from('articles')
     .delete()
-    .eq('id', articleId);
+    .eq('id', articleId)
+    .eq('user_id', userId);
 
   if (error) throw new Error(`Failed to delete article: ${error.message}`);
 }

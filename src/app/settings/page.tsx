@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight } from 'lucide-react';
+import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import type { CompanyContext, ArticleType, PlatformProfile } from '@/types';
 import { createClient } from '@/lib/supabase/client';
@@ -13,7 +14,7 @@ import {
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
 } from '@/lib/supabase/queries';
 
-type Tab = 'context' | 'article-types' | 'platforms';
+type Tab = 'context' | 'article-types' | 'platforms' | 'account';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
@@ -22,6 +23,7 @@ export default function SettingsPage() {
     { id: 'context', label: 'Company Context', icon: Globe },
     { id: 'article-types', label: 'Article Types', icon: FileText },
     { id: 'platforms', label: 'Platforms', icon: FileText },
+    { id: 'account', label: 'Account', icon: User },
   ];
 
   return (
@@ -61,6 +63,7 @@ export default function SettingsPage() {
         {activeTab === 'context' && <CompanyContextTab />}
         {activeTab === 'article-types' && <ArticleTypesTab />}
         {activeTab === 'platforms' && <PlatformProfilesTab />}
+        {activeTab === 'account' && <AccountTab />}
       </div>
     </div>
   );
@@ -652,6 +655,144 @@ function PlatformProfileEditor({
           className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
         >
           Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Account Tab ───────────────────────────────────────────
+
+function AccountTab() {
+  const [confirmText, setConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const router = useRouter();
+
+  const isDeleteConfirmed = confirmText === 'DELETE';
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const res = await fetch('/api/account/export');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Export failed');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'videotokb-data-export.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Data exported successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to export data');
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!isDeleteConfirmed) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch('/api/account/delete', { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Deletion failed');
+      }
+      toast.success('Account deleted successfully');
+      router.push('/login');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete account');
+      setIsDeleting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Export Data */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Download className="h-5 w-5 text-gray-400" />
+          <h3 className="text-lg font-semibold tracking-tight text-gray-900">Export My Data</h3>
+        </div>
+        <p className="text-xs text-gray-400 mb-5">
+          Download a copy of all your data including articles, company context, and preferences as a JSON file.
+        </p>
+        <button
+          onClick={handleExport}
+          disabled={isExporting}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
+            isExporting ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+          )}
+        >
+          {isExporting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" /> Export Data
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Delete Account */}
+      <div className="rounded-2xl border border-red-100 bg-white shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-2">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <h3 className="text-lg font-semibold tracking-tight text-red-600">Delete My Account</h3>
+        </div>
+        <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 mb-5">
+          <p className="text-sm text-red-700">
+            This action is permanent and cannot be undone. All your data will be permanently deleted, including:
+          </p>
+          <ul className="text-sm text-red-600 mt-2 list-disc list-inside space-y-1">
+            <li>All generated articles</li>
+            <li>Company context and preferences</li>
+            <li>Your user account</li>
+          </ul>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-xs font-medium text-gray-400 mb-1.5">
+            Type <span className="font-mono text-red-500">DELETE</span> to confirm
+          </label>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="DELETE"
+            className="w-full max-w-xs rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all"
+          />
+        </div>
+
+        <button
+          onClick={handleDelete}
+          disabled={!isDeleteConfirmed || isDeleting}
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
+            !isDeleteConfirmed || isDeleting
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-red-500 hover:bg-red-600'
+          )}
+        >
+          {isDeleting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Deleting account...
+            </>
+          ) : (
+            <>
+              <Trash2 className="h-4 w-4" /> Permanently Delete Account
+            </>
+          )}
         </button>
       </div>
     </div>

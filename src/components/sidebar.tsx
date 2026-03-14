@@ -158,7 +158,7 @@ export function Sidebar({ email }: { email: string }) {
       </div>
 
       {/* User footer */}
-      <div className="border-t border-gray-100 px-3 py-3">
+      <div className="border-t border-gray-100 px-3 py-3 space-y-2">
         <div className="flex items-center justify-between rounded-xl px-3 py-2 hover:bg-gray-50 transition-colors">
           <span className="text-xs text-gray-400 truncate max-w-[160px]">{email}</span>
           <button
@@ -168,6 +168,14 @@ export function Sidebar({ email }: { email: string }) {
           >
             <LogOut className="h-3.5 w-3.5" />
           </button>
+        </div>
+        <div className="flex items-center gap-3 px-3">
+          <Link href="/privacy" className="text-[11px] text-gray-300 hover:text-gray-500 transition-colors">
+            Privacy
+          </Link>
+          <Link href="/terms" className="text-[11px] text-gray-300 hover:text-gray-500 transition-colors">
+            Terms
+          </Link>
         </div>
       </div>
     </>
