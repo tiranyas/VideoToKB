@@ -1,0 +1,169 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { Copy, Check, FileDown, Trash2, ArrowLeft } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { getArticle, deleteArticle } from '@/lib/supabase/queries';
+import { cn } from '@/utils/cn';
+import type { Article } from '@/types';
+
+type Tab = 'markdown' | 'html';
+
+export default function ArticleDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const supabase = createClient();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('markdown');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const data = await getArticle(supabase, id);
+      setArticle(data);
+      setLoading(false);
+      if (data?.html) setTab('html');
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  async function handleCopy() {
+    const text = tab === 'markdown' ? article?.markdown : article?.html;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success('Copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleDownloadWord() {
+    if (!article) return;
+    try {
+      const { generateWordDoc } = await import('@/lib/word-export');
+      const blob = await generateWordDoc(article.markdown);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${article.title}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Word file downloaded');
+    } catch {
+      toast.error('Failed to generate Word file');
+    }
+  }
+
+  async function handleDelete() {
+    if (!article) return;
+    await deleteArticle(supabase, article.id);
+    toast.success('Article deleted');
+    router.push('/articles');
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Loading article...</p>
+      </div>
+    );
+  }
+
+  if (!article) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+        <p className="text-gray-500">Article not found.</p>
+        <Link href="/articles" className="text-blue-600 hover:underline">
+          Back to Articles
+        </Link>
+      </div>
+    );
+  }
+
+  const content = tab === 'markdown' ? article.markdown : (article.html ?? '');
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <Link
+              href="/articles"
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Articles
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900">{article.title}</h1>
+            <p className="text-xs text-gray-400 mt-1">
+              {article.sourceType} · {new Date(article.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+          <button
+            onClick={handleDelete}
+            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" /> Delete
+          </button>
+        </div>
+
+        {/* Tabs + Actions */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setTab('markdown')}
+              className={cn(
+                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                tab === 'markdown'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              )}
+            >
+              Markdown
+            </button>
+            {article.html && (
+              <button
+                onClick={() => setTab('html')}
+                className={cn(
+                  'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                  tab === 'html'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                )}
+              >
+                HTML
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            {tab === 'markdown' && (
+              <button
+                onClick={handleDownloadWord}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <FileDown className="h-4 w-4" /> Word
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <textarea
+          readOnly
+          value={content}
+          className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}

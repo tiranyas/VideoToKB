@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import {
   getArticleTypes, getPlatformProfiles,
   getUserPreferences, upsertUserPreferences,
-  getCompanyContext,
+  getCompanyContext, saveArticle, updateArticleHtml,
 } from '@/lib/supabase/queries';
 
 interface StepInfo {
@@ -39,6 +39,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [structuredArticle, setStructuredArticle] = useState('');
   const [finalHTML, setFinalHTML] = useState('');
+  const [savedArticleId, setSavedArticleId] = useState<string | null>(null);
 
   // Settings from Supabase
   const [articleTypes, setArticleTypes] = useState<ArticleType[]>([]);
@@ -72,7 +73,7 @@ export default function Home() {
 
   // ── Phase A: Generate structured article ─────────────
 
-  const handleSubmit = useCallback(async (input: { videoUrl?: string; transcript?: string }) => {
+  const handleSubmit = useCallback(async (input: { videoUrl?: string; transcript?: string; sourceType?: string }) => {
     const articleType = articleTypes.find((t) => t.id === selectedTypeId);
 
     if (!articleType) {
@@ -93,6 +94,7 @@ export default function Home() {
     setStepsA(PHASE_A_STEPS.map((s) => ({ ...s })));
     setStructuredArticle('');
     setFinalHTML('');
+    setSavedArticleId(null);
 
     // Get company context
     let companyContext: string | undefined;
@@ -128,6 +130,19 @@ export default function Home() {
         } else if (event.step === 'review' && event.article) {
           setStructuredArticle(event.article);
           setPhase('review');
+          // Auto-save article to DB
+          if (userId) {
+            const title = event.article.match(/^#+\s+(.+)/m)?.[1] ?? 'Untitled Article';
+            const sourceType = input.transcript ? 'paste' : (input.videoUrl?.includes('drive.google') ? 'google-drive' : 'loom');
+            saveArticle(supabase, userId, {
+              title,
+              sourceUrl: input.videoUrl,
+              sourceType: sourceType as 'loom' | 'google-drive' | 'paste',
+              articleTypeId: selectedTypeId,
+              platformId: selectedPlatformId,
+              markdown: event.article,
+            }).then((id) => setSavedArticleId(id)).catch(() => {});
+          }
         } else {
           setStepsA((prev) =>
             prev.map((s) =>
@@ -184,6 +199,10 @@ export default function Home() {
         } else if (event.step === 'done' && event.html) {
           setFinalHTML(event.html);
           setPhase('complete');
+          // Update saved article with HTML
+          if (savedArticleId) {
+            updateArticleHtml(supabase, savedArticleId, event.html).catch(() => {});
+          }
         } else {
           setStepsB((prev) =>
             prev.map((s) =>
@@ -195,7 +214,8 @@ export default function Home() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
     }
-  }, [platforms, selectedPlatformId, structuredArticle]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platforms, selectedPlatformId, structuredArticle, savedArticleId]);
 
   // ── Reset ────────────────────────────────────────────
 

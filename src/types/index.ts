@@ -58,3 +58,17 @@ export interface PlatformProfile {
   htmlTemplate: string;
   isDefault?: boolean;
 }
+
+// Saved article
+export interface Article {
+  id: string;
+  userId: string;
+  title: string;
+  sourceUrl?: string;
+  sourceType: 'loom' | 'google-drive' | 'paste';
+  articleTypeId?: string;
+  platformId?: string;
+  markdown: string;
+  html?: string;
+  createdAt: string;
+}

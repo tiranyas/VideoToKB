@@ -125,4 +125,26 @@ CREATE POLICY "Users can manage own preferences"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+-- ── Articles (per-user) ──────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.articles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  source_url text,
+  source_type text NOT NULL,
+  article_type_id text REFERENCES public.article_types(id) ON DELETE SET NULL,
+  platform_id text REFERENCES public.platform_profiles(id) ON DELETE SET NULL,
+  markdown text NOT NULL,
+  html text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can CRUD own articles"
+  ON public.articles FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
 -- Note: Seed data is inserted separately via the seed script below

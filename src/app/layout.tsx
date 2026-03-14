@@ -52,6 +52,9 @@ export default async function RootLayout({
                   <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
                     Generate
                   </Link>
+                  <Link href="/articles" className="text-sm text-gray-600 hover:text-gray-900">
+                    Articles
+                  </Link>
                   <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
                     Settings
                   </Link>

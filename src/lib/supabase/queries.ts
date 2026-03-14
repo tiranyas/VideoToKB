@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CompanyContext, ArticleType, PlatformProfile } from '@/types';
+import type { CompanyContext, ArticleType, PlatformProfile, Article } from '@/types';
 
 // ── Company Context (per-user) ───────────────────────────
 
@@ -229,4 +229,109 @@ export async function upsertUserPreferences(
     .upsert(row, { onConflict: 'user_id' });
 
   if (error) throw new Error(`Failed to save preferences: ${error.message}`);
+}
+
+// ── Articles (per-user) ──────────────────────────────────
+
+export async function saveArticle(
+  supabase: SupabaseClient,
+  userId: string,
+  article: Omit<Article, 'id' | 'userId' | 'createdAt'>
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('articles')
+    .insert({
+      user_id: userId,
+      title: article.title,
+      source_url: article.sourceUrl ?? null,
+      source_type: article.sourceType,
+      article_type_id: article.articleTypeId ?? null,
+      platform_id: article.platformId ?? null,
+      markdown: article.markdown,
+      html: article.html ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (error) throw new Error(`Failed to save article: ${error.message}`);
+  return data.id;
+}
+
+export async function updateArticleHtml(
+  supabase: SupabaseClient,
+  articleId: string,
+  html: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('articles')
+    .update({ html })
+    .eq('id', articleId);
+
+  if (error) throw new Error(`Failed to update article HTML: ${error.message}`);
+}
+
+export async function getArticles(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Article[]> {
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*, article_types(name), platform_profiles(name)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to load articles: ${error.message}`);
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    sourceUrl: row.source_url ?? undefined,
+    sourceType: row.source_type,
+    articleTypeId: row.article_type_id ?? undefined,
+    platformId: row.platform_id ?? undefined,
+    articleTypeName: row.article_types?.name,
+    platformName: row.platform_profiles?.name,
+    markdown: row.markdown,
+    html: row.html ?? undefined,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getArticle(
+  supabase: SupabaseClient,
+  articleId: string
+): Promise<Article | null> {
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('id', articleId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    title: data.title,
+    sourceUrl: data.source_url ?? undefined,
+    sourceType: data.source_type,
+    articleTypeId: data.article_type_id ?? undefined,
+    platformId: data.platform_id ?? undefined,
+    markdown: data.markdown,
+    html: data.html ?? undefined,
+    createdAt: data.created_at,
+  };
+}
+
+export async function deleteArticle(
+  supabase: SupabaseClient,
+  articleId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('articles')
+    .delete()
+    .eq('id', articleId);
+
+  if (error) throw new Error(`Failed to delete article: ${error.message}`);
 }
