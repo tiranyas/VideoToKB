@@ -5,12 +5,12 @@ import type { PipelineStep, StepStatus, ProgressEvent, ArticleType, PlatformProf
 import { UrlForm } from '@/components/url-form';
 import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
+import { createClient } from '@/lib/supabase/client';
 import {
   getArticleTypes, getPlatformProfiles,
-  getSelectedArticleTypeId, getSelectedPlatformId,
-  setSelectedArticleTypeId, setSelectedPlatformId,
-  getCompanyContext, seedDefaults,
-} from '@/lib/storage';
+  getUserPreferences, upsertUserPreferences,
+  getCompanyContext,
+} from '@/lib/supabase/queries';
 
 interface StepInfo {
   step: PipelineStep;
@@ -40,35 +40,53 @@ export default function Home() {
   const [structuredArticle, setStructuredArticle] = useState('');
   const [finalHTML, setFinalHTML] = useState('');
 
-  // Settings from localStorage
+  // Settings from Supabase
   const [articleTypes, setArticleTypes] = useState<ArticleType[]>([]);
   const [platforms, setPlatforms] = useState<PlatformProfile[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState('');
   const [selectedPlatformId, setSelectedPlatId] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const supabase = createClient();
 
   useEffect(() => {
-    seedDefaults();
-    const types = getArticleTypes();
-    const profs = getPlatformProfiles();
-    setArticleTypes(types);
-    setPlatforms(profs);
-    setSelectedTypeId(getSelectedArticleTypeId() ?? types[0]?.id ?? '');
-    setSelectedPlatId(getSelectedPlatformId() ?? profs[0]?.id ?? '');
+    async function loadSettings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      const [types, profs, prefs] = await Promise.all([
+        getArticleTypes(supabase),
+        getPlatformProfiles(supabase),
+        getUserPreferences(supabase, user.id),
+      ]);
+
+      setArticleTypes(types);
+      setPlatforms(profs);
+      setSelectedTypeId(prefs.selectedArticleTypeId ?? types[0]?.id ?? '');
+      setSelectedPlatId(prefs.selectedPlatformId ?? profs[0]?.id ?? '');
+    }
+    loadSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Phase A: Generate structured article ─────────────
 
   const handleSubmit = useCallback(async (input: { videoUrl?: string; transcript?: string }) => {
     const articleType = articleTypes.find((t) => t.id === selectedTypeId);
-    const platform = platforms.find((p) => p.id === selectedPlatformId);
 
     if (!articleType) {
       setError('Please select an article type in Settings');
       return;
     }
 
-    setSelectedArticleTypeId(selectedTypeId);
-    setSelectedPlatformId(selectedPlatformId);
+    // Save preferences
+    if (userId) {
+      upsertUserPreferences(supabase, userId, {
+        selectedArticleTypeId: selectedTypeId,
+        selectedPlatformId: selectedPlatformId,
+      }).catch(() => {});
+    }
 
     setPhase('processing-a');
     setError(null);
@@ -77,10 +95,13 @@ export default function Home() {
     setFinalHTML('');
 
     // Get company context
-    const ctx = getCompanyContext();
-    const companyContext = ctx
-      ? `Company: ${ctx.name}\n${ctx.description}\nIndustry: ${ctx.industry ?? 'N/A'}\nTarget audience: ${ctx.targetAudience ?? 'N/A'}`
-      : undefined;
+    let companyContext: string | undefined;
+    if (userId) {
+      const ctx = await getCompanyContext(supabase, userId);
+      if (ctx) {
+        companyContext = `Company: ${ctx.name}\n${ctx.description}\nIndustry: ${ctx.industry ?? 'N/A'}\nTarget audience: ${ctx.targetAudience ?? 'N/A'}`;
+      }
+    }
 
     try {
       const response = await fetch('/api/process', {
@@ -105,7 +126,6 @@ export default function Home() {
             prev.map((s) => (s.status === 'in_progress' ? { ...s, status: 'error' } : s))
           );
         } else if (event.step === 'review' && event.article) {
-          // Phase A complete
           setStructuredArticle(event.article);
           setPhase('review');
         } else {
@@ -119,7 +139,8 @@ export default function Home() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
     }
-  }, [articleTypes, platforms, selectedTypeId, selectedPlatformId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, userId]);
 
   // ── Phase B: Generate HTML ───────────────────────────
 
@@ -130,7 +151,6 @@ export default function Home() {
       return;
     }
 
-    // "Markdown Only" — skip HTML generation, just show the article as final
     if (platform.id === 'markdown-only' || !platform.htmlTemplate) {
       setFinalHTML(structuredArticle);
       setPhase('complete');
@@ -206,7 +226,6 @@ export default function Home() {
         <p className="mt-2 text-gray-500">Turn video recordings into KB articles</p>
       </div>
 
-      {/* Phase: Input */}
       {phase === 'input' && (
         <div className="flex w-full flex-col items-center">
           <UrlForm
@@ -222,14 +241,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* Phase: Processing A */}
       {phase === 'processing-a' && (
         <div className="flex w-full flex-col items-center">
           <ProgressDisplay steps={stepsA} error={error ?? undefined} />
         </div>
       )}
 
-      {/* Phase: Review */}
       {phase === 'review' && (
         <div className="flex w-full flex-col items-center gap-4">
           <ArticleView
@@ -248,14 +265,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* Phase: Processing B */}
       {phase === 'processing-b' && (
         <div className="flex w-full flex-col items-center">
           <ProgressDisplay steps={stepsB} error={error ?? undefined} />
         </div>
       )}
 
-      {/* Phase: Complete */}
       {phase === 'complete' && (
         <div className="flex w-full flex-col items-center gap-4">
           <ArticleView

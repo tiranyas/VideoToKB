@@ -1,4 +1,5 @@
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
+import { createClient } from '@/lib/supabase/server';
 import type { ProgressEvent } from '@/types';
 
 export const maxDuration = 300;
@@ -22,6 +23,16 @@ interface RequestBody {
 }
 
 export async function POST(req: Request) {
+  // Auth check
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   let body: RequestBody;
 
   try {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { UserMenu } from "@/components/user-menu";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,11 +21,21 @@ export const metadata: Metadata = {
   description: "Convert video recordings into structured knowledge base articles",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let userEmail: string | null = null;
+
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userEmail = user?.email ?? null;
+  } catch {
+    // Not authenticated or cookies not available
+  }
+
   return (
     <html lang="en">
       <body
@@ -35,12 +47,17 @@ export default function RootLayout({
               VideoToKB
             </Link>
             <div className="flex items-center gap-4">
-              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-                Generate
-              </Link>
-              <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
-                Settings
-              </Link>
+              {userEmail && (
+                <>
+                  <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+                    Generate
+                  </Link>
+                  <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
+                    Settings
+                  </Link>
+                  <UserMenu email={userEmail} />
+                </>
+              )}
             </div>
           </div>
         </nav>

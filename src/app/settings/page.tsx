@@ -6,19 +6,17 @@ import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight } from 'luci
 import Link from 'next/link';
 import { cn } from '@/utils/cn';
 import type { CompanyContext, ArticleType, PlatformProfile } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 import {
-  getCompanyContext, saveCompanyContext, deleteCompanyContext,
-  getArticleTypes, saveArticleTypes, addArticleType, deleteArticleType,
-  getPlatformProfiles, savePlatformProfiles, addPlatformProfile, deletePlatformProfile,
-  seedDefaults,
-} from '@/lib/storage';
+  getCompanyContext, upsertCompanyContext, deleteCompanyContext as deleteCompanyCtx,
+  getArticleTypes, addArticleType, updateArticleType, deleteArticleType,
+  getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
+} from '@/lib/supabase/queries';
 
 type Tab = 'context' | 'article-types' | 'platforms';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
-
-  useEffect(() => { seedDefaults(); }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,13 +73,22 @@ function CompanyContextTab() {
   const [manualText, setManualText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'url' | 'manual'>('url');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const supabase = createClient();
 
   useEffect(() => {
-    setContext(getCompanyContext());
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+      const ctx = await getCompanyContext(supabase, user.id);
+      setContext(ctx);
+    })();
   }, []);
 
   async function handleScrapeUrl() {
-    if (!url.trim()) return;
+    if (!url.trim() || !userId) return;
     setIsLoading(true);
     try {
       const res = await fetch('/api/scrape-context', {
@@ -100,7 +107,7 @@ function CompanyContextTab() {
         targetAudience: data.targetAudience,
         createdAt: new Date().toISOString(),
       };
-      saveCompanyContext(newContext);
+      await upsertCompanyContext(supabase, userId, newContext);
       setContext(newContext);
       toast.success('Company context extracted successfully');
     } catch (err) {
@@ -110,29 +117,30 @@ function CompanyContextTab() {
     }
   }
 
-  function handleSaveManual() {
-    if (!manualText.trim()) return;
+  async function handleSaveManual() {
+    if (!manualText.trim() || !userId) return;
     const newContext: CompanyContext = {
       id: crypto.randomUUID(),
       name: 'My Company',
       description: manualText.trim(),
       createdAt: new Date().toISOString(),
     };
-    saveCompanyContext(newContext);
+    await upsertCompanyContext(supabase, userId, newContext);
     setContext(newContext);
     toast.success('Company context saved');
   }
 
-  function handleDelete() {
-    deleteCompanyContext();
+  async function handleDelete() {
+    if (!userId) return;
+    await deleteCompanyCtx(supabase, userId);
     setContext(null);
     toast.success('Company context removed');
   }
 
-  function handleUpdateField(field: keyof CompanyContext, value: string) {
-    if (!context) return;
+  async function handleUpdateField(field: keyof CompanyContext, value: string) {
+    if (!context || !userId) return;
     const updated = { ...context, [field]: value };
-    saveCompanyContext(updated);
+    await upsertCompanyContext(supabase, userId, updated);
     setContext(updated);
   }
 
@@ -281,28 +289,38 @@ function ArticleTypesTab() {
   const [editing, setEditing] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
 
+  const supabase = createClient();
+
   useEffect(() => {
-    setTypes(getArticleTypes());
+    (async () => {
+      const data = await getArticleTypes(supabase);
+      setTypes(data);
+    })();
   }, []);
 
-  function handleSave(type: ArticleType) {
-    const updated = types.map((t) => (t.id === type.id ? type : t));
-    saveArticleTypes(updated);
-    setTypes(updated);
+  async function handleSave(type: ArticleType) {
+    await updateArticleType(supabase, type.id, {
+      name: type.name,
+      draftPrompt: type.draftPrompt,
+      structurePrompt: type.structurePrompt,
+    });
+    setTypes((prev) => prev.map((t) => (t.id === type.id ? type : t)));
     setEditing(null);
     toast.success('Article type updated');
   }
 
-  function handleAdd(type: ArticleType) {
-    addArticleType(type);
-    setTypes(getArticleTypes());
+  async function handleAdd(type: ArticleType) {
+    await addArticleType(supabase, type);
+    const data = await getArticleTypes(supabase);
+    setTypes(data);
     setShowNew(false);
     toast.success('Article type added');
   }
 
-  function handleRemove(id: string) {
-    deleteArticleType(id);
-    setTypes(getArticleTypes());
+  async function handleRemove(id: string) {
+    await deleteArticleType(supabase, id);
+    const data = await getArticleTypes(supabase);
+    setTypes(data);
     toast.success('Article type removed');
   }
 
@@ -437,28 +455,38 @@ function PlatformProfilesTab() {
   const [editing, setEditing] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
 
+  const supabase = createClient();
+
   useEffect(() => {
-    setProfiles(getPlatformProfiles());
+    (async () => {
+      const data = await getPlatformProfiles(supabase);
+      setProfiles(data);
+    })();
   }, []);
 
-  function handleSave(profile: PlatformProfile) {
-    const updated = profiles.map((p) => (p.id === profile.id ? profile : p));
-    savePlatformProfiles(updated);
-    setProfiles(updated);
+  async function handleSave(profile: PlatformProfile) {
+    await updatePlatformProfile(supabase, profile.id, {
+      name: profile.name,
+      htmlPrompt: profile.htmlPrompt,
+      htmlTemplate: profile.htmlTemplate,
+    });
+    setProfiles((prev) => prev.map((p) => (p.id === profile.id ? profile : p)));
     setEditing(null);
     toast.success('Platform profile updated');
   }
 
-  function handleAdd(profile: PlatformProfile) {
-    addPlatformProfile(profile);
-    setProfiles(getPlatformProfiles());
+  async function handleAdd(profile: PlatformProfile) {
+    await addPlatformProfile(supabase, profile);
+    const data = await getPlatformProfiles(supabase);
+    setProfiles(data);
     setShowNew(false);
     toast.success('Platform profile added');
   }
 
-  function handleRemove(id: string) {
-    deletePlatformProfile(id);
-    setProfiles(getPlatformProfiles());
+  async function handleRemove(id: string) {
+    await deletePlatformProfile(supabase, id);
+    const data = await getPlatformProfiles(supabase);
+    setProfiles(data);
     toast.success('Platform profile removed');
   }
 
