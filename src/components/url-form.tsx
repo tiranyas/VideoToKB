@@ -203,9 +203,9 @@ export function UrlForm({
           {/* Provider icons — all on by default, only matched one stays colored */}
           <div className="flex items-center justify-center gap-6">
             {([
-              { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', defaultColor: 'text-gray-400', Icon: YouTubeIcon },
-              { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', defaultColor: 'text-gray-400', Icon: LoomIcon },
-              { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-600', defaultColor: 'text-gray-400', Icon: GDriveIcon },
+              { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', defaultColor: 'text-red-400', Icon: YouTubeIcon },
+              { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', defaultColor: 'text-purple-400', Icon: LoomIcon },
+              { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-600', defaultColor: 'text-green-500', Icon: GDriveIcon },
             ]).map(({ id, label, activeColor, defaultColor, Icon }) => {
               const hasUrl = detectedProvider !== null;
               const isActive = detectedProvider === id;
