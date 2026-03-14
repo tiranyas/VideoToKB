@@ -1,7 +1,7 @@
 import type { ProgressEvent, VideoInfo } from '@/types';
 import { resolveLoomUrl } from '@/lib/loom-resolver';
 import { resolveGoogleDriveUrl } from '@/lib/gdrive-resolver';
-import { isYouTubeUrl, getYouTubeTranscript } from '@/lib/youtube-resolver';
+import { isYouTubeUrl, getYouTubeTranscript, YouTubeExtractionError } from '@/lib/youtube-resolver';
 import { transcribeVideo, preprocessTranscript } from '@/lib/transcription';
 import { generateDraft, generateStructured, generateHTML } from '@/lib/article-generator';
 
@@ -59,7 +59,14 @@ export async function runPhaseA(
         onProgress({ step: 'transcribe', status: 'complete', message: 'Skipped — using YouTube captions' });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        onProgress({ step: 'error', status: 'error', message: `YouTube caption extraction failed: ${message}` });
+        const isBlocked = error instanceof YouTubeExtractionError && error.isServerBlocked;
+        onProgress({
+          step: 'error',
+          status: 'error',
+          message: isBlocked
+            ? 'youtube_blocked'
+            : `YouTube caption extraction failed: ${message}`,
+        });
         return;
       }
     } else {

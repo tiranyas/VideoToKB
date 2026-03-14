@@ -38,18 +38,14 @@ interface RawSegment {
   dur: number;
 }
 
-// ── Client Configurations ────────────────────────────────
-// YouTube treats different "clients" differently.
-// Server IPs get LOGIN_REQUIRED with WEB client but often work with
-// ANDROID, IOS, or TV_EMBEDDED clients.
+// ── Constants ────────────────────────────────────────────
 
 const INNERTUBE_BASE = 'https://www.youtube.com/youtubei/v1';
 const INNERTUBE_API_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
-
 const CONSENT_COOKIES =
   'SOCS=CAISNQgDEitib3FfaWRlbnRpdHlfZnJvbnRlbmRfdWlzZXJ2ZXJfMjAyMzA4MjkuMDdfcDAQAhgCGgJlbg; CONSENT=PENDING+999';
 
-// Different client contexts to try — each has different restrictions
+// Client configs — TV_EMBEDDED is the least restricted
 const CLIENT_CONFIGS: Array<{
   name: string;
   context: Record<string, unknown>;
@@ -64,48 +60,10 @@ const CLIENT_CONFIGS: Array<{
         hl: 'en',
         gl: 'US',
       },
-      thirdParty: {
-        embedUrl: 'https://www.google.com',
-      },
+      thirdParty: { embedUrl: 'https://www.google.com' },
     },
     headers: {
       'User-Agent': 'Mozilla/5.0',
-      'Content-Type': 'application/json',
-      Cookie: CONSENT_COOKIES,
-    },
-  },
-  {
-    name: 'ANDROID',
-    context: {
-      client: {
-        clientName: 'ANDROID',
-        clientVersion: '19.09.37',
-        androidSdkVersion: 30,
-        hl: 'en',
-        gl: 'US',
-      },
-    },
-    headers: {
-      'User-Agent':
-        'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
-      'Content-Type': 'application/json',
-      Cookie: CONSENT_COOKIES,
-    },
-  },
-  {
-    name: 'IOS',
-    context: {
-      client: {
-        clientName: 'IOS',
-        clientVersion: '19.09.3',
-        deviceModel: 'iPhone14,3',
-        hl: 'en',
-        gl: 'US',
-      },
-    },
-    headers: {
-      'User-Agent':
-        'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
       'Content-Type': 'application/json',
       Cookie: CONSENT_COOKIES,
     },
@@ -130,24 +88,17 @@ const CLIENT_CONFIGS: Array<{
   },
 ];
 
-// ── InnerTube /player API ────────────────────────────────
-// Try each client config until one returns caption tracks.
+// ── Caption Extraction ───────────────────────────────────
 
-async function getCaptionTracksMultiClient(
-  videoId: string
-): Promise<{ tracks: CaptionTrack[]; clientUsed: string }> {
+async function getCaptionTracks(videoId: string): Promise<CaptionTrack[]> {
   const errors: string[] = [];
 
   for (const config of CLIENT_CONFIGS) {
     try {
-      const playerUrl = `${INNERTUBE_BASE}/player?key=${INNERTUBE_API_KEY}`;
-      const res = await fetch(playerUrl, {
+      const res = await fetch(`${INNERTUBE_BASE}/player?key=${INNERTUBE_API_KEY}`, {
         method: 'POST',
         headers: config.headers,
-        body: JSON.stringify({
-          context: config.context,
-          videoId,
-        }),
+        body: JSON.stringify({ context: config.context, videoId }),
       });
 
       if (!res.ok) {
@@ -156,61 +107,45 @@ async function getCaptionTracksMultiClient(
       }
 
       const data = await res.json();
-
-      // Check playability
-      const playability = data?.playabilityStatus as Record<string, unknown> | undefined;
-      const status = playability?.status as string | undefined;
+      const status = (data?.playabilityStatus as Record<string, unknown>)?.status as string | undefined;
       if (status === 'LOGIN_REQUIRED' || status === 'UNPLAYABLE') {
         errors.push(`${config.name}: ${status}`);
         continue;
       }
 
-      // Extract caption tracks
-      const captions = data?.captions as Record<string, unknown> | undefined;
-      const renderer = captions?.playerCaptionsTracklistRenderer as Record<string, unknown> | undefined;
-      const tracks = renderer?.captionTracks as Array<{
+      const tracks = (
+        (data?.captions as Record<string, unknown>)
+          ?.playerCaptionsTracklistRenderer as Record<string, unknown>
+      )?.captionTracks as Array<{
         baseUrl: string;
         languageCode: string;
         name: { simpleText?: string; runs?: Array<{ text: string }> };
       }> | undefined;
 
-      if (!tracks || tracks.length === 0) {
-        errors.push(`${config.name}: no caption tracks`);
-        continue;
-      }
-
-      return {
-        tracks: tracks.map((t) => ({
+      if (tracks?.length) {
+        return tracks.map((t) => ({
           baseUrl: t.baseUrl,
           languageCode: t.languageCode,
           name: t.name?.simpleText || t.name?.runs?.map(r => r.text).join('') || t.languageCode,
-        })),
-        clientUsed: config.name,
-      };
+        }));
+      }
+      errors.push(`${config.name}: no caption tracks`);
     } catch (err) {
       errors.push(`${config.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
-  throw new Error(`All clients failed: ${errors.join('; ')}`);
+  throw new Error(errors.join('; '));
 }
-
-// ── Fetch caption data from track URL ────────────────────
 
 async function fetchCaptionData(trackUrl: string): Promise<RawSegment[]> {
   const url = new URL(trackUrl);
   url.searchParams.set('fmt', 'json3');
 
   const res = await fetch(url.toString(), {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      Cookie: CONSENT_COOKIES,
-    },
+    headers: { 'User-Agent': 'Mozilla/5.0', Cookie: CONSENT_COOKIES },
   });
-
-  if (!res.ok) {
-    throw new Error(`Caption fetch returned ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`Caption fetch returned ${res.status}`);
 
   const data = (await res.json()) as {
     events?: Array<{
@@ -219,147 +154,75 @@ async function fetchCaptionData(trackUrl: string): Promise<RawSegment[]> {
       segs?: Array<{ utf8: string }>;
     }>;
   };
-
-  if (!data.events) {
-    throw new Error('No events in caption response');
-  }
+  if (!data.events) throw new Error('No events in caption response');
 
   const segments: RawSegment[] = [];
-
   for (const event of data.events) {
     if (!event.segs) continue;
-    const text = event.segs
-      .map((s) => s.utf8)
-      .join('')
-      .replace(/\n/g, ' ')
-      .trim();
-    if (!text) continue;
-
-    segments.push({
-      text,
-      start: (event.tStartMs ?? 0) / 1000,
-      dur: (event.dDurationMs ?? 0) / 1000,
-    });
-  }
-
-  return segments;
-}
-
-// ── InnerTube transcript panel (last resort) ─────────────
-
-async function getTranscriptPanel(videoId: string): Promise<RawSegment[]> {
-  // Use WEB client for /next since it has the transcript panel
-  const webConfig = CLIENT_CONFIGS[CLIENT_CONFIGS.length - 1];
-
-  const nextRes = await fetch(`${INNERTUBE_BASE}/next?key=${INNERTUBE_API_KEY}`, {
-    method: 'POST',
-    headers: webConfig.headers,
-    body: JSON.stringify({
-      context: webConfig.context,
-      videoId,
-    }),
-  });
-
-  if (!nextRes.ok) {
-    throw new Error(`next API returned ${nextRes.status}`);
-  }
-
-  const nextData = await nextRes.json();
-  const panels = nextData?.engagementPanels as Array<Record<string, unknown>> | undefined;
-  if (!panels) throw new Error('No engagement panels');
-
-  let params: string | null = null;
-  for (const panel of panels) {
-    const epir = panel?.engagementPanelSectionListRenderer as Record<string, unknown> | undefined;
-    if (epir?.panelIdentifier === 'engagement-panel-searchable-transcript') {
-      const content = epir?.content as Record<string, unknown>;
-      const ctr = content?.continuationItemRenderer as Record<string, unknown>;
-      const ce = ctr?.continuationEndpoint as Record<string, unknown>;
-      const cc = ce?.getTranscriptEndpoint as Record<string, unknown>;
-      params = (cc?.params as string) || null;
-      break;
+    const text = event.segs.map((s) => s.utf8).join('').replace(/\n/g, ' ').trim();
+    if (text) {
+      segments.push({
+        text,
+        start: (event.tStartMs ?? 0) / 1000,
+        dur: (event.dDurationMs ?? 0) / 1000,
+      });
     }
   }
-
-  if (!params) throw new Error('No transcript panel');
-
-  const tRes = await fetch(`${INNERTUBE_BASE}/get_transcript?key=${INNERTUBE_API_KEY}`, {
-    method: 'POST',
-    headers: webConfig.headers,
-    body: JSON.stringify({
-      context: webConfig.context,
-      params,
-    }),
-  });
-
-  if (!tRes.ok) throw new Error(`get_transcript returned ${tRes.status}`);
-
-  const tData = await tRes.json();
-  const body = tData?.actions?.[0]?.updateEngagementPanelAction?.content
-    ?.transcriptRenderer?.body?.transcriptBodyRenderer;
-  const cueGroups = body?.cueGroups as Array<Record<string, unknown>> | undefined;
-
-  if (!cueGroups?.length) throw new Error('No cue groups');
-
-  const segments: RawSegment[] = [];
-  for (const group of cueGroups) {
-    const cues = (group?.transcriptCueGroupRenderer as Record<string, unknown>)
-      ?.cues as Array<Record<string, unknown>> | undefined;
-    if (!cues) continue;
-    for (const cue of cues) {
-      const r = cue?.transcriptCueRenderer as Record<string, unknown>;
-      if (!r) continue;
-      const text = ((r.cue as Record<string, unknown>)?.simpleText as string || '').trim();
-      const startMs = parseInt(r.startOffsetMs as string, 10) || 0;
-      const durMs = parseInt(r.durationMs as string, 10) || 0;
-      if (text) segments.push({ text, start: startMs / 1000, dur: durMs / 1000 });
-    }
-  }
-
   return segments;
 }
 
 // ── Main Entry Point ─────────────────────────────────────
+
+/**
+ * Custom error class for YouTube extraction failures.
+ * Contains `isServerBlocked` flag to help UI decide whether to show
+ * the manual transcript fallback instructions.
+ */
+export class YouTubeExtractionError extends Error {
+  isServerBlocked: boolean;
+  constructor(message: string, isServerBlocked: boolean) {
+    super(message);
+    this.name = 'YouTubeExtractionError';
+    this.isServerBlocked = isServerBlocked;
+  }
+}
 
 export async function getYouTubeTranscript(
   url: string
 ): Promise<YouTubeTranscriptResult> {
   const videoId = extractYouTubeId(url);
   if (!videoId) {
-    throw new Error('Invalid YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/');
-  }
-
-  let rawSegments: RawSegment[] = [];
-  const errors: string[] = [];
-
-  // Method 1: Try multiple InnerTube client configs to get caption tracks
-  try {
-    const { tracks } = await getCaptionTracksMultiClient(videoId);
-    const track = tracks[0]; // First track is usually the primary language
-    rawSegments = await fetchCaptionData(track.baseUrl);
-  } catch (err) {
-    errors.push(err instanceof Error ? err.message : String(err));
-  }
-
-  // Method 2: InnerTube transcript panel (only WEB client supports this)
-  if (rawSegments.length === 0) {
-    try {
-      rawSegments = await getTranscriptPanel(videoId);
-    } catch (err) {
-      errors.push(`Transcript panel: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-
-  if (rawSegments.length === 0) {
-    throw new Error(
-      'Could not extract captions from this YouTube video. ' +
-        'The video may not have captions, or YouTube may be blocking server requests. ' +
-        'Try pasting the transcript manually instead. ' +
-        `(Details: ${errors.join('; ')})`
+    throw new YouTubeExtractionError(
+      'Invalid YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/',
+      false
     );
   }
 
-  // Fetch video title via oEmbed (always works, no auth)
+  let rawSegments: RawSegment[] = [];
+
+  try {
+    const tracks = await getCaptionTracks(videoId);
+    rawSegments = await fetchCaptionData(tracks[0].baseUrl);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    const isBlocked = detail.includes('LOGIN_REQUIRED') || detail.includes('HTTP 400');
+
+    throw new YouTubeExtractionError(
+      isBlocked
+        ? 'YouTube is blocking caption extraction from this server. Please copy the transcript manually from YouTube.'
+        : `Could not extract captions: ${detail}`,
+      isBlocked
+    );
+  }
+
+  if (rawSegments.length === 0) {
+    throw new YouTubeExtractionError(
+      'This video has no captions available. Please copy the transcript manually from YouTube.',
+      false
+    );
+  }
+
+  // Fetch title
   let title = 'YouTube Video';
   try {
     const oRes = await fetch(
