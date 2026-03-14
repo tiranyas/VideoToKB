@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User } from 'lucide-react';
+import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Key, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
@@ -14,7 +14,7 @@ import {
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
 } from '@/lib/supabase/queries';
 
-type Tab = 'context' | 'article-types' | 'platforms' | 'account';
+type Tab = 'context' | 'article-types' | 'platforms' | 'api' | 'account';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
@@ -23,6 +23,7 @@ export default function SettingsPage() {
     { id: 'context', label: 'Company Context', icon: Globe },
     { id: 'article-types', label: 'Article Types', icon: FileText },
     { id: 'platforms', label: 'Platforms', icon: FileText },
+    { id: 'api', label: 'API', icon: Key },
     { id: 'account', label: 'Account', icon: User },
   ];
 
@@ -63,6 +64,7 @@ export default function SettingsPage() {
         {activeTab === 'context' && <CompanyContextTab />}
         {activeTab === 'article-types' && <ArticleTypesTab />}
         {activeTab === 'platforms' && <PlatformProfilesTab />}
+        {activeTab === 'api' && <ApiKeysTab />}
         {activeTab === 'account' && <AccountTab />}
       </div>
     </div>
@@ -656,6 +658,259 @@ function PlatformProfileEditor({
         >
           Save
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── API Keys Tab ──────────────────────────────────────────
+
+interface ApiKeyInfo {
+  id: string;
+  key_prefix: string;
+  name: string;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+function ApiKeysTab() {
+  const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+
+  useEffect(() => {
+    loadKeys();
+  }, []);
+
+  async function loadKeys() {
+    try {
+      const res = await fetch('/api/api-keys');
+      const data = await res.json();
+      if (data.keys) setKeys(data.keys);
+    } catch {
+      toast.error('Failed to load API keys');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreate() {
+    setCreating(true);
+    try {
+      const res = await fetch('/api/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'API Key' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setNewKey(data.key);
+      await loadKeys();
+      toast.success('API key created');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create key');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleRevoke(id: string) {
+    try {
+      const res = await fetch('/api/api-keys', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error('Failed to revoke');
+      setKeys((prev) => prev.filter((k) => k.id !== id));
+      toast.success('API key revoked');
+    } catch {
+      toast.error('Failed to revoke API key');
+    }
+  }
+
+  async function handleCopyKey() {
+    if (!newKey) return;
+    await navigator.clipboard.writeText(newKey);
+    setCopied(true);
+    toast.success('Copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://your-app.vercel.app';
+
+  const curlExample = `curl -X POST ${baseUrl}/api/v1/generate \\
+  -H "Authorization: Bearer vtk_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"videoUrl": "https://www.loom.com/share/..."}'`;
+
+  const curlTranscriptExample = `curl -X POST ${baseUrl}/api/v1/generate \\
+  -H "Authorization: Bearer vtk_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"transcript": "Your transcript text here..."}'`;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* New key alert */}
+      {newKey && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <h4 className="text-sm font-semibold text-amber-800">Save your API key now</h4>
+          </div>
+          <p className="text-xs text-amber-600 mb-3">
+            This is the only time you&apos;ll see this key. Copy it and store it securely.
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 rounded-xl bg-white border border-amber-200 px-4 py-3 text-sm font-mono text-gray-900 break-all">
+              {showKey ? newKey : newKey.slice(0, 12) + '•'.repeat(36)}
+            </code>
+            <button
+              onClick={() => setShowKey(!showKey)}
+              className="rounded-xl bg-white border border-amber-200 px-3 py-3 text-amber-600 hover:bg-amber-50 transition-colors"
+              title={showKey ? 'Hide' : 'Show'}
+            >
+              {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={handleCopyKey}
+              className="rounded-xl bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </button>
+          </div>
+          <button
+            onClick={() => setNewKey(null)}
+            className="mt-3 text-xs text-amber-500 hover:text-amber-700 transition-colors"
+          >
+            Dismiss — I&apos;ve saved my key
+          </button>
+        </div>
+      )}
+
+      {/* Existing keys */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Key className="h-5 w-5 text-gray-400" />
+            <div>
+              <h3 className="text-lg font-semibold tracking-tight text-gray-900">API Keys</h3>
+              <p className="text-xs text-gray-400">Use API keys to generate articles programmatically</p>
+            </div>
+          </div>
+          <button
+            onClick={handleCreate}
+            disabled={creating || keys.length >= 3}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
+              creating || keys.length >= 3 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+            )}
+          >
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Create Key
+          </button>
+        </div>
+
+        {keys.length === 0 ? (
+          <div className="rounded-xl bg-gray-50 px-4 py-8 text-center">
+            <Key className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+            <p className="text-sm text-gray-400">No API keys yet</p>
+            <p className="text-xs text-gray-300 mt-1">Create a key to start using the API</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {keys.map((k) => (
+              <div key={k.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <code className="text-sm font-mono text-gray-600">{k.key_prefix}{'•'.repeat(12)}</code>
+                  <span className="text-xs text-gray-400">{k.name}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-gray-300">
+                    {k.last_used_at
+                      ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}`
+                      : 'Never used'}
+                  </span>
+                  <button
+                    onClick={() => handleRevoke(k.id)}
+                    className="text-gray-300 hover:text-red-400 transition-colors"
+                    title="Revoke key"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* API Usage Guide */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-1">Quick Start</h3>
+        <p className="text-xs text-gray-400 mb-5">
+          One endpoint to generate articles. Works with Zapier, Make, or any HTTP client.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">POST</span>
+              <code className="text-sm font-mono text-gray-700">/api/v1/generate</code>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">From a video URL:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+              {curlExample}
+            </pre>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">From a transcript:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+              {curlTranscriptExample}
+            </pre>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 px-4 py-3">
+            <p className="text-xs font-medium text-gray-700 mb-2">Response:</p>
+            <pre className="text-xs text-gray-500 font-mono whitespace-pre-wrap">{`{
+  "id": "uuid",
+  "title": "Article Title",
+  "markdown": "# Full article in markdown...",
+  "html": "<div>Platform HTML (if applicable)</div>",
+  "platform": "HelpJuice",
+  "articleType": "Screen Overview"
+}`}</pre>
+          </div>
+
+          <div className="rounded-xl bg-blue-50/50 border border-blue-100 px-4 py-3">
+            <p className="text-xs text-blue-700">
+              <strong>Optional parameters:</strong>{' '}
+              <code className="text-blue-600">&quot;articleType&quot;</code> and{' '}
+              <code className="text-blue-600">&quot;platform&quot;</code> override your default settings.
+              Pass the ID of any article type or platform profile.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 px-4 py-3">
+            <p className="text-xs font-medium text-gray-700 mb-1">Rate limit:</p>
+            <p className="text-xs text-gray-500">5 requests per minute per API key</p>
+          </div>
+        </div>
       </div>
     </div>
   );
