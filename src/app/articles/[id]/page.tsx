@@ -23,6 +23,7 @@ export default function ArticleDetailPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -33,6 +34,17 @@ export default function ArticleDetailPage() {
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (tab === 'preview' && iframeRef.current && article?.html) {
+      const doc = iframeRef.current.contentDocument;
+      if (doc) {
+        doc.open();
+        doc.write(article.html);
+        doc.close();
+      }
+    }
+  }, [tab, article?.html]);
 
   async function handleCopy() {
     const text = tab === 'markdown' ? article?.markdown : (article?.html ?? '');
@@ -102,19 +114,6 @@ export default function ArticleDetailPage() {
   }
 
   const content = tab === 'markdown' ? article.markdown : (article.html ?? '');
-
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    if (tab === 'preview' && iframeRef.current && article?.html) {
-      const doc = iframeRef.current.contentDocument;
-      if (doc) {
-        doc.open();
-        doc.write(article.html);
-        doc.close();
-      }
-    }
-  }, [tab, article?.html]);
 
   return (
     <div className="min-h-screen bg-gray-50">
