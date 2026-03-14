@@ -226,12 +226,17 @@ export default function ArticleDetailPage() {
 
         {/* Content */}
         {tab === 'preview' ? (
-          <iframe
-            ref={iframeRef}
-            title="Article Preview"
-            className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white"
-            sandbox="allow-same-origin"
-          />
+          <>
+            <p className="text-xs text-gray-400 mb-2">
+              This is a generic preview. Images and layout may appear differently in your KB platform (e.g. HelpJuice).
+            </p>
+            <iframe
+              ref={iframeRef}
+              title="Article Preview"
+              className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white"
+              sandbox="allow-same-origin"
+            />
+          </>
         ) : (
           <textarea
             readOnly

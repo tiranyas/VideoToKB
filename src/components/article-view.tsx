@@ -103,12 +103,17 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
       </div>
 
       {showPreview ? (
-        <iframe
-          ref={iframeRef}
-          title="Article Preview"
-          className="w-full min-h-[400px] rounded-lg border border-gray-300 bg-white"
-          sandbox="allow-same-origin"
-        />
+        <>
+          <p className="text-xs text-gray-400">
+            This is a generic preview. Images and layout may appear differently in your KB platform.
+          </p>
+          <iframe
+            ref={iframeRef}
+            title="Article Preview"
+            className="w-full min-h-[400px] rounded-lg border border-gray-300 bg-white"
+            sandbox="allow-same-origin"
+          />
+        </>
       ) : (
         <textarea
           value={article}
