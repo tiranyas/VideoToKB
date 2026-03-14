@@ -79,7 +79,7 @@ export function Sidebar({ email }: { email: string }) {
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-5">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
-          <Image src="/logo.png" alt="KBify" width={28} height={28} />
+          <Image src="/logo.png" alt="KBify" width={32} height={32} />
           {!collapsed && 'KBify'}
         </Link>
         <button
