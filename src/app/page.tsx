@@ -242,14 +242,13 @@ export default function Home() {
   const isMarkdownOnly = selectedPlatform?.id === 'markdown-only' || !selectedPlatform?.htmlTemplate;
 
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-12">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">VideoToKB</h1>
-        <p className="mt-2 text-gray-500">Turn video recordings into KB articles</p>
-      </div>
-
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center px-6 py-12">
       {phase === 'input' && (
-        <div className="flex w-full flex-col items-center">
+        <div className="flex w-full flex-col items-center mt-8">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Create Article</h1>
+            <p className="mt-2 text-sm text-gray-400">Paste a video URL or transcript to generate a KB article</p>
+          </div>
           <UrlForm
             onSubmit={handleSubmit}
             isProcessing={false}
@@ -280,7 +279,7 @@ export default function Home() {
           />
           <button
             onClick={handleStartOver}
-            className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
           >
             Start Over
           </button>
@@ -288,7 +287,7 @@ export default function Home() {
       )}
 
       {phase === 'processing-b' && (
-        <div className="flex w-full flex-col items-center">
+        <div className="flex w-full flex-col items-center mt-8">
           <ProgressDisplay steps={stepsB} error={error ?? undefined} />
         </div>
       )}
@@ -303,13 +302,13 @@ export default function Home() {
           <div className="flex gap-3">
             <button
               onClick={handleBackToEdit}
-              className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
             >
               Back to Edit
             </button>
             <button
               onClick={handleStartOver}
-              className="rounded-lg border border-gray-300 px-6 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
             >
               Start Over
             </button>

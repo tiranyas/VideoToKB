@@ -67,15 +67,15 @@ export function UrlForm({
   const noConfig = articleTypes.length === 0;
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-xl space-y-4">
+    <form onSubmit={handleSubmit} className="w-full max-w-xl space-y-5">
       {/* Config selectors */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Article Type</label>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5">Article Type</label>
           <select
             value={selectedTypeId}
             onChange={(e) => onTypeChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
             disabled={isProcessing}
           >
             {articleTypes.length === 0 && <option value="">No article types configured</option>}
@@ -85,11 +85,11 @@ export function UrlForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Output Platform</label>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5">Output Platform</label>
           <select
             value={selectedPlatformId}
             onChange={(e) => onPlatformChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
             disabled={isProcessing}
           >
             {platforms.length === 0 && <option value="">No platforms configured</option>}
@@ -103,7 +103,7 @@ export function UrlForm({
       {noConfig && (
         <Link
           href="/settings"
-          className="flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-700 hover:bg-amber-100"
+          className="flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
         >
           <Settings className="h-4 w-4" />
           Configure article types and platforms in Settings
@@ -111,15 +111,15 @@ export function UrlForm({
       )}
 
       {/* Mode toggle */}
-      <div className="flex rounded-lg border border-gray-300 p-1">
+      <div className="bg-gray-100 rounded-full p-1 flex">
         <button
           type="button"
           onClick={() => setMode('url')}
           className={cn(
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
             mode === 'url'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-black text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           )}
           disabled={isProcessing}
         >
@@ -129,10 +129,10 @@ export function UrlForm({
           type="button"
           onClick={() => setMode('transcript')}
           className={cn(
-            'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+            'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
             mode === 'transcript'
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-black text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           )}
           disabled={isProcessing}
         >
@@ -143,7 +143,7 @@ export function UrlForm({
       {/* Input area */}
       {mode === 'url' ? (
         <div>
-          <label htmlFor="video-url" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="video-url" className="block text-xs font-medium text-gray-400 mb-1.5">
             Video URL
           </label>
           <input
@@ -152,13 +152,13 @@ export function UrlForm({
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="Paste your Loom or Google Drive URL here..."
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
             disabled={isProcessing}
           />
         </div>
       ) : (
         <div>
-          <label htmlFor="transcript" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="transcript" className="block text-xs font-medium text-gray-400 mb-1.5">
             Transcript
           </label>
           <textarea
@@ -167,7 +167,7 @@ export function UrlForm({
             onChange={(e) => setTranscript(e.target.value)}
             placeholder="Paste your ready-made transcript here..."
             rows={8}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 resize-y transition-all"
             disabled={isProcessing}
           />
         </div>
@@ -177,10 +177,10 @@ export function UrlForm({
         type="submit"
         disabled={isDisabled || noConfig}
         className={cn(
-          'w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors',
+          'w-full rounded-xl px-4 py-3.5 text-sm font-medium text-white transition-all',
           isDisabled || noConfig
-            ? 'cursor-not-allowed bg-blue-300'
-            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+            ? 'cursor-not-allowed bg-gray-300'
+            : 'bg-black hover:bg-gray-800 active:bg-gray-900'
         )}
       >
         {isProcessing ? (

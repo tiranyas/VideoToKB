@@ -15,17 +15,16 @@ export function UserMenu({ email }: { email: string }) {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-gray-500 hidden sm:inline">
+    <div className="flex items-center gap-3 pl-2 border-l border-gray-100">
+      <span className="text-xs text-gray-400 hidden sm:inline">
         {email}
       </span>
       <button
         onClick={handleSignOut}
-        className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors"
         title="Sign out"
       >
-        <LogOut className="h-4 w-4" />
-        <span className="hidden sm:inline">Sign Out</span>
+        <LogOut className="h-3.5 w-3.5" />
       </button>
     </div>
   );

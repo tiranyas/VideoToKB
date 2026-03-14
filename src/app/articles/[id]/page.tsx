@@ -96,17 +96,17 @@ export default function ArticleDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading article...</p>
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <p className="text-sm text-gray-400">Loading article...</p>
       </div>
     );
   }
 
   if (!article) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-gray-500">Article not found.</p>
-        <Link href="/articles" className="text-blue-600 hover:underline">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4">
+        <p className="text-sm text-gray-400">Article not found.</p>
+        <Link href="/articles" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
           Back to Articles
         </Link>
       </div>
@@ -114,23 +114,27 @@ export default function ArticleDetailPage() {
   }
 
   const content = tab === 'markdown' ? article.markdown : (article.html ?? '');
+  const tabs: { id: Tab; label: string; show: boolean }[] = [
+    { id: 'markdown', label: 'Markdown', show: true },
+    { id: 'preview', label: 'Preview', show: !!article.html },
+    { id: 'html', label: 'HTML', show: !!article.html },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-[calc(100vh-4rem)]">
+      <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
+        <div className="flex items-start justify-between mb-8">
+          <div className="flex-1 min-w-0">
             <Link
               href="/articles"
-              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors mb-3"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Articles
+              <ArrowLeft className="h-3.5 w-3.5" /> Articles
             </Link>
             {editingTitle ? (
               <form
                 onSubmit={(e) => { e.preventDefault(); handleTitleSave(); }}
-                className="flex items-center gap-2"
               >
                 <input
                   ref={titleInputRef}
@@ -139,84 +143,62 @@ export default function ArticleDetailPage() {
                   onBlur={handleTitleSave}
                   onKeyDown={(e) => { if (e.key === 'Escape') setEditingTitle(false); }}
                   autoFocus
-                  className="text-2xl font-bold text-gray-900 border-b-2 border-blue-500 bg-transparent outline-none w-full"
+                  className="text-2xl font-semibold tracking-tight text-gray-900 border-b-2 border-gray-900 bg-transparent outline-none w-full"
                 />
               </form>
             ) : (
               <button
                 onClick={() => { setTitleDraft(article.title); setEditingTitle(true); }}
-                className="group flex items-center gap-2 text-left"
+                className="group flex items-center gap-2.5 text-left"
                 title="Click to edit title"
               >
-                <h1 className="text-2xl font-bold text-gray-900">{article.title}</h1>
-                <Pencil className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{article.title}</h1>
+                <Pencil className="h-3.5 w-3.5 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             )}
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 mt-1.5">
               {article.sourceType} · {new Date(article.createdAt).toLocaleDateString()}
             </p>
           </div>
           <button
             onClick={handleDelete}
-            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+            className="ml-4 text-gray-300 hover:text-red-400 transition-colors"
+            title="Delete article"
           >
-            <Trash2 className="h-4 w-4" /> Delete
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
 
         {/* Tabs + Actions */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setTab('markdown')}
-              className={cn(
-                'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-                tab === 'markdown'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              )}
-            >
-              Markdown
-            </button>
-            {article.html && (
-              <>
-                <button
-                  onClick={() => setTab('preview')}
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-                    tab === 'preview'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  )}
-                >
-                  Preview
-                </button>
-                <button
-                  onClick={() => setTab('html')}
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-                    tab === 'html'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  )}
-                >
-                  HTML
-                </button>
-              </>
-            )}
+        <div className="flex items-center justify-between mb-5">
+          <div className="bg-gray-100 rounded-full p-1 flex">
+            {tabs.filter(t => t.show).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={cn(
+                  'rounded-full px-4 py-2 text-sm font-medium transition-all',
+                  tab === t.id
+                    ? 'bg-black text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
             >
               {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
-            {(tab === 'markdown') && (
+            {tab === 'markdown' && (
               <button
                 onClick={handleDownloadWord}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
               >
                 <FileDown className="h-4 w-4" /> Word
               </button>
@@ -233,7 +215,7 @@ export default function ArticleDetailPage() {
             <iframe
               ref={iframeRef}
               title="Article Preview"
-              className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white"
+              className="w-full min-h-[500px] rounded-2xl border border-gray-200 bg-white"
               sandbox="allow-same-origin"
             />
           </>
@@ -241,7 +223,7 @@ export default function ArticleDetailPage() {
           <textarea
             readOnly
             value={content}
-            className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
+            className="w-full min-h-[500px] rounded-2xl border border-gray-200 bg-gray-50/30 px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
           />
         )}
       </div>

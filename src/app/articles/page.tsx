@@ -42,27 +42,27 @@ export default function ArticlesPage() {
     : articles;
 
   const sourceIcon = (type: string) => {
-    if (type === 'loom') return <Video className="h-4 w-4 text-purple-500" />;
-    if (type === 'google-drive') return <Globe className="h-4 w-4 text-green-500" />;
-    return <ClipboardPaste className="h-4 w-4 text-gray-500" />;
+    if (type === 'loom') return <Video className="h-4 w-4 text-purple-400" />;
+    if (type === 'google-drive') return <Globe className="h-4 w-4 text-green-400" />;
+    return <ClipboardPaste className="h-4 w-4 text-gray-400" />;
   };
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading articles...</p>
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <p className="text-sm text-gray-400">Loading articles...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Articles</h1>
+    <div className="min-h-[calc(100vh-4rem)]">
+      <div className="max-w-4xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Articles</h1>
           <Link
             href="/"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
           >
             + New Article
           </Link>
@@ -74,52 +74,52 @@ export default function ArticlesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search articles..."
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm mb-4 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-full bg-gray-100 border-0 px-5 py-2.5 text-sm mb-6 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
           />
         )}
 
         {filtered.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-            <FileText className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-gray-500">
+          <div className="rounded-2xl border border-gray-100 p-16 text-center">
+            <FileText className="mx-auto h-10 w-10 text-gray-200" />
+            <p className="mt-4 text-sm text-gray-400">
               {search ? 'No articles match your search.' : 'No articles yet. Generate your first article!'}
             </p>
             {!search && (
               <Link
                 href="/"
-                className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="mt-4 inline-block rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
               >
                 Generate Article
               </Link>
             )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {filtered.map((article) => (
               <div
                 key={article.id}
-                className="rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-300 transition-colors"
+                className="rounded-2xl bg-white shadow-sm hover:shadow-md p-5 transition-all"
               >
                 <div className="flex items-start justify-between">
                   <Link href={`/articles/${article.id}`} className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2.5 mb-1">
                       {sourceIcon(article.sourceType)}
-                      <h3 className="font-semibold text-gray-900 truncate">{article.title}</h3>
+                      <h3 className="font-medium text-gray-900 truncate">{article.title}</h3>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <div className="flex items-center gap-3 text-xs text-gray-400 ml-[26px]">
                       {(article as ArticleWithMeta).articleTypeName && (
                         <span>{(article as ArticleWithMeta).articleTypeName}</span>
                       )}
                       {(article as ArticleWithMeta).platformName && (
                         <span>{(article as ArticleWithMeta).platformName}</span>
                       )}
-                      {article.html && <span className="text-green-500">HTML</span>}
+                      {article.html && <span className="text-indigo-400">HTML</span>}
                       <span>{new Date(article.createdAt).toLocaleDateString()}</span>
                     </div>
                   </Link>
                   <button
                     onClick={() => handleDelete(article.id)}
-                    className="ml-4 text-gray-400 hover:text-red-500 transition-colors"
+                    className="ml-4 text-gray-300 hover:text-red-400 transition-colors"
                     title="Delete article"
                   >
                     <Trash2 className="h-4 w-4" />

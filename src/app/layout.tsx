@@ -41,21 +41,21 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <nav className="border-b border-gray-200 bg-white">
-          <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-14">
-            <Link href="/" className="text-lg font-bold text-gray-900">
+        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
+            <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
               VideoToKB
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               {userEmail && (
                 <>
-                  <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+                  <Link href="/" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
                     Generate
                   </Link>
-                  <Link href="/articles" className="text-sm text-gray-600 hover:text-gray-900">
+                  <Link href="/articles" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
                     Articles
                   </Link>
-                  <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
+                  <Link href="/settings" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
                     Settings
                   </Link>
                   <UserMenu email={userEmail} />

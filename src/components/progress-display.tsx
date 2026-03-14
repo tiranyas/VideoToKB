@@ -18,59 +18,62 @@ interface ProgressDisplayProps {
 const STEP_LABELS: Record<PipelineStep, string> = {
   resolve: 'Resolving video URL',
   transcribe: 'Transcribing audio',
-  draft: 'Creating draft (Agent 2)',
-  structure: 'Structuring article (Agent 3)',
+  draft: 'Creating draft',
+  structure: 'Structuring article',
   review: 'Ready for review',
-  html: 'Generating HTML (Agent 4)',
+  html: 'Generating HTML',
   done: 'Complete',
 };
 
 function StepIcon({ status }: { status: StepStatus }) {
   switch (status) {
     case 'pending':
-      return <Circle className="h-5 w-5 text-gray-400" />;
+      return <Circle className="h-4 w-4 text-gray-300" />;
     case 'in_progress':
-      return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
+      return <Loader2 className="h-4 w-4 text-gray-900 animate-spin" />;
     case 'complete':
-      return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      return <CheckCircle2 className="h-4 w-4 text-gray-900" />;
     case 'error':
-      return <XCircle className="h-5 w-5 text-red-500" />;
+      return <XCircle className="h-4 w-4 text-red-500" />;
   }
 }
 
 export function ProgressDisplay({ steps, error }: ProgressDisplayProps) {
   return (
-    <div className="w-full max-w-xl space-y-3 mt-6">
-      <ul className="space-y-2">
-        {steps.map((s) => (
+    <div className="w-full max-w-xl space-y-4 mt-8">
+      <ul className="space-y-1">
+        {steps.map((s, i) => (
           <li
             key={s.step}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-colors',
-              s.status === 'in_progress' && 'bg-blue-50',
-              s.status === 'complete' && 'bg-green-50',
-              s.status === 'error' && 'bg-red-50',
-              s.status === 'pending' && 'bg-gray-50'
-            )}
+            className="flex items-center gap-3 relative"
           >
-            <StepIcon status={s.status} />
-            <span
-              className={cn(
-                'font-medium',
-                s.status === 'pending' && 'text-gray-500',
-                s.status === 'in_progress' && 'text-blue-700',
-                s.status === 'complete' && 'text-green-700',
-                s.status === 'error' && 'text-red-700'
-              )}
-            >
-              {STEP_LABELS[s.step]}
-            </span>
+            {/* Connector line */}
+            {i < steps.length - 1 && (
+              <div className={cn(
+                'absolute left-[7px] top-[28px] w-px h-[calc(100%+4px)]',
+                s.status === 'complete' ? 'bg-gray-300' : 'bg-gray-100'
+              )} />
+            )}
+            <div className="relative z-10 flex items-center gap-3 rounded-xl px-3 py-2.5 w-full">
+              <StepIcon status={s.status} />
+              <span
+                className={cn(
+                  'text-sm',
+                  s.status === 'pending' && 'text-gray-300',
+                  s.status === 'in_progress' && 'text-gray-900 font-medium',
+                  s.status === 'complete' && 'text-gray-500',
+                  s.status === 'error' && 'text-red-500'
+                )}
+              >
+                {STEP_LABELS[s.step]}
+              </span>
+            </div>
           </li>
         ))}
       </ul>
 
       {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
       )}

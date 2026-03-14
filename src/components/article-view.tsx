@@ -18,6 +18,7 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isFinal = mode === 'final';
+  const isReview = mode === 'review';
 
   useEffect(() => {
     if (showPreview && iframeRef.current && article) {
@@ -57,23 +58,22 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
     }
   }
 
-  const isReview = mode === 'review';
   const title = isReview ? 'Review Article' : 'Final Output';
   const subtitle = isReview
     ? 'Review and edit the structured article before generating the final output.'
     : 'Your article has been converted to platform HTML.';
 
   return (
-    <div className="w-full max-w-3xl space-y-3">
+    <div className="w-full max-w-3xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900">{title}</h2>
           <p className="text-xs text-gray-400">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
             title="Copy to clipboard"
           >
             {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
@@ -82,7 +82,7 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
           {isReview && (
             <button
               onClick={handleDownloadWord}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
               title="Download as Word"
             >
               <FileDown className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
           {isFinal && (
             <button
               onClick={() => setShowPreview(!showPreview)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
               title={showPreview ? 'Show HTML code' : 'Show preview'}
             >
               {showPreview ? <FileCode className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -110,7 +110,7 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
           <iframe
             ref={iframeRef}
             title="Article Preview"
-            className="w-full min-h-[400px] rounded-lg border border-gray-300 bg-white"
+            className="w-full min-h-[400px] rounded-xl border border-gray-200 bg-white"
             sandbox="allow-same-origin"
           />
         </>
@@ -118,15 +118,14 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
         <textarea
           value={article}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full min-h-[400px] rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm leading-relaxed focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="w-full min-h-[400px] rounded-xl border border-gray-200 bg-gray-50/30 px-4 py-3 font-mono text-sm leading-relaxed focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
         />
       )}
 
-      {/* Generate HTML button — only in review mode when platform has HTML generation */}
       {isReview && onGenerateHTML && (
         <button
           onClick={onGenerateHTML}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-3 text-sm font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-600"
         >
           <Code className="h-4 w-4" />
           Generate {platformName ?? 'Platform'} HTML

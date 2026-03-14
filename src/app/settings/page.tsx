@@ -18,40 +18,41 @@ type Tab = 'context' | 'article-types' | 'platforms';
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
 
+  const tabs: { id: Tab; label: string; icon: typeof Globe }[] = [
+    { id: 'context', label: 'Company Context', icon: Globe },
+    { id: 'article-types', label: 'Article Types', icon: FileText },
+    { id: 'platforms', label: 'Platforms', icon: FileText },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-[calc(100vh-4rem)]">
+      <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="mt-1 text-gray-500">Configure your article generation pipeline</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h1>
+            <p className="text-xs text-gray-400 mt-1">Configure your article generation pipeline</p>
           </div>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
           >
             Generate Article <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6">
-          {[
-            { id: 'context' as Tab, label: 'Company Context', icon: Globe },
-            { id: 'article-types' as Tab, label: 'Article Types', icon: FileText },
-            { id: 'platforms' as Tab, label: 'Platform Profiles', icon: FileText },
-          ].map(({ id, label, icon: Icon }) => (
+        <div className="bg-gray-100 rounded-full p-1 flex mb-8">
+          {tabs.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+                'flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-all',
                 activeTab === id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-black text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               )}
             >
-              <Icon className="h-4 w-4" />
               {label}
             </button>
           ))}
@@ -147,50 +148,50 @@ function CompanyContextTab() {
   if (context) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 space-y-4">
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Current Company Context</h3>
-            <button onClick={handleDelete} className="text-red-500 hover:text-red-700">
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Current Company Context</h3>
+            <button onClick={handleDelete} className="text-gray-300 hover:text-red-400 transition-colors">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Company Name</label>
               <input
                 type="text"
                 value={context.name}
                 onChange={(e) => handleUpdateField('name', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Description</label>
               <textarea
                 value={context.description}
                 onChange={(e) => handleUpdateField('description', e.target.value)}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Industry</label>
                 <input
                   type="text"
                   value={context.industry ?? ''}
                   onChange={(e) => handleUpdateField('industry', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Target Audience</label>
                 <input
                   type="text"
                   value={context.targetAudience ?? ''}
                   onChange={(e) => handleUpdateField('targetAudience', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
                 />
               </div>
             </div>
@@ -203,18 +204,18 @@ function CompanyContextTab() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Company Context</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-2">Add Company Context</h3>
+        <p className="text-xs text-gray-400 mb-5">
           Provide information about your company so articles are tailored to your product, audience, and terminology.
         </p>
 
-        <div className="flex rounded-lg border border-gray-300 p-1 mb-4">
+        <div className="bg-gray-100 rounded-full p-1 flex mb-5">
           <button
             onClick={() => setMode('url')}
             className={cn(
-              'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              mode === 'url' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'
+              'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
+              mode === 'url' ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}
           >
             From Website URL
@@ -222,8 +223,8 @@ function CompanyContextTab() {
           <button
             onClick={() => setMode('manual')}
             className={cn(
-              'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              mode === 'manual' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'
+              'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
+              mode === 'manual' ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}
           >
             Write Manually
@@ -237,14 +238,14 @@ function CompanyContextTab() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://your-company.com"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
             />
             <button
               onClick={handleScrapeUrl}
               disabled={isLoading || !url.trim()}
               className={cn(
-                'w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors',
-                isLoading || !url.trim() ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'
+                'w-full rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
+                isLoading || !url.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
               )}
             >
               {isLoading ? (
@@ -263,14 +264,14 @@ function CompanyContextTab() {
               onChange={(e) => setManualText(e.target.value)}
               placeholder="Describe your company, product, target audience, and industry..."
               rows={6}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all resize-y"
             />
             <button
               onClick={handleSaveManual}
               disabled={!manualText.trim()}
               className={cn(
-                'w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors',
-                !manualText.trim() ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'
+                'w-full rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
+                !manualText.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
               )}
             >
               Save Context
@@ -325,7 +326,7 @@ function ArticleTypesTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {types.map((type) =>
         editing === type.id ? (
           <ArticleTypeEditor
@@ -335,20 +336,20 @@ function ArticleTypesTab() {
             onCancel={() => setEditing(null)}
           />
         ) : (
-          <div key={type.id} className="rounded-lg border border-gray-200 bg-white p-4">
+          <div key={type.id} className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 transition-all hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-gray-900">{type.name}</h3>
+                <h3 className="font-medium text-gray-900">{type.name}</h3>
                 {type.isDefault && (
                   <span className="text-xs text-gray-400">Default preset</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setEditing(type.id)} className="text-gray-500 hover:text-blue-600">
+                <button onClick={() => setEditing(type.id)} className="text-gray-300 hover:text-gray-900 transition-colors">
                   <Pencil className="h-4 w-4" />
                 </button>
                 {!type.isDefault && (
-                  <button onClick={() => handleRemove(type.id)} className="text-gray-500 hover:text-red-600">
+                  <button onClick={() => handleRemove(type.id)} className="text-gray-300 hover:text-red-400 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}
@@ -366,7 +367,7 @@ function ArticleTypesTab() {
       ) : (
         <button
           onClick={() => setShowNew(true)}
-          className="flex items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 w-full justify-center"
+          className="flex items-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 px-4 py-4 text-sm text-gray-400 hover:border-gray-300 hover:text-gray-600 w-full justify-center transition-colors"
         >
           <Plus className="h-4 w-4" /> Add Article Type
         </button>
@@ -403,43 +404,43 @@ function ArticleTypeEditor({
   }
 
   return (
-    <div className="rounded-lg border-2 border-blue-200 bg-white p-4 space-y-3">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-5 space-y-4">
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Article type name (e.g., Screen Overview)"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium"
+        className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-medium focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
       />
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-xs font-medium text-gray-400 mb-1.5">
           Draft Prompt (Agent 2 — creates initial draft from transcript)
         </label>
         <textarea
           value={draftPrompt}
           onChange={(e) => setDraftPrompt(e.target.value)}
           rows={6}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-xs font-medium text-gray-400 mb-1.5">
           Structure Prompt (Agent 3 — formats draft into structured article)
         </label>
         <textarea
           value={structurePrompt}
           onChange={(e) => setStructurePrompt(e.target.value)}
           rows={6}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
         />
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onCancel} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">
+        <button onClick={onCancel} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
           Cancel
         </button>
         <button
           onClick={handleSubmit}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
         >
           Save
         </button>
@@ -491,7 +492,7 @@ function PlatformProfilesTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {profiles.map((profile) =>
         editing === profile.id ? (
           <PlatformProfileEditor
@@ -501,21 +502,21 @@ function PlatformProfilesTab() {
             onCancel={() => setEditing(null)}
           />
         ) : (
-          <div key={profile.id} className="rounded-lg border border-gray-200 bg-white p-4">
+          <div key={profile.id} className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 transition-all hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-gray-900">{profile.name}</h3>
+                <h3 className="font-medium text-gray-900">{profile.name}</h3>
                 <p className="text-xs text-gray-400">
                   {profile.isDefault ? 'Default preset' : 'Custom'}
                   {profile.htmlTemplate ? ` · ${(profile.htmlTemplate.length / 1024).toFixed(1)}KB template` : ' · No template'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setEditing(profile.id)} className="text-gray-500 hover:text-blue-600">
+                <button onClick={() => setEditing(profile.id)} className="text-gray-300 hover:text-gray-900 transition-colors">
                   <Pencil className="h-4 w-4" />
                 </button>
                 {!profile.isDefault && (
-                  <button onClick={() => handleRemove(profile.id)} className="text-gray-500 hover:text-red-600">
+                  <button onClick={() => handleRemove(profile.id)} className="text-gray-300 hover:text-red-400 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}
@@ -533,7 +534,7 @@ function PlatformProfilesTab() {
       ) : (
         <button
           onClick={() => setShowNew(true)}
-          className="flex items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 w-full justify-center"
+          className="flex items-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 px-4 py-4 text-sm text-gray-400 hover:border-gray-300 hover:text-gray-600 w-full justify-center transition-colors"
         >
           <Plus className="h-4 w-4" /> Add Platform Profile
         </button>
@@ -592,27 +593,27 @@ function PlatformProfileEditor({
   }
 
   return (
-    <div className="rounded-lg border-2 border-blue-200 bg-white p-4 space-y-3">
+    <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-5 space-y-4">
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Platform name (e.g., HelpJuice, Zendesk)"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium"
+        className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-medium focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
       />
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-xs font-medium text-gray-400 mb-1.5">
           HTML Prompt (Agent 4 — converts article to platform HTML)
         </label>
         <textarea
           value={htmlPrompt}
           onChange={(e) => setHtmlPrompt(e.target.value)}
           rows={6}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-xs font-medium text-gray-400 mb-1.5">
           HTML Template Reference (paste or scrape from URL)
         </label>
         <div className="flex gap-2 mb-2">
@@ -621,14 +622,14 @@ function PlatformProfileEditor({
             value={scrapeUrl}
             onChange={(e) => setScrapeUrl(e.target.value)}
             placeholder="Paste URL of existing KB article to extract template..."
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
           />
           <button
             onClick={handleScrapeTemplate}
             disabled={isScraping || !scrapeUrl.trim()}
             className={cn(
-              'rounded-lg px-3 py-2 text-sm font-medium text-white whitespace-nowrap',
-              isScraping || !scrapeUrl.trim() ? 'bg-gray-300' : 'bg-green-600 hover:bg-green-700'
+              'rounded-xl px-4 py-3 text-sm font-medium text-white whitespace-nowrap transition-all',
+              isScraping || !scrapeUrl.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
             )}
           >
             {isScraping ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Extract'}
@@ -639,16 +640,16 @@ function PlatformProfileEditor({
           onChange={(e) => setHtmlTemplate(e.target.value)}
           rows={8}
           placeholder="Paste HTML template code here, or use the URL scraper above..."
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
         />
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onCancel} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">
+        <button onClick={onCancel} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
           Cancel
         </button>
         <button
           onClick={handleSubmit}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
         >
           Save
         </button>
