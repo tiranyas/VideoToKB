@@ -37,7 +37,7 @@ function LoomIcon({ className }: { className?: string }) {
 function GDriveIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M7.71 0l-7.71 13.5h4.29L12 0H7.71zm0.79 15.5L4.79 22.5h14.42l3.71-7H8.5zm7.79-1.5L24 0H16.29l-7.71 14h7.71z"/>
+      <path d="M7.94 1.65L.82 13.8h4.24l7.12-12.15H7.94zm.73 14.7L5.7 21.6h14.18l2.97-5.25H8.67zm7.68-1.5L23.47 1.65h-4.24l-7.12 13.2h4.24z"/>
     </svg>
   );
 }
@@ -194,19 +194,23 @@ export function UrlForm({
             />
           </div>
 
-          {/* Provider icons */}
+          {/* Provider icons — all on by default, only matched one stays colored */}
           <div className="flex items-center justify-center gap-6">
             {([
-              { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', Icon: YouTubeIcon },
-              { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', Icon: LoomIcon },
-              { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-500', Icon: GDriveIcon },
-            ]).map(({ id, label, activeColor, Icon }) => {
+              { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', defaultColor: 'text-gray-400', Icon: YouTubeIcon },
+              { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', defaultColor: 'text-gray-400', Icon: LoomIcon },
+              { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-600', defaultColor: 'text-gray-400', Icon: GDriveIcon },
+            ]).map(({ id, label, activeColor, defaultColor, Icon }) => {
+              const hasUrl = detectedProvider !== null;
               const isActive = detectedProvider === id;
-              const isDimmed = detectedProvider !== null && !isActive;
               return (
                 <div key={id} className={cn(
                   'flex items-center gap-1.5 transition-all duration-200',
-                  isActive ? `${activeColor} scale-110` : isDimmed ? 'text-gray-200' : 'text-gray-300'
+                  hasUrl
+                    ? isActive
+                      ? `${activeColor} scale-110`
+                      : 'text-gray-200 scale-100'
+                    : defaultColor
                 )}>
                   <Icon className="h-5 w-5" />
                   <span className="text-xs font-medium">{label}</span>
