@@ -28,16 +28,22 @@ function YouTubeIcon({ className }: { className?: string }) {
 
 function LoomIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.16 12.6l-4.73-2.73 4.73-2.73a.87.87 0 000-1.5L12.6.84a1.18 1.18 0 00-1.2 0L.84 7.14a.87.87 0 000 1.5l4.73 2.73L.84 14.1a.87.87 0 000 1.5l10.56 6.3a1.18 1.18 0 001.2 0l10.56-6.3a.87.87 0 000-1.5zM12 2.42l8.4 5.01L12 12.44 3.6 7.43 12 2.42zm0 19.16l-8.4-5.01 3.93-2.27L12 17.03l4.47-2.73 3.93 2.27L12 21.58z"/>
+    <svg className={className} viewBox="0 0 32 32" fill="currentColor">
+      <path d="M16 0C7.163 0 0 7.163 0 16s7.163 16 16 16 16-7.163 16-16S24.837 0 16 0zm0 24a8 8 0 110-16 8 8 0 010 16z"/>
+      <circle cx="16" cy="16" r="4"/>
     </svg>
   );
 }
 
 function GDriveIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M7.94 1.65L.82 13.8h4.24l7.12-12.15H7.94zm.73 14.7L5.7 21.6h14.18l2.97-5.25H8.67zm7.68-1.5L23.47 1.65h-4.24l-7.12 13.2h4.24z"/>
+    <svg className={className} viewBox="0 0 87.3 78" fill="currentColor">
+      <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z"/>
+      <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0-1.2 4.5h27.5l16.15-28z"/>
+      <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.95 10.3 7.8 13.5z"/>
+      <path d="M43.65 25 57.4 1.2C56.05.4 54.5 0 52.85 0H34.44c-1.65 0-3.2.45-4.55 1.2L43.65 25z"/>
+      <path d="M59.8 53H27.5l-13.75 23.8c1.35.8 2.9 1.2 4.55 1.2h50.7c1.65 0 3.2-.45 4.55-1.2L59.8 53z"/>
+      <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28h27.5c0-1.55-.4-3.1-1.2-4.5l-12.7-22z"/>
     </svg>
   );
 }
