@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Trash2, FileText, Globe, Video, ClipboardPaste } from 'lucide-react';
+import { Trash2, FileText, Globe, Video, ClipboardPaste, Sparkles, Link2, Type } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getArticles, deleteArticle } from '@/lib/supabase/queries';
 import type { Article } from '@/types';
@@ -81,20 +81,55 @@ export default function ArticlesPage() {
         )}
 
         {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-gray-100 p-16 text-center">
-            <FileText className="mx-auto h-10 w-10 text-gray-200" />
-            <p className="mt-4 text-sm text-gray-400">
-              {search ? 'No articles match your search.' : 'No articles yet. Generate your first article!'}
-            </p>
-            {!search && (
-              <Link
-                href="/"
-                className="mt-4 inline-block rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
-              >
-                Generate Article
-              </Link>
-            )}
-          </div>
+          search ? (
+            <div className="rounded-2xl border border-gray-100 p-16 text-center">
+              <FileText className="mx-auto h-10 w-10 text-gray-200" />
+              <p className="mt-4 text-sm text-gray-400">No articles match your search.</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-gray-100 bg-white p-10">
+              <div className="text-center mb-8">
+                <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mb-4">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <h2 className="text-lg font-semibold tracking-tight text-gray-900">Create your first article</h2>
+                <p className="mt-1 text-sm text-gray-400">Turn any video recording into a structured KB article in minutes</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div className="rounded-xl bg-gray-50 p-4 text-center">
+                  <div className="mx-auto h-8 w-8 rounded-lg bg-white shadow-sm flex items-center justify-center mb-2">
+                    <Link2 className="h-4 w-4 text-indigo-500" />
+                  </div>
+                  <p className="text-xs font-medium text-gray-700">Paste a URL</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Loom or Google Drive</p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-4 text-center">
+                  <div className="mx-auto h-8 w-8 rounded-lg bg-white shadow-sm flex items-center justify-center mb-2">
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <p className="text-xs font-medium text-gray-700">AI generates</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Draft, structure & format</p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-4 text-center">
+                  <div className="mx-auto h-8 w-8 rounded-lg bg-white shadow-sm flex items-center justify-center mb-2">
+                    <Type className="h-4 w-4 text-green-500" />
+                  </div>
+                  <p className="text-xs font-medium text-gray-700">Get your article</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Markdown & platform HTML</p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+                >
+                  <Sparkles className="h-4 w-4" /> Generate Your First Article
+                </Link>
+              </div>
+            </div>
+          )
         ) : (
           <div className="space-y-2">
             {filtered.map((article) => (

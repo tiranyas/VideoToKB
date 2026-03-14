@@ -5,6 +5,7 @@ import type { PipelineStep, StepStatus, ProgressEvent, ArticleType, PlatformProf
 import { UrlForm } from '@/components/url-form';
 import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
+import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import { createClient } from '@/lib/supabase/client';
 import {
   getArticleTypes, getPlatformProfiles,
@@ -245,6 +246,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col items-center px-6 py-12">
       {phase === 'input' && (
         <div className="flex w-full flex-col items-center mt-8">
+          <OnboardingChecklist />
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Create Article</h1>
             <p className="mt-2 text-sm text-gray-400">Paste a video URL or transcript to generate a KB article</p>
