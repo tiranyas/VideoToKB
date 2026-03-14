@@ -912,6 +912,60 @@ function ApiKeysTab() {
           </div>
         </div>
       </div>
+
+      {/* MCP / Claude Integration */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+            <span className="text-white text-sm font-bold">⚡</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Claude Integration (MCP)</h3>
+            <p className="text-xs text-gray-400">Generate articles by talking to Claude directly</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 mt-4">
+          <p className="text-xs text-gray-500">
+            Add VideoToKB as an MCP tool in Claude Desktop or Claude Code. Then just say
+            <em className="text-gray-700"> &ldquo;generate a KB article from this Loom video&rdquo;</em> and Claude will call VideoToKB for you.
+          </p>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">1. Install the MCP server:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto">
+{`cd mcp-server && npm install && npm run build`}
+            </pre>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">2. Add to Claude Desktop config <code className="text-gray-600 text-xs">(claude_desktop_config.json)</code>:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+{`{
+  "mcpServers": {
+    "videotokb": {
+      "command": "node",
+      "args": ["path/to/mcp-server/dist/index.js"],
+      "env": {
+        "VIDEOTOKB_API_KEY": "vtk_your_key_here",
+        "VIDEOTOKB_URL": "${baseUrl}"
+      }
+    }
+  }
+}`}
+            </pre>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">3. Now talk to Claude:</p>
+            <div className="rounded-xl bg-gray-50 px-4 py-3 space-y-2">
+              <p className="text-xs text-gray-500 italic">&ldquo;Generate a KB article from this Loom video: https://www.loom.com/share/...&rdquo;</p>
+              <p className="text-xs text-gray-500 italic">&ldquo;Turn this transcript into a knowledge base article for our HelpJuice&rdquo;</p>
+              <p className="text-xs text-gray-500 italic">&ldquo;Create a Notion article from the following meeting notes...&rdquo;</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
