@@ -169,7 +169,7 @@ export default function Home() {
       return;
     }
 
-    if (platform.id === 'markdown-only' || !platform.htmlTemplate) {
+    if (platform.id === 'markdown-only' || (!platform.htmlTemplate && !platform.htmlPrompt)) {
       setFinalHTML(structuredArticle);
       setPhase('complete');
       return;
@@ -240,7 +240,7 @@ export default function Home() {
   // ── Render ───────────────────────────────────────────
 
   const selectedPlatform = platforms.find((p) => p.id === selectedPlatformId);
-  const isMarkdownOnly = selectedPlatform?.id === 'markdown-only' || !selectedPlatform?.htmlTemplate;
+  const isMarkdownOnly = selectedPlatform?.id === 'markdown-only' || (!selectedPlatform?.htmlTemplate && !selectedPlatform?.htmlPrompt);
 
   return (
     <div className="flex min-h-screen flex-col items-center px-6 py-12">
