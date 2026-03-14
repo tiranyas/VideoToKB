@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Copy, Check, FileDown, Trash2, ArrowLeft } from 'lucide-react';
+import { Copy, Check, FileDown, Trash2, ArrowLeft, Pencil } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { getArticle, deleteArticle } from '@/lib/supabase/queries';
+import { getArticle, deleteArticle, updateArticleTitle } from '@/lib/supabase/queries';
 import { cn } from '@/utils/cn';
 import type { Article } from '@/types';
 
@@ -20,6 +20,9 @@ export default function ArticleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('markdown');
   const [copied, setCopied] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +58,21 @@ export default function ArticleDetailPage() {
     } catch {
       toast.error('Failed to generate Word file');
     }
+  }
+
+  async function handleTitleSave() {
+    if (!article || !titleDraft.trim() || titleDraft.trim() === article.title) {
+      setEditingTitle(false);
+      return;
+    }
+    try {
+      await updateArticleTitle(supabase, article.id, titleDraft.trim());
+      setArticle({ ...article, title: titleDraft.trim() });
+      toast.success('Title updated');
+    } catch {
+      toast.error('Failed to update title');
+    }
+    setEditingTitle(false);
   }
 
   async function handleDelete() {
@@ -97,7 +115,31 @@ export default function ArticleDetailPage() {
             >
               <ArrowLeft className="h-4 w-4" /> Back to Articles
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{article.title}</h1>
+            {editingTitle ? (
+              <form
+                onSubmit={(e) => { e.preventDefault(); handleTitleSave(); }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  ref={titleInputRef}
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setEditingTitle(false); }}
+                  autoFocus
+                  className="text-2xl font-bold text-gray-900 border-b-2 border-blue-500 bg-transparent outline-none w-full"
+                />
+              </form>
+            ) : (
+              <button
+                onClick={() => { setTitleDraft(article.title); setEditingTitle(true); }}
+                className="group flex items-center gap-2 text-left"
+                title="Click to edit title"
+              >
+                <h1 className="text-2xl font-bold text-gray-900">{article.title}</h1>
+                <Pencil className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            )}
             <p className="text-xs text-gray-400 mt-1">
               {article.sourceType} · {new Date(article.createdAt).toLocaleDateString()}
             </p>

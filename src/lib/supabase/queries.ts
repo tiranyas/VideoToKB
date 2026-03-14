@@ -257,6 +257,19 @@ export async function saveArticle(
   return data.id;
 }
 
+export async function updateArticleTitle(
+  supabase: SupabaseClient,
+  articleId: string,
+  title: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('articles')
+    .update({ title })
+    .eq('id', articleId);
+
+  if (error) throw new Error(`Failed to update article title: ${error.message}`);
+}
+
 export async function updateArticleHtml(
   supabase: SupabaseClient,
   articleId: string,

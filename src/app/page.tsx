@@ -132,7 +132,9 @@ export default function Home() {
           setPhase('review');
           // Auto-save article to DB
           if (userId) {
-            const title = event.article.match(/^#+\s+(.+)/m)?.[1] ?? 'Untitled Article';
+            const title = event.article.match(/^#+\s+(.+)/m)?.[1]
+              ?? event.article.split('\n').map(l => l.trim()).find(l => l.length > 0)?.slice(0, 120)
+              ?? 'Untitled Article';
             const sourceType = input.transcript ? 'paste' : (input.videoUrl?.includes('drive.google') ? 'google-drive' : 'loom');
             saveArticle(supabase, userId, {
               title,
