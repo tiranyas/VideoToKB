@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -77,8 +78,9 @@ export function Sidebar({ email }: { email: string }) {
     <>
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-5">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-gray-900">
-          KBify
+        <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
+          <Image src="/logo.png" alt="KBify" width={28} height={28} />
+          {!collapsed && 'KBify'}
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}

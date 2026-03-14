@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 
 type Mode = 'password' | 'magic-link';
@@ -66,7 +67,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
       <div className="w-full max-w-sm">
         <div className="rounded-2xl bg-white shadow-xl shadow-gray-200/50 p-8 space-y-6 text-center">
-          <div>
+          <div className="flex flex-col items-center">
+            <Image src="/logo.png" alt="KBify" width={64} height={64} className="mb-3" />
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">KBify</h1>
             <p className="mt-2 text-sm text-gray-400">Turn video recordings into KB articles</p>
           </div>
