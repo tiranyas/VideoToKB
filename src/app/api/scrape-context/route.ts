@@ -89,7 +89,7 @@ export async function POST(req: Request) {
   try {
     // Fetch the page HTML
     const response = await fetch(validation.url.toString(), {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; VideoToKB/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KBify/1.0)' },
     });
 
     if (!response.ok) {

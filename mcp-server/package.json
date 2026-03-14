@@ -1,10 +1,10 @@
 {
-  "name": "@videotokb/mcp-server",
+  "name": "@kbify/mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for VideoToKB — generate KB articles from video URLs or transcripts via Claude",
+  "description": "MCP server for KBify — generate KB articles from video URLs or transcripts via Claude",
   "type": "module",
   "bin": {
-    "videotokb-mcp": "./dist/index.js"
+    "kbify-mcp": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",

@@ -6,12 +6,12 @@ import { z } from "zod";
 
 // ── Configuration ──────────────────────────────────────────
 
-const API_KEY = process.env.VIDEOTOKB_API_KEY;
-const BASE_URL = process.env.VIDEOTOKB_URL || "https://video-to-kb.vercel.app";
+const API_KEY = process.env.KBIFY_API_KEY;
+const BASE_URL = process.env.KBIFY_URL || "https://video-to-kb.vercel.app";
 
 if (!API_KEY) {
-  console.error("Error: VIDEOTOKB_API_KEY environment variable is required");
-  console.error("Get your API key from: Settings > API in the VideoToKB app");
+  console.error("Error: KBIFY_API_KEY environment variable is required");
+  console.error("Get your API key from: Settings > API in the KBify app");
   process.exit(1);
 }
 
@@ -41,7 +41,7 @@ async function apiRequest(
 // ── MCP Server ─────────────────────────────────────────────
 
 const server = new McpServer({
-  name: "VideoToKB",
+  name: "KBify",
   version: "1.0.0",
 });
 
@@ -50,7 +50,7 @@ server.tool(
   "generate_article",
   "Generate a structured KB article from a video URL (Loom, Google Drive) or a raw transcript. " +
     "Returns markdown and optionally platform-specific HTML (HelpJuice, Notion, etc.). " +
-    "The article is saved to the user's VideoToKB account automatically.",
+    "The article is saved to the user's KBify account automatically.",
   {
     videoUrl: z
       .string()
@@ -141,7 +141,7 @@ server.tool(
 // Tool: list_articles
 server.tool(
   "list_articles",
-  "List recent articles from the user's VideoToKB account. Returns article IDs, titles, and metadata.",
+  "List recent articles from the user's KBify account. Returns article IDs, titles, and metadata.",
   {},
   async () => {
     // Use the Supabase REST API through the app's api-keys endpoint
@@ -151,7 +151,7 @@ server.tool(
         {
           type: "text" as const,
           text:
-            "To list articles, visit your VideoToKB dashboard or use the sidebar in the app. " +
+            "To list articles, visit your KBify dashboard or use the sidebar in the app. " +
             "The API currently supports article generation. " +
             "Use generate_article to create new articles from video URLs or transcripts.",
         },
@@ -168,6 +168,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Failed to start VideoToKB MCP server:", err);
+  console.error("Failed to start KBify MCP server:", err);
   process.exit(1);
 });

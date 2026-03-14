@@ -78,7 +78,7 @@ export function Sidebar({ email }: { email: string }) {
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-5">
         <Link href="/" className="text-lg font-semibold tracking-tight text-gray-900">
-          VideoToKB
+          KBify
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}

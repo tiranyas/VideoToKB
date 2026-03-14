@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { Shield, Database, Globe, Cookie, Clock, UserCheck, Mail, Scale } from 'lucide-react';
 
 export const metadata = {
-  title: 'Privacy Policy - VideoToKB',
-  description: 'How VideoToKB handles your data and protects your privacy.',
+  title: 'Privacy Policy - KBify',
+  description: 'How KBify handles your data and protects your privacy.',
 };
 
 function Section({
@@ -42,13 +42,13 @@ export default function PrivacyPage() {
           <div className="border-t border-gray-100" />
 
           <p className="text-sm leading-relaxed text-gray-600">
-            VideoToKB is committed to protecting your privacy. This policy explains what data we collect,
+            KBify is committed to protecting your privacy. This policy explains what data we collect,
             how we use it, and the rights you have over your information.
           </p>
 
           {/* Data Collected */}
           <Section icon={Database} title="Data We Collect">
-            <p>We collect and store the following information when you use VideoToKB:</p>
+            <p>We collect and store the following information when you use KBify:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>Account data</strong> &mdash; your email address for authentication</li>
               <li><strong>Video URLs</strong> &mdash; links you provide for transcription</li>
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
               <li><strong>Anthropic (Claude API)</strong> &mdash; receives transcripts and company context to generate structured knowledge base articles. Anthropic does not use API inputs for model training.</li>
               <li><strong>Supabase</strong> &mdash; stores your account data, articles, and application data in a PostgreSQL database with row-level security.</li>
             </ul>
-            <p>We do not sell your data to any third party. Data is shared with the above services solely to provide the core functionality of VideoToKB.</p>
+            <p>We do not sell your data to any third party. Data is shared with the above services solely to provide the core functionality of KBify.</p>
           </Section>
 
           {/* Third-Party Services */}
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
           {/* Cookies */}
           <Section icon={Cookie} title="Cookie Usage">
             <p>
-              VideoToKB uses <strong>essential cookies only</strong>. We use Supabase authentication cookies
+              KBify uses <strong>essential cookies only</strong>. We use Supabase authentication cookies
               to keep you signed in. We do not use analytics cookies, advertising cookies, or any third-party
               tracking cookies.
             </p>
@@ -140,15 +140,15 @@ export default function PrivacyPage() {
               If you have questions about this privacy policy or want to exercise your data rights, reach out:
             </p>
             <p>
-              <a href="mailto:privacy@videotokb.com" className="text-gray-900 font-medium hover:underline">
-                privacy@videotokb.com
+              <a href="mailto:privacy@kbify.com" className="text-gray-900 font-medium hover:underline">
+                privacy@kbify.com
               </a>
             </p>
           </Section>
 
           <div className="border-t border-gray-100 pt-4 text-center">
             <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              &larr; Back to VideoToKB
+              &larr; Back to KBify
             </Link>
           </div>
         </div>

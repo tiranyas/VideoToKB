@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { FileText, UserCheck, ShieldCheck, Lightbulb, AlertTriangle, Server, XCircle, RefreshCw } from 'lucide-react';
 
 export const metadata = {
-  title: 'Terms of Service - VideoToKB',
-  description: 'Terms and conditions for using VideoToKB.',
+  title: 'Terms of Service - KBify',
+  description: 'Terms and conditions for using KBify.',
 };
 
 function Section({
@@ -42,13 +42,13 @@ export default function TermsPage() {
           <div className="border-t border-gray-100" />
 
           <p className="text-sm leading-relaxed text-gray-600">
-            By using VideoToKB, you agree to these terms. Please read them carefully before using the service.
+            By using KBify, you agree to these terms. Please read them carefully before using the service.
           </p>
 
           {/* Service Description */}
           <Section icon={FileText} title="Service Description">
             <p>
-              VideoToKB is a web application that converts video recordings into structured knowledge base
+              KBify is a web application that converts video recordings into structured knowledge base
               articles. The service uses AI-powered transcription (AssemblyAI) and content generation
               (Anthropic Claude) to process your videos and produce formatted articles.
             </p>
@@ -60,7 +60,7 @@ export default function TermsPage() {
 
           {/* User Responsibilities */}
           <Section icon={UserCheck} title="User Responsibilities">
-            <p>As a user of VideoToKB, you agree to:</p>
+            <p>As a user of KBify, you agree to:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Provide accurate account information</li>
               <li>Keep your login credentials secure</li>
@@ -72,7 +72,7 @@ export default function TermsPage() {
 
           {/* Acceptable Use */}
           <Section icon={ShieldCheck} title="Acceptable Use">
-            <p>You may not use VideoToKB to:</p>
+            <p>You may not use KBify to:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Process content that is illegal, harmful, or violates others&apos; rights</li>
               <li>Attempt to reverse-engineer, exploit, or compromise the service</li>
@@ -86,23 +86,23 @@ export default function TermsPage() {
           <Section icon={Lightbulb} title="Intellectual Property">
             <p>
               <strong>You own your content.</strong> All videos you submit, transcripts generated from your
-              videos, and articles produced by the service remain your intellectual property. VideoToKB does
+              videos, and articles produced by the service remain your intellectual property. KBify does
               not claim ownership over any content you create or process through the service.
             </p>
             <p>
-              The VideoToKB application, its design, branding, and underlying technology are owned by
-              VideoToKB and its licensors.
+              The KBify application, its design, branding, and underlying technology are owned by
+              KBify and its licensors.
             </p>
           </Section>
 
           {/* Limitation of Liability */}
           <Section icon={AlertTriangle} title="Limitation of Liability">
             <p>
-              VideoToKB is provided &ldquo;as is&rdquo; without warranties of any kind, express or implied.
+              KBify is provided &ldquo;as is&rdquo; without warranties of any kind, express or implied.
               We do not guarantee the accuracy, completeness, or reliability of AI-generated content.
             </p>
             <p>
-              To the maximum extent permitted by law, VideoToKB shall not be liable for any indirect,
+              To the maximum extent permitted by law, KBify shall not be liable for any indirect,
               incidental, special, or consequential damages arising from your use of the service, including
               but not limited to loss of data, revenue, or business opportunities.
             </p>
@@ -111,7 +111,7 @@ export default function TermsPage() {
           {/* Service Availability */}
           <Section icon={Server} title="Service Availability">
             <p>
-              We strive to keep VideoToKB available at all times, but we do not guarantee uninterrupted access.
+              We strive to keep KBify available at all times, but we do not guarantee uninterrupted access.
               The service may experience downtime due to maintenance, updates, or circumstances beyond our control.
             </p>
             <p>
@@ -148,14 +148,14 @@ export default function TermsPage() {
             <p className="text-sm text-gray-600">
               Questions about these terms? Reach out to us at
             </p>
-            <a href="mailto:legal@videotokb.com" className="text-sm text-gray-900 font-medium hover:underline">
-              legal@videotokb.com
+            <a href="mailto:legal@kbify.com" className="text-sm text-gray-900 font-medium hover:underline">
+              legal@kbify.com
             </a>
           </div>
 
           <div className="border-t border-gray-100 pt-4 text-center">
             <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              &larr; Back to VideoToKB
+              &larr; Back to KBify
             </Link>
           </div>
         </div>

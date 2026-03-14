@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VideoToKB",
+  title: "KBify",
   description: "Convert video recordings into structured knowledge base articles",
 };
 
