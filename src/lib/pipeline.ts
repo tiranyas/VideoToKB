@@ -1,11 +1,13 @@
 import type { ProgressEvent, VideoInfo } from '@/types';
 import { resolveLoomUrl } from '@/lib/loom-resolver';
 import { resolveGoogleDriveUrl } from '@/lib/gdrive-resolver';
+import { isYouTubeUrl, getYouTubeTranscript } from '@/lib/youtube-resolver';
 import { transcribeVideo, preprocessTranscript } from '@/lib/transcription';
 import { generateDraft, generateStructured, generateHTML } from '@/lib/article-generator';
 
-function detectProvider(url: string): 'loom' | 'gdrive' {
+function detectProvider(url: string): 'loom' | 'gdrive' | 'youtube' {
   if (url.includes('drive.google.com')) return 'gdrive';
+  if (isYouTubeUrl(url)) return 'youtube';
   return 'loom';
 }
 
@@ -42,27 +44,46 @@ export async function runPhaseA(
     onProgress({ step: 'resolve', status: 'complete', message: 'Skipped — using pasted transcript' });
     onProgress({ step: 'transcribe', status: 'complete', message: 'Skipped — using pasted transcript' });
   } else if (videoUrl) {
-    // Step 1: Resolve video URL
-    try {
-      const provider = detectProvider(videoUrl);
-      const providerLabel = provider === 'gdrive' ? 'Google Drive' : 'Loom';
-      onProgress({ step: 'resolve', status: 'in_progress', message: `Resolving ${providerLabel} video URL...` });
+    const provider = detectProvider(videoUrl);
 
-      const videoInfo = await resolveVideoUrl(videoUrl, provider);
-      onProgress({ step: 'resolve', status: 'complete', message: 'Video URL resolved' });
+    if (provider === 'youtube') {
+      // YouTube: Extract captions directly (no AssemblyAI needed)
+      try {
+        onProgress({ step: 'resolve', status: 'in_progress', message: 'Extracting YouTube captions...' });
 
-      // Step 2: Transcribe video
-      onProgress({ step: 'transcribe', status: 'in_progress', message: 'Transcribing video audio...' });
+        const ytResult = await getYouTubeTranscript(videoUrl);
+        // Format segments like AssemblyAI paragraphs for consistency
+        cleanedTranscript = preprocessTranscript(ytResult.segments);
 
-      const transcriptResult = await transcribeVideo(videoInfo.videoUrl);
-      cleanedTranscript = preprocessTranscript(transcriptResult.paragraphs);
+        onProgress({ step: 'resolve', status: 'complete', message: 'YouTube captions extracted' });
+        onProgress({ step: 'transcribe', status: 'complete', message: 'Skipped — using YouTube captions' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        onProgress({ step: 'error', status: 'error', message: `YouTube caption extraction failed: ${message}` });
+        return;
+      }
+    } else {
+      // Loom / Google Drive: Resolve URL → Transcribe with AssemblyAI
+      try {
+        const providerLabel = provider === 'gdrive' ? 'Google Drive' : 'Loom';
+        onProgress({ step: 'resolve', status: 'in_progress', message: `Resolving ${providerLabel} video URL...` });
 
-      onProgress({ step: 'transcribe', status: 'complete', message: 'Transcription complete' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const step = message.includes('Transcri') ? 'transcribe' : 'resolve';
-      onProgress({ step: 'error', status: 'error', message: `${step === 'resolve' ? 'Failed to resolve video URL' : 'Transcription failed'}: ${message}` });
-      return;
+        const videoInfo = await resolveVideoUrl(videoUrl, provider);
+        onProgress({ step: 'resolve', status: 'complete', message: 'Video URL resolved' });
+
+        // Step 2: Transcribe video
+        onProgress({ step: 'transcribe', status: 'in_progress', message: 'Transcribing video audio...' });
+
+        const transcriptResult = await transcribeVideo(videoInfo.videoUrl);
+        cleanedTranscript = preprocessTranscript(transcriptResult.paragraphs);
+
+        onProgress({ step: 'transcribe', status: 'complete', message: 'Transcription complete' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const step = message.includes('Transcri') ? 'transcribe' : 'resolve';
+        onProgress({ step: 'error', status: 'error', message: `${step === 'resolve' ? 'Failed to resolve video URL' : 'Transcription failed'}: ${message}` });
+        return;
+      }
     }
   } else {
     onProgress({ step: 'error', status: 'error', message: 'No video URL or transcript provided' });

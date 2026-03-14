@@ -45,8 +45,9 @@ export function UrlForm({
     if (mode === 'url') {
       const isLoom = videoUrl.includes('loom.com/share/');
       const isGDrive = videoUrl.includes('drive.google.com');
-      if (!isLoom && !isGDrive) {
-        toast.error('Please enter a Loom or Google Drive URL');
+      const isYouTube = videoUrl.includes('youtube.com/') || videoUrl.includes('youtu.be/');
+      if (!isLoom && !isGDrive && !isYouTube) {
+        toast.error('Please enter a YouTube, Loom, or Google Drive URL');
         return;
       }
       onSubmit({ videoUrl });
@@ -151,7 +152,7 @@ export function UrlForm({
             type="url"
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder="Paste your Loom or Google Drive URL here..."
+            placeholder="Paste a YouTube, Loom, or Google Drive URL..."
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
             disabled={isProcessing}
           />

@@ -48,7 +48,7 @@ const server = new McpServer({
 // Tool: generate_article
 server.tool(
   "generate_article",
-  "Generate a structured KB article from a video URL (Loom, Google Drive) or a raw transcript. " +
+  "Generate a structured KB article from a video URL (YouTube, Loom, Google Drive) or a raw transcript. " +
     "Returns markdown and optionally platform-specific HTML (HelpJuice, Notion, etc.). " +
     "The article is saved to the user's KBify account automatically.",
   {
@@ -56,7 +56,7 @@ server.tool(
       .string()
       .optional()
       .describe(
-        "URL of a Loom or Google Drive video to transcribe and convert to an article"
+        "URL of a YouTube, Loom, or Google Drive video to transcribe and convert to an article"
       ),
     transcript: z
       .string()
