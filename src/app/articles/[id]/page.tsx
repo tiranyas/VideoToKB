@@ -10,7 +10,7 @@ import { getArticle, deleteArticle, updateArticleTitle } from '@/lib/supabase/qu
 import { cn } from '@/utils/cn';
 import type { Article } from '@/types';
 
-type Tab = 'markdown' | 'html';
+type Tab = 'markdown' | 'html' | 'preview';
 
 export default function ArticleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,13 +29,13 @@ export default function ArticleDetailPage() {
       const data = await getArticle(supabase, id);
       setArticle(data);
       setLoading(false);
-      if (data?.html) setTab('html');
+      if (data?.html) setTab('preview');
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function handleCopy() {
-    const text = tab === 'markdown' ? article?.markdown : article?.html;
+    const text = tab === 'markdown' ? article?.markdown : (article?.html ?? '');
     if (!text) return;
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -103,6 +103,19 @@ export default function ArticleDetailPage() {
 
   const content = tab === 'markdown' ? article.markdown : (article.html ?? '');
 
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (tab === 'preview' && iframeRef.current && article?.html) {
+      const doc = iframeRef.current.contentDocument;
+      if (doc) {
+        doc.open();
+        doc.write(article.html);
+        doc.close();
+      }
+    }
+  }, [tab, article?.html]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -167,17 +180,30 @@ export default function ArticleDetailPage() {
               Markdown
             </button>
             {article.html && (
-              <button
-                onClick={() => setTab('html')}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-                  tab === 'html'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                )}
-              >
-                HTML
-              </button>
+              <>
+                <button
+                  onClick={() => setTab('preview')}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                    tab === 'preview'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  )}
+                >
+                  Preview
+                </button>
+                <button
+                  onClick={() => setTab('html')}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+                    tab === 'html'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  )}
+                >
+                  HTML
+                </button>
+              </>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -188,7 +214,7 @@ export default function ArticleDetailPage() {
               {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy'}
             </button>
-            {tab === 'markdown' && (
+            {(tab === 'markdown') && (
               <button
                 onClick={handleDownloadWord}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -200,11 +226,20 @@ export default function ArticleDetailPage() {
         </div>
 
         {/* Content */}
-        <textarea
-          readOnly
-          value={content}
-          className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
-        />
+        {tab === 'preview' ? (
+          <iframe
+            ref={iframeRef}
+            title="Article Preview"
+            className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white"
+            sandbox="allow-same-origin"
+          />
+        ) : (
+          <textarea
+            readOnly
+            value={content}
+            className="w-full min-h-[500px] rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
+          />
+        )}
       </div>
     </div>
   );

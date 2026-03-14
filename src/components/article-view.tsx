@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Copy, Check, FileDown, Code } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Copy, Check, FileDown, Code, Eye, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ArticleViewProps {
@@ -14,6 +14,21 @@ interface ArticleViewProps {
 
 export function ArticleView({ article, onChange, mode, onGenerateHTML, platformName }: ArticleViewProps) {
   const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const isFinal = mode === 'final';
+
+  useEffect(() => {
+    if (showPreview && iframeRef.current && article) {
+      const doc = iframeRef.current.contentDocument;
+      if (doc) {
+        doc.open();
+        doc.write(article);
+        doc.close();
+      }
+    }
+  }, [showPreview, article]);
 
   async function handleCopy() {
     try {
@@ -74,14 +89,33 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
               Word
             </button>
           )}
+          {isFinal && (
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              title={showPreview ? 'Show HTML code' : 'Show preview'}
+            >
+              {showPreview ? <FileCode className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPreview ? 'Code' : 'Preview'}
+            </button>
+          )}
         </div>
       </div>
 
-      <textarea
-        value={article}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full min-h-[400px] rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm leading-relaxed focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-      />
+      {showPreview ? (
+        <iframe
+          ref={iframeRef}
+          title="Article Preview"
+          className="w-full min-h-[400px] rounded-lg border border-gray-300 bg-white"
+          sandbox="allow-same-origin"
+        />
+      ) : (
+        <textarea
+          value={article}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full min-h-[400px] rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm leading-relaxed focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        />
+      )}
 
       {/* Generate HTML button — only in review mode when platform has HTML generation */}
       {isReview && onGenerateHTML && (
