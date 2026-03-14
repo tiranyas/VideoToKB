@@ -1,5 +1,4 @@
 // ── URL Patterns ─────────────────────────────────────────
-// Supports: youtube.com/watch?v=, youtu.be/, youtube.com/embed/, youtube.com/shorts/
 const YT_PATTERNS = [
   /(?:youtube\.com\/watch\?.*v=)([a-zA-Z0-9_-]{11})/,
   /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
@@ -27,192 +26,188 @@ export interface YouTubeTranscriptResult {
   segments: { text: string; start: number; end: number }[];
 }
 
-// ── Browser-like Headers + Consent Cookie ────────────────
-// The SOCS cookie bypasses the EU consent screen that blocks caption data.
+interface CaptionTrack {
+  baseUrl: string;
+  languageCode: string;
+  name: string;
+}
 
-const CONSENT_COOKIE =
-  'SOCS=CAISNQgDEitib3FfaWRlbnRpdHlfZnJvbnRlbmRfdWlzZXJ2ZXJfMjAyMzA4MjkuMDdfcDAQAhgCGgJlbg';
+interface RawSegment {
+  text: string;
+  start: number;
+  dur: number;
+}
 
-const BROWSER_HEADERS: Record<string, string> = {
-  'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-  'Accept-Language': 'en-US,en;q=0.9',
-  Accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  Cookie: `${CONSENT_COOKIE}; CONSENT=PENDING+999`,
-};
+// ── Client Configurations ────────────────────────────────
+// YouTube treats different "clients" differently.
+// Server IPs get LOGIN_REQUIRED with WEB client but often work with
+// ANDROID, IOS, or TV_EMBEDDED clients.
 
-// ── InnerTube constants ──────────────────────────────────
-
-const INNERTUBE_API_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
 const INNERTUBE_BASE = 'https://www.youtube.com/youtubei/v1';
-const INNERTUBE_CONTEXT = {
-  client: {
-    clientName: 'WEB',
-    clientVersion: '2.20241126.01.00',
-    hl: 'en',
-    gl: 'US',
+const INNERTUBE_API_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
+
+const CONSENT_COOKIES =
+  'SOCS=CAISNQgDEitib3FfaWRlbnRpdHlfZnJvbnRlbmRfdWlzZXJ2ZXJfMjAyMzA4MjkuMDdfcDAQAhgCGgJlbg; CONSENT=PENDING+999';
+
+// Different client contexts to try — each has different restrictions
+const CLIENT_CONFIGS: Array<{
+  name: string;
+  context: Record<string, unknown>;
+  headers: Record<string, string>;
+}> = [
+  {
+    name: 'TV_EMBEDDED',
+    context: {
+      client: {
+        clientName: 'TVHTML5_SIMPLY_EMBEDDED_PLAYER',
+        clientVersion: '2.0',
+        hl: 'en',
+        gl: 'US',
+      },
+      thirdParty: {
+        embedUrl: 'https://www.google.com',
+      },
+    },
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Content-Type': 'application/json',
+      Cookie: CONSENT_COOKIES,
+    },
   },
-};
+  {
+    name: 'ANDROID',
+    context: {
+      client: {
+        clientName: 'ANDROID',
+        clientVersion: '19.09.37',
+        androidSdkVersion: 30,
+        hl: 'en',
+        gl: 'US',
+      },
+    },
+    headers: {
+      'User-Agent':
+        'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+      'Content-Type': 'application/json',
+      Cookie: CONSENT_COOKIES,
+    },
+  },
+  {
+    name: 'IOS',
+    context: {
+      client: {
+        clientName: 'IOS',
+        clientVersion: '19.09.3',
+        deviceModel: 'iPhone14,3',
+        hl: 'en',
+        gl: 'US',
+      },
+    },
+    headers: {
+      'User-Agent':
+        'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
+      'Content-Type': 'application/json',
+      Cookie: CONSENT_COOKIES,
+    },
+  },
+  {
+    name: 'WEB',
+    context: {
+      client: {
+        clientName: 'WEB',
+        clientVersion: '2.20241126.01.00',
+        hl: 'en',
+        gl: 'US',
+      },
+    },
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      'Content-Type': 'application/json',
+      'Accept-Language': 'en-US,en;q=0.9',
+      Cookie: CONSENT_COOKIES,
+    },
+  },
+];
 
-// ── Method 1: Page scrape → caption tracks → timedtext ───
+// ── InnerTube /player API ────────────────────────────────
+// Try each client config until one returns caption tracks.
 
-async function getCaptionTracksFromPage(
+async function getCaptionTracksMultiClient(
   videoId: string
-): Promise<{ baseUrl: string; languageCode: string; name: string }[]> {
-  const watchUrl = `https://www.youtube.com/watch?v=${videoId}&hl=en&gl=US&has_verified=1`;
-  const res = await fetch(watchUrl, { headers: BROWSER_HEADERS });
+): Promise<{ tracks: CaptionTrack[]; clientUsed: string }> {
+  const errors: string[] = [];
 
-  if (!res.ok) {
-    throw new Error(`YouTube returned ${res.status}`);
-  }
+  for (const config of CLIENT_CONFIGS) {
+    try {
+      const playerUrl = `${INNERTUBE_BASE}/player?key=${INNERTUBE_API_KEY}`;
+      const res = await fetch(playerUrl, {
+        method: 'POST',
+        headers: config.headers,
+        body: JSON.stringify({
+          context: config.context,
+          videoId,
+        }),
+      });
 
-  const html = await res.text();
-
-  // Try multiple patterns to find player response
-  let playerJson: string | null = null;
-
-  // Pattern 1: ytInitialPlayerResponse = {...};
-  const p1 = html.match(
-    /ytInitialPlayerResponse\s*=\s*(\{[\s\S]+?\})\s*;(?:\s*var\s|\s*<\/script>)/
-  );
-  if (p1) playerJson = p1[1];
-
-  // Pattern 2: inside ytInitialData or embedded JSON
-  if (!playerJson) {
-    const p2 = html.match(/"captions":\s*(\{[\s\S]*?"captionTracks"[\s\S]*?\})\s*,\s*"/);
-    if (p2) {
-      // Extract just the captionTracks from the captions object
-      const trackMatch = p2[1].match(/"captionTracks":\s*(\[[\s\S]*?\])/);
-      if (trackMatch) {
-        try {
-          const tracks = JSON.parse(trackMatch[1]);
-          return tracks.map((t: { baseUrl: string; languageCode: string; name?: { simpleText?: string } }) => ({
-            baseUrl: t.baseUrl,
-            languageCode: t.languageCode,
-            name: t.name?.simpleText || t.languageCode,
-          }));
-        } catch {
-          // Fall through to full parse
-        }
+      if (!res.ok) {
+        errors.push(`${config.name}: HTTP ${res.status}`);
+        continue;
       }
-    }
-  }
 
-  // Pattern 3: Try to find captionTracks directly in any JSON blob
-  if (!playerJson) {
-    const p3 = html.match(/"captionTracks":\s*(\[[\s\S]*?\])\s*,/);
-    if (p3) {
-      try {
-        const tracks = JSON.parse(p3[1]);
-        return tracks.map((t: { baseUrl: string; languageCode: string; name?: { simpleText?: string } }) => ({
+      const data = await res.json();
+
+      // Check playability
+      const playability = data?.playabilityStatus as Record<string, unknown> | undefined;
+      const status = playability?.status as string | undefined;
+      if (status === 'LOGIN_REQUIRED' || status === 'UNPLAYABLE') {
+        errors.push(`${config.name}: ${status}`);
+        continue;
+      }
+
+      // Extract caption tracks
+      const captions = data?.captions as Record<string, unknown> | undefined;
+      const renderer = captions?.playerCaptionsTracklistRenderer as Record<string, unknown> | undefined;
+      const tracks = renderer?.captionTracks as Array<{
+        baseUrl: string;
+        languageCode: string;
+        name: { simpleText?: string; runs?: Array<{ text: string }> };
+      }> | undefined;
+
+      if (!tracks || tracks.length === 0) {
+        errors.push(`${config.name}: no caption tracks`);
+        continue;
+      }
+
+      return {
+        tracks: tracks.map((t) => ({
           baseUrl: t.baseUrl,
           languageCode: t.languageCode,
-          name: t.name?.simpleText || t.languageCode,
-        }));
-      } catch {
-        throw new Error('Found caption data but could not parse it');
-      }
+          name: t.name?.simpleText || t.name?.runs?.map(r => r.text).join('') || t.languageCode,
+        })),
+        clientUsed: config.name,
+      };
+    } catch (err) {
+      errors.push(`${config.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
-  if (!playerJson) {
-    // Check if we got a consent page instead
-    if (html.includes('consent.youtube.com') || html.includes('CONSENT')) {
-      throw new Error('YouTube returned a consent page — cookie bypass failed');
-    }
-    throw new Error('Could not find player data in page');
-  }
-
-  let playerData: Record<string, unknown>;
-  try {
-    playerData = JSON.parse(playerJson);
-  } catch {
-    throw new Error('Could not parse player JSON');
-  }
-
-  const captions = playerData?.captions as Record<string, unknown> | undefined;
-  const renderer = captions?.playerCaptionsTracklistRenderer as Record<string, unknown> | undefined;
-  const tracks = renderer?.captionTracks as Array<{
-    baseUrl: string;
-    languageCode: string;
-    name: { simpleText?: string };
-  }> | undefined;
-
-  if (!tracks || tracks.length === 0) {
-    // Check if playability status blocks it
-    const playability = playerData?.playabilityStatus as Record<string, unknown> | undefined;
-    const status = playability?.status as string | undefined;
-    if (status === 'LOGIN_REQUIRED') {
-      throw new Error('This video requires login (age-restricted or private)');
-    }
-    if (status === 'UNPLAYABLE') {
-      throw new Error('This video is unavailable or region-locked');
-    }
-    throw new Error('No captions available on this video');
-  }
-
-  return tracks.map((t) => ({
-    baseUrl: t.baseUrl,
-    languageCode: t.languageCode,
-    name: t.name?.simpleText || t.languageCode,
-  }));
+  throw new Error(`All clients failed: ${errors.join('; ')}`);
 }
 
-// ── Method 2: InnerTube /player API → caption tracks ─────
-// Uses the player endpoint directly instead of scraping HTML
+// ── Fetch caption data from track URL ────────────────────
 
-async function getCaptionTracksViaPlayer(
-  videoId: string
-): Promise<{ baseUrl: string; languageCode: string; name: string }[]> {
-  const playerUrl = `${INNERTUBE_BASE}/player?key=${INNERTUBE_API_KEY}`;
-
-  const res = await fetch(playerUrl, {
-    method: 'POST',
-    headers: {
-      ...BROWSER_HEADERS,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      context: INNERTUBE_CONTEXT,
-      videoId,
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`InnerTube player API returned ${res.status}`);
-  }
-
-  const data = await res.json();
-  const captions = data?.captions as Record<string, unknown> | undefined;
-  const renderer = captions?.playerCaptionsTracklistRenderer as Record<string, unknown> | undefined;
-  const tracks = renderer?.captionTracks as Array<{
-    baseUrl: string;
-    languageCode: string;
-    name: { simpleText?: string };
-  }> | undefined;
-
-  if (!tracks || tracks.length === 0) {
-    throw new Error('No captions from InnerTube player');
-  }
-
-  return tracks.map((t) => ({
-    baseUrl: t.baseUrl,
-    languageCode: t.languageCode,
-    name: t.name?.simpleText || t.languageCode,
-  }));
-}
-
-// ── Fetch captions from track URL ────────────────────────
-
-async function fetchCaptionData(
-  trackUrl: string
-): Promise<{ text: string; start: number; dur: number }[]> {
-  // Try JSON3 format first (easier to parse)
+async function fetchCaptionData(trackUrl: string): Promise<RawSegment[]> {
   const url = new URL(trackUrl);
   url.searchParams.set('fmt', 'json3');
 
-  const res = await fetch(url.toString(), { headers: BROWSER_HEADERS });
+  const res = await fetch(url.toString(), {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      Cookie: CONSENT_COOKIES,
+    },
+  });
+
   if (!res.ok) {
     throw new Error(`Caption fetch returned ${res.status}`);
   }
@@ -229,7 +224,7 @@ async function fetchCaptionData(
     throw new Error('No events in caption response');
   }
 
-  const segments: { text: string; start: number; dur: number }[] = [];
+  const segments: RawSegment[] = [];
 
   for (const event of data.events) {
     if (!event.segs) continue;
@@ -250,37 +245,30 @@ async function fetchCaptionData(
   return segments;
 }
 
-// ── Method 3: InnerTube transcript panel ─────────────────
+// ── InnerTube transcript panel (last resort) ─────────────
 
-async function getTranscriptViaInnerTube(
-  videoId: string
-): Promise<{ text: string; start: number; dur: number }[]> {
-  const nextUrl = `${INNERTUBE_BASE}/next?key=${INNERTUBE_API_KEY}`;
+async function getTranscriptPanel(videoId: string): Promise<RawSegment[]> {
+  // Use WEB client for /next since it has the transcript panel
+  const webConfig = CLIENT_CONFIGS[CLIENT_CONFIGS.length - 1];
 
-  const nextRes = await fetch(nextUrl, {
+  const nextRes = await fetch(`${INNERTUBE_BASE}/next?key=${INNERTUBE_API_KEY}`, {
     method: 'POST',
-    headers: {
-      ...BROWSER_HEADERS,
-      'Content-Type': 'application/json',
-    },
+    headers: webConfig.headers,
     body: JSON.stringify({
-      context: INNERTUBE_CONTEXT,
+      context: webConfig.context,
       videoId,
     }),
   });
 
   if (!nextRes.ok) {
-    throw new Error(`InnerTube next returned ${nextRes.status}`);
+    throw new Error(`next API returned ${nextRes.status}`);
   }
 
   const nextData = await nextRes.json();
-
-  const panels =
-    nextData?.engagementPanels as Array<Record<string, unknown>> | undefined;
+  const panels = nextData?.engagementPanels as Array<Record<string, unknown>> | undefined;
   if (!panels) throw new Error('No engagement panels');
 
-  let serializedParams: string | null = null;
-
+  let params: string | null = null;
   for (const panel of panels) {
     const epir = panel?.engagementPanelSectionListRenderer as Record<string, unknown> | undefined;
     if (epir?.panelIdentifier === 'engagement-panel-searchable-transcript') {
@@ -288,67 +276,43 @@ async function getTranscriptViaInnerTube(
       const ctr = content?.continuationItemRenderer as Record<string, unknown>;
       const ce = ctr?.continuationEndpoint as Record<string, unknown>;
       const cc = ce?.getTranscriptEndpoint as Record<string, unknown>;
-      serializedParams = (cc?.params as string) || null;
+      params = (cc?.params as string) || null;
       break;
     }
   }
 
-  if (!serializedParams) {
-    throw new Error('No transcript panel found');
-  }
+  if (!params) throw new Error('No transcript panel');
 
-  const transcriptUrl = `${INNERTUBE_BASE}/get_transcript?key=${INNERTUBE_API_KEY}`;
-  const tRes = await fetch(transcriptUrl, {
+  const tRes = await fetch(`${INNERTUBE_BASE}/get_transcript?key=${INNERTUBE_API_KEY}`, {
     method: 'POST',
-    headers: {
-      ...BROWSER_HEADERS,
-      'Content-Type': 'application/json',
-    },
+    headers: webConfig.headers,
     body: JSON.stringify({
-      context: INNERTUBE_CONTEXT,
-      params: serializedParams,
+      context: webConfig.context,
+      params,
     }),
   });
 
-  if (!tRes.ok) {
-    throw new Error(`Transcript API returned ${tRes.status}`);
-  }
+  if (!tRes.ok) throw new Error(`get_transcript returned ${tRes.status}`);
 
   const tData = await tRes.json();
-
-  const body =
-    tData?.actions?.[0]?.updateEngagementPanelAction?.content
-      ?.transcriptRenderer?.body?.transcriptBodyRenderer;
+  const body = tData?.actions?.[0]?.updateEngagementPanelAction?.content
+    ?.transcriptRenderer?.body?.transcriptBodyRenderer;
   const cueGroups = body?.cueGroups as Array<Record<string, unknown>> | undefined;
 
-  if (!cueGroups || cueGroups.length === 0) {
-    throw new Error('No cue groups in transcript');
-  }
+  if (!cueGroups?.length) throw new Error('No cue groups');
 
-  const segments: { text: string; start: number; dur: number }[] = [];
-
+  const segments: RawSegment[] = [];
   for (const group of cueGroups) {
     const cues = (group?.transcriptCueGroupRenderer as Record<string, unknown>)
       ?.cues as Array<Record<string, unknown>> | undefined;
     if (!cues) continue;
-
     for (const cue of cues) {
-      const renderer = cue?.transcriptCueRenderer as Record<string, unknown>;
-      if (!renderer) continue;
-
-      const text = (
-        (renderer.cue as Record<string, unknown>)?.simpleText as string || ''
-      ).trim();
-      const startMs = parseInt(renderer.startOffsetMs as string, 10) || 0;
-      const durMs = parseInt(renderer.durationMs as string, 10) || 0;
-
-      if (text) {
-        segments.push({
-          text,
-          start: startMs / 1000,
-          dur: durMs / 1000,
-        });
-      }
+      const r = cue?.transcriptCueRenderer as Record<string, unknown>;
+      if (!r) continue;
+      const text = ((r.cue as Record<string, unknown>)?.simpleText as string || '').trim();
+      const startMs = parseInt(r.startOffsetMs as string, 10) || 0;
+      const durMs = parseInt(r.durationMs as string, 10) || 0;
+      if (text) segments.push({ text, start: startMs / 1000, dur: durMs / 1000 });
     }
   }
 
@@ -357,52 +321,32 @@ async function getTranscriptViaInnerTube(
 
 // ── Main Entry Point ─────────────────────────────────────
 
-/**
- * Extract transcript from YouTube video captions.
- * Tries 3 methods with fallback:
- * 1. Page scrape → extract caption track URLs → fetch JSON3
- * 2. InnerTube /player API → caption track URLs → fetch JSON3
- * 3. InnerTube /next + /get_transcript API
- */
 export async function getYouTubeTranscript(
   url: string
 ): Promise<YouTubeTranscriptResult> {
   const videoId = extractYouTubeId(url);
   if (!videoId) {
-    throw new Error(
-      'Invalid YouTube URL. Supported formats: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/'
-    );
+    throw new Error('Invalid YouTube URL. Supported: youtube.com/watch?v=, youtu.be/, youtube.com/shorts/');
   }
 
-  let rawSegments: { text: string; start: number; dur: number }[] = [];
+  let rawSegments: RawSegment[] = [];
   const errors: string[] = [];
 
-  // Method 1: Page scrape → caption tracks → JSON3
+  // Method 1: Try multiple InnerTube client configs to get caption tracks
   try {
-    const tracks = await getCaptionTracksFromPage(videoId);
-    const track = tracks[0];
+    const { tracks } = await getCaptionTracksMultiClient(videoId);
+    const track = tracks[0]; // First track is usually the primary language
     rawSegments = await fetchCaptionData(track.baseUrl);
   } catch (err) {
-    errors.push(`Page: ${err instanceof Error ? err.message : String(err)}`);
+    errors.push(err instanceof Error ? err.message : String(err));
   }
 
-  // Method 2: InnerTube /player API → caption tracks → JSON3
+  // Method 2: InnerTube transcript panel (only WEB client supports this)
   if (rawSegments.length === 0) {
     try {
-      const tracks = await getCaptionTracksViaPlayer(videoId);
-      const track = tracks[0];
-      rawSegments = await fetchCaptionData(track.baseUrl);
+      rawSegments = await getTranscriptPanel(videoId);
     } catch (err) {
-      errors.push(`Player API: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-
-  // Method 3: InnerTube transcript panel
-  if (rawSegments.length === 0) {
-    try {
-      rawSegments = await getTranscriptViaInnerTube(videoId);
-    } catch (err) {
-      errors.push(`Transcript API: ${err instanceof Error ? err.message : String(err)}`);
+      errors.push(`Transcript panel: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -415,22 +359,18 @@ export async function getYouTubeTranscript(
     );
   }
 
-  // Fetch video title
+  // Fetch video title via oEmbed (always works, no auth)
   let title = 'YouTube Video';
   try {
-    const oembedRes = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
-      { headers: BROWSER_HEADERS }
+    const oRes = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
     );
-    if (oembedRes.ok) {
-      const data = await oembedRes.json();
-      title = data.title || title;
+    if (oRes.ok) {
+      const d = await oRes.json();
+      title = d.title || title;
     }
-  } catch {
-    // Non-critical
-  }
+  } catch { /* non-critical */ }
 
-  // Convert to ms segments
   const segments = rawSegments.map((seg) => {
     const startMs = Math.round(seg.start * 1000);
     const durMs = Math.round(seg.dur * 1000);
