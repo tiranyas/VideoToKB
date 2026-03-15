@@ -80,7 +80,7 @@ export interface Article {
   workspaceId: string;
   title: string;
   sourceUrl?: string;
-  sourceType: 'loom' | 'google-drive' | 'paste';
+  sourceType: 'youtube' | 'loom' | 'google-drive' | 'paste';
   articleTypeId?: string;
   platformId?: string;
   markdown: string;

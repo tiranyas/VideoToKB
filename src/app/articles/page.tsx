@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Trash2, FileText, Globe, Video, ClipboardPaste, Sparkles, Link2, Type } from 'lucide-react';
+import { Trash2, FileText, Globe, Video, ClipboardPaste, Sparkles, Link2, Type, Youtube } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { getArticles, deleteArticle } from '@/lib/supabase/queries';
@@ -45,6 +45,7 @@ export default function ArticlesPage() {
     : articles;
 
   const sourceIcon = (type: string) => {
+    if (type === 'youtube') return <Youtube className="h-4 w-4 text-red-400" />;
     if (type === 'loom') return <Video className="h-4 w-4 text-purple-400" />;
     if (type === 'google-drive') return <Globe className="h-4 w-4 text-green-400" />;
     return <ClipboardPaste className="h-4 w-4 text-gray-400" />;

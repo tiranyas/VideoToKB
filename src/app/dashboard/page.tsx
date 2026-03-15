@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   FileText, TrendingUp, Calendar, PenSquare,
-  Building2, Video, Globe, ClipboardPaste,
+  Building2, Video, Globe, ClipboardPaste, Youtube,
   ArrowRight, Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -15,7 +15,7 @@ interface DashboardStats {
   totalArticles: number;
   thisWeek: number;
   thisMonth: number;
-  bySource: { loom: number; 'google-drive': number; paste: number };
+  bySource: { youtube: number; loom: number; 'google-drive': number; paste: number };
   recentArticles: { id: string; title: string; source_type: string; created_at: string }[];
   hasCompanyContext: boolean;
 }
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       const thisWeek = all.filter(a => new Date(a.created_at) >= weekAgo).length;
       const thisMonth = all.filter(a => new Date(a.created_at) >= monthAgo).length;
 
-      const bySource = { loom: 0, 'google-drive': 0, paste: 0 };
+      const bySource = { youtube: 0, loom: 0, 'google-drive': 0, paste: 0 };
       for (const a of all) {
         const src = a.source_type as keyof typeof bySource;
         if (src in bySource) bySource[src]++;
@@ -83,6 +83,7 @@ export default function DashboardPage() {
   }
 
   const sourceItems = [
+    { key: 'youtube', label: 'YouTube', icon: Youtube, count: stats.bySource.youtube, color: 'text-red-500', bg: 'bg-red-50' },
     { key: 'loom', label: 'Loom', icon: Video, count: stats.bySource.loom, color: 'text-purple-500', bg: 'bg-purple-50' },
     { key: 'google-drive', label: 'Google Drive', icon: Globe, count: stats.bySource['google-drive'], color: 'text-green-500', bg: 'bg-green-50' },
     { key: 'paste', label: 'Paste', icon: ClipboardPaste, count: stats.bySource.paste, color: 'text-gray-500', bg: 'bg-gray-100' },
@@ -188,10 +189,12 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-1">
                 {stats.recentArticles.map((article) => {
-                  const SourceIcon = article.source_type === 'loom' ? Video
+                  const SourceIcon = article.source_type === 'youtube' ? Youtube
+                    : article.source_type === 'loom' ? Video
                     : article.source_type === 'google-drive' ? Globe
                     : ClipboardPaste;
-                  const sourceColor = article.source_type === 'loom' ? 'text-purple-400'
+                  const sourceColor = article.source_type === 'youtube' ? 'text-red-400'
+                    : article.source_type === 'loom' ? 'text-purple-400'
                     : article.source_type === 'google-drive' ? 'text-green-400'
                     : 'text-gray-400';
 
@@ -241,6 +244,7 @@ export default function DashboardPage() {
                       <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                         <div
                           className={cn('h-full rounded-full transition-all duration-500',
+                            src.key === 'youtube' ? 'bg-red-400' :
                             src.key === 'loom' ? 'bg-purple-400' :
                             src.key === 'google-drive' ? 'bg-green-400' : 'bg-gray-300'
                           )}

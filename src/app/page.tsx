@@ -148,11 +148,14 @@ export default function Home() {
             const title = event.article.match(/^#+\s+(.+)/m)?.[1]
               ?? event.article.split('\n').map(l => l.trim()).find(l => l.length > 0)?.slice(0, 120)
               ?? 'Untitled Article';
-            const sourceType = input.transcript ? 'paste' : (input.videoUrl?.includes('drive.google') ? 'google-drive' : 'loom');
+            const sourceType = input.transcript ? 'paste'
+              : input.videoUrl?.includes('drive.google') ? 'google-drive'
+              : (input.videoUrl?.includes('youtube.com') || input.videoUrl?.includes('youtu.be')) ? 'youtube'
+              : 'loom';
             saveArticle(supabase, userId, activeWorkspace.id, {
               title,
               sourceUrl: input.videoUrl,
-              sourceType: sourceType as 'loom' | 'google-drive' | 'paste',
+              sourceType: sourceType as 'loom' | 'google-drive' | 'youtube' | 'paste',
               articleTypeId: selectedTypeId,
               platformId: selectedPlatformId,
               markdown: event.article,
