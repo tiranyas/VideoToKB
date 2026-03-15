@@ -59,10 +59,25 @@ export interface PlatformProfile {
   isDefault?: boolean;
 }
 
+// Workspace — groups company context, preferences, and articles
+export interface Workspace {
+  id: string;
+  userId: string;
+  name: string;
+  slug: string;
+  companyName?: string;
+  companyDescription?: string;
+  industry?: string;
+  targetAudience?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Saved article
 export interface Article {
   id: string;
   userId: string;
+  workspaceId: string;
   title: string;
   sourceUrl?: string;
   sourceType: 'loom' | 'google-drive' | 'paste';

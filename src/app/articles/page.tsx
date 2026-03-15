@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Trash2, FileText, Globe, Video, ClipboardPaste, Sparkles, Link2, Type } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { getArticles, deleteArticle } from '@/lib/supabase/queries';
 import type { Article } from '@/types';
 
@@ -19,17 +20,17 @@ export default function ArticlesPage() {
   const [search, setSearch] = useState('');
 
   const supabase = createClient();
+  const { activeWorkspace } = useWorkspace();
 
   useEffect(() => {
+    if (!activeWorkspace) return;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const data = await getArticles(supabase, user.id);
+      const data = await getArticles(supabase, activeWorkspace.id);
       setArticles(data as ArticleWithMeta[]);
       setLoading(false);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeWorkspace?.id]);
 
   async function handleDelete(id: string) {
     const { data: { user } } = await supabase.auth.getUser();

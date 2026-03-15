@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight } from 'lucide-react';
+import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/utils/cn';
 
 interface RecentArticle {
@@ -17,28 +18,66 @@ interface RecentArticle {
 export function Sidebar({ email }: { email: string }) {
   const pathname = usePathname();
   const supabase = createClient();
+  const { activeWorkspace, workspaces, switchWorkspace, createWorkspace } = useWorkspace();
   const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
+  const [creatingWs, setCreatingWs] = useState(false);
+  const [newWsName, setNewWsName] = useState('');
+  const wsDropdownRef = useRef<HTMLDivElement>(null);
+  const newWsInputRef = useRef<HTMLInputElement>(null);
 
+  // Load articles scoped to active workspace
   useEffect(() => {
+    if (!activeWorkspace) return;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data } = await supabase
         .from('articles')
         .select('id, title, created_at')
-        .eq('user_id', user.id)
+        .eq('workspace_id', activeWorkspace.id)
         .order('created_at', { ascending: false })
         .limit(15);
       if (data) setRecentArticles(data);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, activeWorkspace?.id]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wsDropdownRef.current && !wsDropdownRef.current.contains(e.target as Node)) {
+        setWsDropdownOpen(false);
+        setCreatingWs(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Auto-focus new workspace input
+  useEffect(() => {
+    if (creatingWs && newWsInputRef.current) {
+      newWsInputRef.current.focus();
+    }
+  }, [creatingWs]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
     window.location.href = '/login';
+  }
+
+  async function handleCreateWorkspace() {
+    const name = newWsName.trim();
+    if (!name) return;
+    try {
+      await createWorkspace(name);
+      setNewWsName('');
+      setCreatingWs(false);
+      setWsDropdownOpen(false);
+    } catch {
+      // slug conflict or other error — ignore silently
+    }
   }
 
   const navItems = [
@@ -89,6 +128,71 @@ export function Sidebar({ email }: { email: string }) {
           <ChevronRight className={cn('h-4 w-4 transition-transform', !collapsed && 'rotate-180')} />
         </button>
       </div>
+
+      {/* Workspace Switcher */}
+      {!collapsed && (
+        <div className="px-3 mb-2 relative" ref={wsDropdownRef}>
+          <button
+            onClick={() => setWsDropdownOpen(!wsDropdownOpen)}
+            className="flex items-center gap-2 w-full rounded-xl px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            <Building2 className="h-4 w-4 text-gray-400 shrink-0" />
+            <span className="flex-1 text-left truncate font-medium">
+              {activeWorkspace?.name ?? 'Workspace'}
+            </span>
+            <ChevronDown className={cn('h-3.5 w-3.5 text-gray-400 transition-transform', wsDropdownOpen && 'rotate-180')} />
+          </button>
+
+          {wsDropdownOpen && (
+            <div className="absolute left-3 right-3 top-full mt-1 z-50 rounded-xl bg-white border border-gray-200 shadow-lg py-1 max-h-64 overflow-y-auto">
+              {workspaces.map((ws) => (
+                <button
+                  key={ws.id}
+                  onClick={() => {
+                    switchWorkspace(ws.id);
+                    setWsDropdownOpen(false);
+                  }}
+                  className={cn(
+                    'flex items-center gap-2 w-full px-3 py-2 text-sm transition-colors text-left',
+                    ws.id === activeWorkspace?.id
+                      ? 'bg-violet-50 text-violet-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  )}
+                >
+                  <Building2 className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{ws.name}</span>
+                </button>
+              ))}
+
+              <div className="border-t border-gray-100 mt-1 pt-1">
+                {creatingWs ? (
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); handleCreateWorkspace(); }}
+                    className="px-3 py-1.5"
+                  >
+                    <input
+                      ref={newWsInputRef}
+                      value={newWsName}
+                      onChange={(e) => setNewWsName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Escape') { setCreatingWs(false); setNewWsName(''); } }}
+                      placeholder="Workspace name..."
+                      className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200"
+                    />
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setCreatingWs(true)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    New Workspace
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* New Article Button */}
       <div className="px-3 mb-1">

@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { CookieConsent } from "@/components/cookie-consent";
+import { WorkspaceProvider } from "@/contexts/workspace-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,12 +43,14 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {userEmail ? (
-          <div className="flex min-h-screen bg-grid">
-            <Sidebar email={userEmail} />
-            <main className="flex-1 min-w-0">
-              {children}
-            </main>
-          </div>
+          <WorkspaceProvider>
+            <div className="flex min-h-screen bg-grid">
+              <Sidebar email={userEmail} />
+              <main className="flex-1 min-w-0">
+                {children}
+              </main>
+            </div>
+          </WorkspaceProvider>
         ) : (
           <div className="bg-grid min-h-screen">
             {children}

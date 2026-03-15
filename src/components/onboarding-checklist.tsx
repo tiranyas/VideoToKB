@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Check, Building2, FileText, Sparkles, ArrowRight, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/utils/cn';
 
 interface ChecklistItem {
@@ -21,6 +22,7 @@ export function OnboardingChecklist() {
   const [dismissed, setDismissed] = useState(false);
 
   const supabase = createClient();
+  const { activeWorkspace } = useWorkspace();
 
   useEffect(() => {
     (async () => {
@@ -31,18 +33,15 @@ export function OnboardingChecklist() {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+      if (!activeWorkspace) { setLoading(false); return; }
 
-      const [
-        { data: context },
-        { data: articles },
-      ] = await Promise.all([
-        supabase.from('company_contexts').select('id').eq('user_id', user.id).maybeSingle(),
-        supabase.from('articles').select('id').eq('user_id', user.id).limit(1),
-      ]);
+      const { data: articles } = await supabase
+        .from('articles')
+        .select('id')
+        .eq('workspace_id', activeWorkspace.id)
+        .limit(1);
 
-      const hasContext = !!context;
+      const hasContext = !!(activeWorkspace.companyName || activeWorkspace.companyDescription);
       const hasArticles = (articles?.length ?? 0) > 0;
 
       // If everything is done, auto-dismiss
@@ -82,7 +81,7 @@ export function OnboardingChecklist() {
       setLoading(false);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeWorkspace?.id]);
 
   function handleDismiss() {
     localStorage.setItem('kbify-onboarding-dismissed', 'true');

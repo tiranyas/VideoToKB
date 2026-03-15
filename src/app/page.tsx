@@ -7,10 +7,11 @@ import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
 import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 import {
   getArticleTypes, getPlatformProfiles,
-  getUserPreferences, upsertUserPreferences,
-  getCompanyContext, saveArticle, updateArticleHtml,
+  getWorkspacePreferences, upsertWorkspacePreferences,
+  saveArticle, updateArticleHtml,
 } from '@/lib/supabase/queries';
 
 interface StepInfo {
@@ -51,6 +52,7 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
 
   const supabase = createClient();
+  const { activeWorkspace } = useWorkspace();
 
   useEffect(() => {
     async function loadSettings() {
@@ -58,20 +60,27 @@ export default function Home() {
       if (!user) return;
       setUserId(user.id);
 
-      const [types, profs, prefs] = await Promise.all([
+      const [types, profs] = await Promise.all([
         getArticleTypes(supabase),
         getPlatformProfiles(supabase),
-        getUserPreferences(supabase, user.id),
       ]);
 
       setArticleTypes(types);
       setPlatforms(profs);
-      setSelectedTypeId(prefs.selectedArticleTypeId ?? types[0]?.id ?? '');
-      setSelectedPlatId(prefs.selectedPlatformId ?? profs[0]?.id ?? '');
+
+      // Load workspace-scoped preferences
+      if (activeWorkspace) {
+        const prefs = await getWorkspacePreferences(supabase, activeWorkspace.id);
+        setSelectedTypeId(prefs.selectedArticleTypeId ?? types[0]?.id ?? '');
+        setSelectedPlatId(prefs.selectedPlatformId ?? profs[0]?.id ?? '');
+      } else {
+        setSelectedTypeId(types[0]?.id ?? '');
+        setSelectedPlatId(profs[0]?.id ?? '');
+      }
     }
     loadSettings();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeWorkspace?.id]);
 
   // ── Phase A: Generate structured article ─────────────
 
@@ -83,9 +92,9 @@ export default function Home() {
       return;
     }
 
-    // Save preferences
-    if (userId) {
-      upsertUserPreferences(supabase, userId, {
+    // Save workspace preferences
+    if (activeWorkspace) {
+      upsertWorkspacePreferences(supabase, activeWorkspace.id, {
         selectedArticleTypeId: selectedTypeId,
         selectedPlatformId: selectedPlatformId,
       }).catch(() => {});
@@ -98,13 +107,10 @@ export default function Home() {
     setFinalHTML('');
     setSavedArticleId(null);
 
-    // Get company context
+    // Get company context from active workspace
     let companyContext: string | undefined;
-    if (userId) {
-      const ctx = await getCompanyContext(supabase, userId);
-      if (ctx) {
-        companyContext = `Company: ${ctx.name}\n${ctx.description}\nIndustry: ${ctx.industry ?? 'N/A'}\nTarget audience: ${ctx.targetAudience ?? 'N/A'}`;
-      }
+    if (activeWorkspace?.companyName || activeWorkspace?.companyDescription) {
+      companyContext = `Company: ${activeWorkspace.companyName ?? 'N/A'}\n${activeWorkspace.companyDescription ?? ''}\nIndustry: ${activeWorkspace.industry ?? 'N/A'}\nTarget audience: ${activeWorkspace.targetAudience ?? 'N/A'}`;
     }
 
     try {
@@ -138,12 +144,12 @@ export default function Home() {
           setStructuredArticle(event.article);
           setPhase('review');
           // Auto-save article to DB
-          if (userId) {
+          if (userId && activeWorkspace) {
             const title = event.article.match(/^#+\s+(.+)/m)?.[1]
               ?? event.article.split('\n').map(l => l.trim()).find(l => l.length > 0)?.slice(0, 120)
               ?? 'Untitled Article';
             const sourceType = input.transcript ? 'paste' : (input.videoUrl?.includes('drive.google') ? 'google-drive' : 'loom');
-            saveArticle(supabase, userId, {
+            saveArticle(supabase, userId, activeWorkspace.id, {
               title,
               sourceUrl: input.videoUrl,
               sourceType: sourceType as 'loom' | 'google-drive' | 'paste',
@@ -164,7 +170,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, userId]);
+  }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, userId, activeWorkspace]);
 
   // ── Phase B: Generate HTML ───────────────────────────
 

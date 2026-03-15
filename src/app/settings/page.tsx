@@ -6,10 +6,11 @@ import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, A
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
-import type { CompanyContext, ArticleType, PlatformProfile } from '@/types';
+import type { ArticleType, PlatformProfile } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { useWorkspace } from '@/contexts/workspace-context';
 import {
-  getCompanyContext, upsertCompanyContext, deleteCompanyContext as deleteCompanyCtx,
+  updateWorkspace,
   getArticleTypes, addArticleType, updateArticleType, deleteArticleType,
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
 } from '@/lib/supabase/queries';
@@ -71,30 +72,21 @@ export default function SettingsPage() {
   );
 }
 
-// ── Company Context Tab ──────────────────────────────────
+// ── Company Context Tab (workspace-scoped) ──────────────
 
 function CompanyContextTab() {
-  const [context, setContext] = useState<CompanyContext | null>(null);
+  const { activeWorkspace, refreshWorkspaces } = useWorkspace();
   const [url, setUrl] = useState('');
   const [manualText, setManualText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'url' | 'manual'>('url');
-  const [userId, setUserId] = useState<string | null>(null);
 
   const supabase = createClient();
 
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-      const ctx = await getCompanyContext(supabase, user.id);
-      setContext(ctx);
-    })();
-  }, []);
+  const hasContext = !!(activeWorkspace?.companyName || activeWorkspace?.companyDescription);
 
   async function handleScrapeUrl() {
-    if (!url.trim() || !userId) return;
+    if (!url.trim() || !activeWorkspace) return;
     setIsLoading(true);
     try {
       const res = await fetch('/api/scrape-context', {
@@ -105,16 +97,13 @@ function CompanyContextTab() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      const newContext: CompanyContext = {
-        id: crypto.randomUUID(),
-        name: data.name,
-        description: data.description,
+      await updateWorkspace(supabase, activeWorkspace.id, {
+        companyName: data.name,
+        companyDescription: data.description,
         industry: data.industry,
         targetAudience: data.targetAudience,
-        createdAt: new Date().toISOString(),
-      };
-      await upsertCompanyContext(supabase, userId, newContext);
-      setContext(newContext);
+      });
+      await refreshWorkspaces();
       toast.success('Company context extracted successfully');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to extract context');
@@ -124,39 +113,42 @@ function CompanyContextTab() {
   }
 
   async function handleSaveManual() {
-    if (!manualText.trim() || !userId) return;
-    const newContext: CompanyContext = {
-      id: crypto.randomUUID(),
-      name: 'My Company',
-      description: manualText.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    await upsertCompanyContext(supabase, userId, newContext);
-    setContext(newContext);
+    if (!manualText.trim() || !activeWorkspace) return;
+    await updateWorkspace(supabase, activeWorkspace.id, {
+      companyName: activeWorkspace.name,
+      companyDescription: manualText.trim(),
+    });
+    await refreshWorkspaces();
     toast.success('Company context saved');
   }
 
-  async function handleDelete() {
-    if (!userId) return;
-    await deleteCompanyCtx(supabase, userId);
-    setContext(null);
-    toast.success('Company context removed');
+  async function handleClearContext() {
+    if (!activeWorkspace) return;
+    await updateWorkspace(supabase, activeWorkspace.id, {
+      companyName: '',
+      companyDescription: '',
+      industry: '',
+      targetAudience: '',
+    });
+    await refreshWorkspaces();
+    toast.success('Company context cleared');
   }
 
-  async function handleUpdateField(field: keyof CompanyContext, value: string) {
-    if (!context || !userId) return;
-    const updated = { ...context, [field]: value };
-    await upsertCompanyContext(supabase, userId, updated);
-    setContext(updated);
+  async function handleUpdateField(field: 'companyName' | 'companyDescription' | 'industry' | 'targetAudience', value: string) {
+    if (!activeWorkspace) return;
+    await updateWorkspace(supabase, activeWorkspace.id, { [field]: value });
+    await refreshWorkspaces();
   }
 
-  if (context) {
+  if (!activeWorkspace) return null;
+
+  if (hasContext) {
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Current Company Context</h3>
-            <button onClick={handleDelete} className="text-gray-300 hover:text-red-400 transition-colors">
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Company Context — {activeWorkspace.name}</h3>
+            <button onClick={handleClearContext} className="text-gray-300 hover:text-red-400 transition-colors">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
@@ -166,16 +158,16 @@ function CompanyContextTab() {
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Company Name</label>
               <input
                 type="text"
-                value={context.name}
-                onChange={(e) => handleUpdateField('name', e.target.value)}
+                value={activeWorkspace.companyName ?? ''}
+                onChange={(e) => handleUpdateField('companyName', e.target.value)}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Description</label>
               <textarea
-                value={context.description}
-                onChange={(e) => handleUpdateField('description', e.target.value)}
+                value={activeWorkspace.companyDescription ?? ''}
+                onChange={(e) => handleUpdateField('companyDescription', e.target.value)}
                 rows={4}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
               />
@@ -185,7 +177,7 @@ function CompanyContextTab() {
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Industry</label>
                 <input
                   type="text"
-                  value={context.industry ?? ''}
+                  value={activeWorkspace.industry ?? ''}
                   onChange={(e) => handleUpdateField('industry', e.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
                 />
@@ -194,7 +186,7 @@ function CompanyContextTab() {
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Target Audience</label>
                 <input
                   type="text"
-                  value={context.targetAudience ?? ''}
+                  value={activeWorkspace.targetAudience ?? ''}
                   onChange={(e) => handleUpdateField('targetAudience', e.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
                 />
@@ -202,7 +194,7 @@ function CompanyContextTab() {
             </div>
           </div>
         </div>
-        <p className="text-xs text-gray-400">This context is injected into article generation to tailor content to your company.</p>
+        <p className="text-xs text-gray-400">This context is injected into article generation to tailor content for this workspace.</p>
       </div>
     );
   }
@@ -210,7 +202,7 @@ function CompanyContextTab() {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
-        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-2">Add Company Context</h3>
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-2">Add Company Context — {activeWorkspace.name}</h3>
         <p className="text-xs text-gray-400 mb-5">
           Provide information about your company so articles are tailored to your product, audience, and terminology.
         </p>

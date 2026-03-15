@@ -24,26 +24,15 @@ export async function GET() {
       throw new Error(`Failed to fetch articles: ${articlesError.message}`);
     }
 
-    // Fetch company context
-    const { data: companyContext, error: contextError } = await supabase
-      .from('company_contexts')
+    // Fetch workspaces (includes company context)
+    const { data: workspaces, error: wsError } = await supabase
+      .from('workspaces')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle();
+      .order('created_at', { ascending: true });
 
-    if (contextError) {
-      throw new Error(`Failed to fetch company context: ${contextError.message}`);
-    }
-
-    // Fetch user preferences
-    const { data: preferences, error: prefsError } = await supabase
-      .from('user_preferences')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (prefsError) {
-      throw new Error(`Failed to fetch user preferences: ${prefsError.message}`);
+    if (wsError) {
+      throw new Error(`Failed to fetch workspaces: ${wsError.message}`);
     }
 
     const exportData = {
@@ -52,9 +41,8 @@ export async function GET() {
         id: user.id,
         email: user.email,
       },
+      workspaces: workspaces ?? [],
       articles: articles ?? [],
-      companyContext: companyContext ?? null,
-      userPreferences: preferences ?? null,
     };
 
     return new Response(JSON.stringify(exportData, null, 2), {

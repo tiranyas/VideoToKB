@@ -1,62 +1,180 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CompanyContext, ArticleType, PlatformProfile, Article } from '@/types';
+import type { Workspace, ArticleType, PlatformProfile, Article } from '@/types';
 
-// ── Company Context (per-user) ───────────────────────────
+// ── Workspaces ──────────────────────────────────────────
 
-export async function getCompanyContext(
+export async function getWorkspaces(
   supabase: SupabaseClient,
   userId: string
-): Promise<CompanyContext | null> {
+): Promise<Workspace[]> {
   const { data, error } = await supabase
-    .from('company_contexts')
+    .from('workspaces')
     .select('*')
     .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(`Failed to load workspaces: ${error.message}`);
+
+  return (data ?? []).map(mapWorkspaceRow);
+}
+
+export async function getWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<Workspace | null> {
+  const { data, error } = await supabase
+    .from('workspaces')
+    .select('*')
+    .eq('id', workspaceId)
     .maybeSingle();
 
   if (error || !data) return null;
+  return mapWorkspaceRow(data);
+}
 
+export async function createWorkspace(
+  supabase: SupabaseClient,
+  userId: string,
+  ws: { name: string; slug: string; companyName?: string; companyDescription?: string; industry?: string; targetAudience?: string }
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('workspaces')
+    .insert({
+      user_id: userId,
+      name: ws.name,
+      slug: ws.slug,
+      company_name: ws.companyName ?? null,
+      company_description: ws.companyDescription ?? null,
+      industry: ws.industry ?? null,
+      target_audience: ws.targetAudience ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (error) throw new Error(`Failed to create workspace: ${error.message}`);
+  return data.id;
+}
+
+export async function updateWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  ws: Partial<{ name: string; slug: string; companyName: string; companyDescription: string; industry: string; targetAudience: string }>
+): Promise<void> {
+  const updates: Record<string, unknown> = {};
+  if (ws.name !== undefined) updates.name = ws.name;
+  if (ws.slug !== undefined) updates.slug = ws.slug;
+  if (ws.companyName !== undefined) updates.company_name = ws.companyName;
+  if (ws.companyDescription !== undefined) updates.company_description = ws.companyDescription;
+  if (ws.industry !== undefined) updates.industry = ws.industry;
+  if (ws.targetAudience !== undefined) updates.target_audience = ws.targetAudience;
+
+  const { error } = await supabase
+    .from('workspaces')
+    .update(updates)
+    .eq('id', workspaceId);
+
+  if (error) throw new Error(`Failed to update workspace: ${error.message}`);
+}
+
+export async function deleteWorkspace(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('workspaces')
+    .delete()
+    .eq('id', workspaceId);
+
+  if (error) throw new Error(`Failed to delete workspace: ${error.message}`);
+}
+
+function mapWorkspaceRow(row: Record<string, unknown>): Workspace {
   return {
-    id: data.id,
-    name: data.name,
-    description: data.description,
-    industry: data.industry ?? undefined,
-    targetAudience: data.target_audience ?? undefined,
-    createdAt: data.created_at,
+    id: row.id as string,
+    userId: row.user_id as string,
+    name: row.name as string,
+    slug: row.slug as string,
+    companyName: (row.company_name as string) ?? undefined,
+    companyDescription: (row.company_description as string) ?? undefined,
+    industry: (row.industry as string) ?? undefined,
+    targetAudience: (row.target_audience as string) ?? undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
   };
 }
 
-export async function upsertCompanyContext(
-  supabase: SupabaseClient,
-  userId: string,
-  ctx: Omit<CompanyContext, 'id' | 'createdAt'>
-): Promise<void> {
-  const { error } = await supabase.from('company_contexts').upsert(
-    {
-      user_id: userId,
-      name: ctx.name,
-      description: ctx.description,
-      industry: ctx.industry ?? null,
-      target_audience: ctx.targetAudience ?? null,
-    },
-    { onConflict: 'user_id' }
-  );
+// ── Active Workspace (user_settings) ────────────────────
 
-  if (error) throw new Error(`Failed to save company context: ${error.message}`);
-}
-
-export async function deleteCompanyContext(
+export async function getActiveWorkspaceId(
   supabase: SupabaseClient,
   userId: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('company_contexts')
-    .delete()
-    .eq('user_id', userId);
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('user_settings')
+    .select('active_workspace_id')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  if (error) throw new Error(`Failed to delete company context: ${error.message}`);
+  return data?.active_workspace_id ?? null;
 }
 
-// ── Article Types (shared) ───────────────────────────────
+export async function setActiveWorkspaceId(
+  supabase: SupabaseClient,
+  userId: string,
+  workspaceId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert(
+      { user_id: userId, active_workspace_id: workspaceId },
+      { onConflict: 'user_id' }
+    );
+
+  if (error) throw new Error(`Failed to set active workspace: ${error.message}`);
+}
+
+// ── Workspace Preferences (per-workspace) ───────────────
+
+export interface WorkspacePreferences {
+  selectedArticleTypeId: string | null;
+  selectedPlatformId: string | null;
+}
+
+export async function getWorkspacePreferences(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspacePreferences> {
+  const { data } = await supabase
+    .from('workspace_preferences')
+    .select('selected_article_type_id, selected_platform_id')
+    .eq('workspace_id', workspaceId)
+    .maybeSingle();
+
+  return {
+    selectedArticleTypeId: data?.selected_article_type_id ?? null,
+    selectedPlatformId: data?.selected_platform_id ?? null,
+  };
+}
+
+export async function upsertWorkspacePreferences(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  prefs: Partial<WorkspacePreferences>
+): Promise<void> {
+  const row: Record<string, unknown> = { workspace_id: workspaceId };
+  if (prefs.selectedArticleTypeId !== undefined)
+    row.selected_article_type_id = prefs.selectedArticleTypeId;
+  if (prefs.selectedPlatformId !== undefined)
+    row.selected_platform_id = prefs.selectedPlatformId;
+
+  const { error } = await supabase
+    .from('workspace_preferences')
+    .upsert(row, { onConflict: 'workspace_id' });
+
+  if (error) throw new Error(`Failed to save workspace preferences: ${error.message}`);
+}
+
+// ── Article Types (shared/global) ───────────────────────
 
 export async function getArticleTypes(
   supabase: SupabaseClient
@@ -123,7 +241,7 @@ export async function deleteArticleType(
   if (error) throw new Error(`Failed to delete article type: ${error.message}`);
 }
 
-// ── Platform Profiles (shared) ───────────────────────────
+// ── Platform Profiles (shared/global) ───────────────────
 
 export async function getPlatformProfiles(
   supabase: SupabaseClient
@@ -190,58 +308,19 @@ export async function deletePlatformProfile(
   if (error) throw new Error(`Failed to delete platform profile: ${error.message}`);
 }
 
-// ── User Preferences (per-user) ──────────────────────────
-
-export interface UserPreferences {
-  selectedArticleTypeId: string | null;
-  selectedPlatformId: string | null;
-}
-
-export async function getUserPreferences(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<UserPreferences> {
-  const { data } = await supabase
-    .from('user_preferences')
-    .select('selected_article_type_id, selected_platform_id')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  return {
-    selectedArticleTypeId: data?.selected_article_type_id ?? null,
-    selectedPlatformId: data?.selected_platform_id ?? null,
-  };
-}
-
-export async function upsertUserPreferences(
-  supabase: SupabaseClient,
-  userId: string,
-  prefs: Partial<UserPreferences>
-): Promise<void> {
-  const row: Record<string, unknown> = { user_id: userId };
-  if (prefs.selectedArticleTypeId !== undefined)
-    row.selected_article_type_id = prefs.selectedArticleTypeId;
-  if (prefs.selectedPlatformId !== undefined)
-    row.selected_platform_id = prefs.selectedPlatformId;
-
-  const { error } = await supabase
-    .from('user_preferences')
-    .upsert(row, { onConflict: 'user_id' });
-
-  if (error) throw new Error(`Failed to save preferences: ${error.message}`);
-}
-
-// ── Articles (per-user) ──────────────────────────────────
+// ── Articles (workspace-scoped) ─────────────────────────
 
 export async function saveArticle(
   supabase: SupabaseClient,
   userId: string,
-  article: Omit<Article, 'id' | 'userId' | 'createdAt'>
+  workspaceId: string,
+  article: Omit<Article, 'id' | 'userId' | 'workspaceId' | 'createdAt'>
 ): Promise<string> {
   const { data, error } = await supabase
     .from('articles')
     .insert({
       user_id: userId,
+      workspace_id: workspaceId,
       title: article.title,
       source_url: article.sourceUrl ?? null,
       source_type: article.sourceType,
@@ -289,12 +368,12 @@ export async function updateArticleHtml(
 
 export async function getArticles(
   supabase: SupabaseClient,
-  userId: string
+  workspaceId: string
 ): Promise<Article[]> {
   const { data, error } = await supabase
     .from('articles')
     .select('*, article_types(name), platform_profiles(name)')
-    .eq('user_id', userId)
+    .eq('workspace_id', workspaceId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`Failed to load articles: ${error.message}`);
@@ -302,6 +381,7 @@ export async function getArticles(
   return (data ?? []).map((row) => ({
     id: row.id,
     userId: row.user_id,
+    workspaceId: row.workspace_id,
     title: row.title,
     sourceUrl: row.source_url ?? undefined,
     sourceType: row.source_type,
@@ -332,6 +412,7 @@ export async function getArticle(
   return {
     id: data.id,
     userId: data.user_id,
+    workspaceId: data.workspace_id,
     title: data.title,
     sourceUrl: data.source_url ?? undefined,
     sourceType: data.source_type,

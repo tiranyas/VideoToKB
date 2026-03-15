@@ -14,35 +14,23 @@ export async function DELETE() {
   const userId = user.id;
 
   try {
-    // Delete all user's articles
-    const { error: articlesError } = await supabase
-      .from('articles')
+    // Delete user_settings
+    await supabase.from('user_settings').delete().eq('user_id', userId);
+
+    // Delete workspaces (cascades to articles, workspace_preferences)
+    const { error: wsError } = await supabase
+      .from('workspaces')
       .delete()
       .eq('user_id', userId);
 
-    if (articlesError) {
-      throw new Error(`Failed to delete articles: ${articlesError.message}`);
+    if (wsError) {
+      throw new Error(`Failed to delete workspaces: ${wsError.message}`);
     }
 
-    // Delete user's company contexts
-    const { error: contextError } = await supabase
-      .from('company_contexts')
-      .delete()
-      .eq('user_id', userId);
-
-    if (contextError) {
-      throw new Error(`Failed to delete company context: ${contextError.message}`);
-    }
-
-    // Delete user's preferences
-    const { error: prefsError } = await supabase
-      .from('user_preferences')
-      .delete()
-      .eq('user_id', userId);
-
-    if (prefsError) {
-      throw new Error(`Failed to delete user preferences: ${prefsError.message}`);
-    }
+    // Clean up legacy tables (if they still exist)
+    await supabase.from('articles').delete().eq('user_id', userId);
+    await supabase.from('company_contexts').delete().eq('user_id', userId);
+    await supabase.from('user_preferences').delete().eq('user_id', userId);
 
     // Delete the auth user using admin API (service role key bypasses RLS)
     const adminSupabase = createAdminClient(

@@ -23,8 +23,9 @@ function getAdmin(): SupabaseClient {
 interface GenerateRequest {
   videoUrl?: string;
   transcript?: string;
-  articleType?: string;   // article type ID (optional — uses user's default)
-  platform?: string;      // platform profile ID (optional — uses user's default)
+  articleType?: string;   // article type ID (optional — uses workspace default)
+  platform?: string;      // platform profile ID (optional — uses workspace default)
+  workspace?: string;     // workspace ID (optional — uses active workspace)
 }
 
 interface GenerateResponse {
@@ -101,12 +102,54 @@ export async function POST(req: Request) {
     );
   }
 
-  // ── Load user settings ──────────────────────────────
-  // Get user preferences for defaults
-  const { data: prefs } = await getAdmin()
-    .from('user_preferences')
-    .select('selected_article_type_id, selected_platform_id')
+  // ── Resolve workspace ──────────────────────────────
+  let workspaceId = body.workspace;
+
+  if (!workspaceId) {
+    // Try active workspace from user_settings
+    const { data: settings } = await getAdmin()
+      .from('user_settings')
+      .select('active_workspace_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    workspaceId = settings?.active_workspace_id;
+  }
+
+  if (!workspaceId) {
+    // Fall back to first workspace
+    const { data: wsList } = await getAdmin()
+      .from('workspaces')
+      .select('id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(1);
+    workspaceId = wsList?.[0]?.id;
+  }
+
+  if (!workspaceId) {
+    return Response.json(
+      { error: 'No workspace found. Create a workspace first.' },
+      { status: 400 }
+    );
+  }
+
+  // Load workspace (for company context)
+  const { data: workspace } = await getAdmin()
+    .from('workspaces')
+    .select('*')
+    .eq('id', workspaceId)
     .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!workspace) {
+    return Response.json({ error: 'Workspace not found or access denied' }, { status: 404 });
+  }
+
+  // ── Load workspace preferences ────────────────────
+  const { data: prefs } = await getAdmin()
+    .from('workspace_preferences')
+    .select('selected_article_type_id, selected_platform_id')
+    .eq('workspace_id', workspaceId)
     .maybeSingle();
 
   const articleTypeId = body.articleType || prefs?.selected_article_type_id;
@@ -141,16 +184,10 @@ export async function POST(req: Request) {
     platform = data;
   }
 
-  // Load company context
+  // Load company context from workspace
   let companyContext: string | undefined;
-  const { data: ctx } = await getAdmin()
-    .from('company_contexts')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (ctx) {
-    companyContext = `Company: ${ctx.name}\n${ctx.description}\nIndustry: ${ctx.industry ?? 'N/A'}\nTarget audience: ${ctx.target_audience ?? 'N/A'}`;
+  if (workspace.company_name || workspace.company_description) {
+    companyContext = `Company: ${workspace.company_name ?? 'N/A'}\n${workspace.company_description ?? ''}\nIndustry: ${workspace.industry ?? 'N/A'}\nTarget audience: ${workspace.target_audience ?? 'N/A'}`;
   }
 
   // ── Run Phase A: Generate structured article ────────
@@ -224,6 +261,7 @@ export async function POST(req: Request) {
     .from('articles')
     .insert({
       user_id: userId,
+      workspace_id: workspaceId,
       title,
       source_url: body.videoUrl ?? null,
       source_type: sourceType,
