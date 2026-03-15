@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { getWorkspaceStats } from '@/lib/supabase/queries';
+import { getWorkspaceStats, getUserUsage } from '@/lib/supabase/queries';
+import type { UserUsage } from '@/types';
 import { cn } from '@/utils/cn';
 
 interface DashboardStats {
@@ -23,6 +24,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [usage, setUsage] = useState<UserUsage | null>(null);
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
@@ -34,7 +36,9 @@ export default function DashboardPage() {
     (async () => {
       setLoading(true);
 
-      const [wsStats, { data: recentArticles }] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const [wsStats, { data: recentArticles }, userUsage] = await Promise.all([
         getWorkspaceStats(supabase, activeWorkspace.id),
         supabase
           .from('articles')
@@ -42,10 +46,12 @@ export default function DashboardPage() {
           .eq('workspace_id', activeWorkspace.id)
           .order('created_at', { ascending: false })
           .limit(5),
+        user ? getUserUsage(supabase, user.id).catch(() => null) : Promise.resolve(null),
       ]);
 
       const hasCompanyContext = !!(activeWorkspace.companyName || activeWorkspace.companyDescription);
 
+      setUsage(userUsage);
       setStats({
         totalArticles: wsStats.totalArticles,
         thisWeek: wsStats.thisWeek,
@@ -146,6 +152,50 @@ export default function DashboardPage() {
             <p className="text-3xl font-bold text-gray-900">{stats.thisMonth}</p>
           </div>
         </div>
+
+        {/* Usage / Plan */}
+        {usage && (
+          <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-5 mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {usage.planName} Plan
+                </span>
+                <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">
+                  {usage.articlesThisPeriod} / {usage.articleLimit + usage.bonusCredits} articles used
+                </span>
+              </div>
+              <span className="text-xs text-gray-400">
+                Resets {new Date(usage.periodEnd).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all duration-500',
+                  usage.articlesRemaining <= 0
+                    ? 'bg-red-500'
+                    : usage.articlesRemaining <= 2
+                    ? 'bg-amber-500'
+                    : 'bg-violet-500'
+                )}
+                style={{
+                  width: `${Math.min(100, (usage.articlesThisPeriod / Math.max(1, usage.articleLimit + usage.bonusCredits)) * 100)}%`,
+                }}
+              />
+            </div>
+            {usage.articlesRemaining <= 2 && usage.articlesRemaining > 0 && (
+              <p className="mt-2 text-xs text-amber-600">
+                {usage.articlesRemaining} article{usage.articlesRemaining === 1 ? '' : 's'} remaining this period
+              </p>
+            )}
+            {usage.articlesRemaining <= 0 && (
+              <p className="mt-2 text-xs text-red-600">
+                You&apos;ve reached your article limit. Contact support for additional credits.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Articles */}

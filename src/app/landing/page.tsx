@@ -12,6 +12,12 @@ export default function LandingPage() {
             <span className="text-lg font-semibold text-gray-900">KBify</span>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href="#pricing"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 hidden sm:block"
+            >
+              Pricing
+            </a>
             <Link
               href="/login"
               className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
@@ -259,6 +265,143 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 px-6 bg-gray-50/70">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
+            Simple, transparent pricing
+          </h2>
+          <p className="text-center text-gray-500 mb-14 max-w-lg mx-auto">
+            Start free. Upgrade when you need more.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {/* Free */}
+            <div className="bg-white rounded-2xl p-7 border border-gray-100 flex flex-col">
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 text-lg">Free</h3>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-gray-900">$0</span>
+                  <span className="text-sm text-gray-400">/month</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">Perfect to try KBify</p>
+              </div>
+              <ul className="space-y-3 text-sm text-gray-600 mb-8 flex-1">
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  3 articles per month
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  All input sources
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  1 workspace
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Export: Markdown, HTML, Word
+                </li>
+              </ul>
+              <Link
+                href="/login?signup=true"
+                className="w-full text-center rounded-xl border border-gray-200 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            {/* Pro — highlighted */}
+            <div className="bg-white rounded-2xl p-7 border-2 border-violet-500 flex flex-col relative shadow-lg shadow-violet-500/10">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+                Most Popular
+              </div>
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 text-lg">Pro</h3>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-gray-900">$19</span>
+                  <span className="text-sm text-gray-400">/month</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">For individuals and small teams</p>
+              </div>
+              <ul className="space-y-3 text-sm text-gray-600 mb-8 flex-1">
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  50 articles per month
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  All input sources
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  3 workspaces
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Custom article types
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  API access
+                </li>
+              </ul>
+              <Link
+                href="/login?signup=true"
+                className="w-full text-center rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-3 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all shadow-sm"
+              >
+                Start Free Trial
+              </Link>
+            </div>
+
+            {/* Business */}
+            <div className="bg-white rounded-2xl p-7 border border-gray-100 flex flex-col">
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 text-lg">Business</h3>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-gray-900">$49</span>
+                  <span className="text-sm text-gray-400">/month</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">For growing teams and agencies</p>
+              </div>
+              <ul className="space-y-3 text-sm text-gray-600 mb-8 flex-1">
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  200 articles per month
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  All input sources
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Unlimited workspaces
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Custom article types
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  API access
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  Priority support
+                </li>
+              </ul>
+              <Link
+                href="/login?signup=true"
+                className="w-full text-center rounded-xl border border-gray-200 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Start Free Trial
+              </Link>
+            </div>
           </div>
         </div>
       </section>
