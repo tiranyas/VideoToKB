@@ -1,4 +1,5 @@
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
+import { flushUsageLogs } from '@/lib/usage-logger';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkQuota } from '@/lib/supabase/queries';
@@ -154,6 +155,8 @@ export async function POST(req: Request) {
             message: 'An unexpected error occurred during processing.',
           });
         } finally {
+          // Flush usage logs (best-effort, non-blocking)
+          await flushUsageLogs(user!.id).catch(() => {});
           controller.close();
         }
       })();

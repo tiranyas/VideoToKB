@@ -3,6 +3,7 @@ import { validateApiKey } from '@/lib/api-keys';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkQuota } from '@/lib/supabase/queries';
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
+import { flushUsageLogs } from '@/lib/usage-logger';
 import type { ProgressEvent } from '@/types';
 
 export const maxDuration = 300;
@@ -294,6 +295,9 @@ export async function POST(req: Request) {
     })
     .select('id')
     .single();
+
+  // Flush usage logs (non-blocking)
+  await flushUsageLogs(userId, saved?.id);
 
   if (saveError) {
     // Still return the article even if save fails

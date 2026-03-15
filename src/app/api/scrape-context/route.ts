@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateUrl } from '@/lib/url-validation';
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
     // Use Claude to extract company info
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
+    const start = Date.now();
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1500,
@@ -84,6 +86,25 @@ Return ONLY the JSON object, no markdown or explanations.`,
         },
       ],
     });
+    const durationMs = Date.now() - start;
+
+    // Log usage (best-effort)
+    try {
+      const admin = createSupabaseAdmin(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      await admin.from('api_usage_logs').insert({
+        user_id: user.id,
+        model: 'claude-sonnet-4-6',
+        agent: 'scrape-context',
+        input_tokens: message.usage.input_tokens,
+        output_tokens: message.usage.output_tokens,
+        duration_ms: durationMs,
+      });
+    } catch {
+      // Don't fail the request if logging fails
+    }
 
     const textBlock = message.content.find((b) => b.type === 'text');
     if (!textBlock || textBlock.type !== 'text') {
