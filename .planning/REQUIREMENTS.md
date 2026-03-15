@@ -1,143 +1,68 @@
-# Requirements: VideoToKB
+# Requirements: KBify Stabilization
 
-**Defined:** 2026-03-12
-**Core Value:** A user can take a video recording and get back a publish-ready KB article in minutes instead of days
+**Defined:** 2026-03-15
+**Core Value:** Production reliability and code quality for a deployed SaaS
 
 ## v1 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+Requirements for stabilization milestone. Each maps to roadmap phases.
 
-### Video Input
+### Security
 
-- [x] **VINP-01**: User can paste a Loom share URL and submit it for processing
-- [ ] **VINP-02**: User can paste a YouTube URL (including unlisted videos) and submit it for processing
-- [ ] **VINP-03**: User can paste a Google Drive URL (MP4, MOV sharing link) and submit it for processing
-- [ ] **VINP-04**: System validates URL format and video accessibility before starting the pipeline
-- [ ] **VINP-05**: System shows specific error messages for invalid/inaccessible URLs ("video is private", "unsupported format", "URL not recognized")
-- [ ] **VINP-06**: System rejects videos longer than 15 minutes with a clear message
+- [ ] **SEC-01**: Rate limiter uses persistent storage that works across serverless instances
+- [ ] **SEC-02**: SSRF protection blocks IPv6 private/loopback ranges in addition to IPv4
 
-### Transcription
+### Testing
 
-- [x] **TRNS-01**: System transcribes video audio via AssemblyAI with timestamps
-- [x] **TRNS-02**: System preprocesses transcript (strips filler words, collapses to paragraph-level timestamps)
-- [ ] **TRNS-03**: System supports speaker diarization when multiple speakers are detected
+- [ ] **TEST-01**: Pipeline tests use the current function signature and pass
+- [ ] **TEST-02**: Article generator test asserts the correct model name (claude-sonnet-4-6)
 
-### Article Generation
+### Performance
 
-- [ ] **GENR-01**: User can select one of 4 article templates: How-to, Feature Explainer, Troubleshooting, Onboarding
-- [x] **GENR-02**: System generates structured KB article via Claude API (claude-sonnet-4-5) based on transcript + selected template
-- [ ] **GENR-03**: Each template produces a genuinely different article structure (not just heading changes)
-- [ ] **GENR-04**: System auto-generates suggested article title and metadata (tags, description) in the same generation pass
-- [ ] **GENR-05**: User can provide adjustment instructions and regenerate the article without re-transcribing
-
-### Processing UX
-
-- [x] **PRUX-01**: User sees step-by-step progress during processing (Resolving → Transcribing → Generating → Done)
-- [x] **PRUX-02**: System streams progress via SSE so user gets real-time feedback
-- [x] **PRUX-03**: System shows specific, actionable error messages at each pipeline stage
-
-### Output & Export
-
-- [x] **OUTP-01**: User can view generated article in an editable text area
-- [ ] **OUTP-02**: User can copy article as Markdown to clipboard
-- [ ] **OUTP-03**: User can copy article as HTML to clipboard
-- [ ] **OUTP-04**: User can copy article as code-only format to clipboard
-- [ ] **OUTP-05**: User can export article as Word document (.docx)
-- [ ] **OUTP-06**: User can go back to the input page and generate another article
-
-### Usage Control
-
-- [ ] **USAG-01**: Guest users get 3 free articles tracked via localStorage
-- [ ] **USAG-02**: System shows clear message when free limit is reached with call-to-action
-
-### UI / Landing
-
-- [x] **UILP-01**: Homepage is a single centered input field ("Paste your Loom / YouTube / Google Drive URL") with template dropdown and "Create Article" button
-- [x] **UILP-02**: No login, no dashboard, no navigation — the URL input IS the homepage
-- [ ] **UILP-03**: App is mobile-responsive
+- [ ] **PERF-01**: Dashboard stats are computed via DB aggregation query, not client-side JS
+- [ ] **PERF-02**: SSE parsing logic is extracted into a shared utility used by both components
 
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
 
-### Authentication & Billing
+### Testing
 
-- **AUTH-01**: User can sign up and log in via Supabase auth
-- **AUTH-02**: Registered user sees credit balance and purchase options
-- **AUTH-03**: User can buy article credits via Stripe (Starter $19/10, Growth $49/30, Pro $129/100)
-- **AUTH-04**: System enforces credit-based usage for registered users
+- **TEST-03**: Add test coverage for YouTube resolver
+- **TEST-04**: Add test coverage for Google Drive resolver
+- **TEST-05**: Add test coverage for API routes
 
-### History & Dashboard
+### Code Quality
 
-- **HIST-01**: Registered user can view previously generated articles
-- **HIST-02**: Dashboard accessible from nav menu (not homepage)
-
-### Advanced Output
-
-- **ADVT-01**: Google Doc export (requires OAuth + Drive API)
-- **ADVT-02**: KB-platform-aware formatting (Helpjuice, Zendesk, Freshdesk styles)
-- **ADVT-03**: Automatic table of contents for articles over 1000 words
-
-### Power Features
-
-- **POWR-01**: Batch processing (multiple video URLs at once)
-- **POWR-02**: Screenshot extraction from video frames placed inline
-- **POWR-03**: Style matching from existing KB articles
-- **POWR-04**: Custom template builder
+- **QUAL-01**: Extract duplicated admin Supabase singleton into shared module
+- **QUAL-02**: Extract company context builder into shared function
+- **QUAL-03**: Refactor settings page into smaller components
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Built-in KB hosting/CMS | Pipeline tool, not KB replacement — users have existing KB platforms |
-| Real-time collaborative editing | Google Doc / Word export handles collaboration |
-| Video recording/capture | Loom, OBS, native tools exist — accept URLs only |
-| Full video player with transcript sync | Users care about article output, not re-watching video |
-| AI chatbot for article refinement | Regenerate with instructions covers this simpler |
-| Multi-language translation | Generate in video's spoken language; translation is separate |
-| Direct KB API push (v1) | Each integration is a week+ of work; copy/export first |
-| Chrome Extension (v1) | Growth play, not validation play |
-| Video file upload | Only URLs for MVP — storage/bandwidth cost |
-| Mobile app | Web-first |
+| Stripe webhook handler | Stripe not connected yet |
+| Structured logging | Nice to have but not blocking production |
+| React exhaustive-deps fixes | Low risk, would touch many files |
+| Anthropic client singleton | Marginal performance gain |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VINP-01 | Phase 1 | Complete |
-| VINP-02 | Phase 2 | Pending |
-| VINP-03 | Phase 2 | Pending |
-| VINP-04 | Phase 2 | Pending |
-| VINP-05 | Phase 2 | Pending |
-| VINP-06 | Phase 2 | Pending |
-| TRNS-01 | Phase 1 | Complete |
-| TRNS-02 | Phase 1 | Complete |
-| TRNS-03 | Phase 2 | Pending |
-| GENR-01 | Phase 3 | Pending |
-| GENR-02 | Phase 1 | Complete |
-| GENR-03 | Phase 3 | Pending |
-| GENR-04 | Phase 3 | Pending |
-| GENR-05 | Phase 3 | Pending |
-| PRUX-01 | Phase 1 | Complete |
-| PRUX-02 | Phase 1 | Complete |
-| PRUX-03 | Phase 1 | Complete |
-| OUTP-01 | Phase 1 | Complete |
-| OUTP-02 | Phase 4 | Pending |
-| OUTP-03 | Phase 4 | Pending |
-| OUTP-04 | Phase 4 | Pending |
-| OUTP-05 | Phase 4 | Pending |
-| OUTP-06 | Phase 5 | Pending |
-| USAG-01 | Phase 5 | Pending |
-| USAG-02 | Phase 5 | Pending |
-| UILP-01 | Phase 1 | Complete |
-| UILP-02 | Phase 1 | Complete |
-| UILP-03 | Phase 5 | Pending |
+| SEC-01 | TBD | Pending |
+| SEC-02 | TBD | Pending |
+| TEST-01 | TBD | Pending |
+| TEST-02 | TBD | Pending |
+| PERF-01 | TBD | Pending |
+| PERF-02 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 28
-- Unmapped: 0
+- v1 requirements: 6 total
+- Mapped to phases: 0
+- Unmapped: 6 ⚠️
 
 ---
-*Requirements defined: 2026-03-12*
-*Last updated: 2026-03-12 after roadmap creation*
+*Requirements defined: 2026-03-15*
+*Last updated: 2026-03-15 after initial definition*
