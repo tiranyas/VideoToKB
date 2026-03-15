@@ -73,6 +73,45 @@ export interface Workspace {
   updatedAt: string;
 }
 
+// Pricing & Subscriptions
+export type PlanId = 'free' | 'pro' | 'business';
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+
+export interface Plan {
+  id: PlanId;
+  name: string;
+  priceCents: number;
+  articleLimit: number;
+  description?: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  planId: PlanId;
+  status: SubscriptionStatus;
+  bonusCredits: number;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  stripeSubscriptionId?: string;
+  stripeCustomerId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserUsage {
+  articlesThisPeriod: number;
+  articleLimit: number;
+  bonusCredits: number;
+  articlesRemaining: number;
+  planId: PlanId;
+  planName: string;
+  periodStart: string;
+  periodEnd: string;
+}
+
 // Saved article
 export interface Article {
   id: string;
