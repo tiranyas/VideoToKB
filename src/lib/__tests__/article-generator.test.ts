@@ -23,7 +23,7 @@ describe('generateArticle', () => {
   const sampleTranscript = 'Navigate to the settings page and click on the security tab.';
   const sampleTemplate = 'You are a technical writer creating a How-to Guide.';
 
-  it('calls Anthropic with claude-sonnet-4-5 model', async () => {
+  it('calls Anthropic with claude-sonnet-4-6 model', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: '# How to Configure Security Settings' }],
     });
@@ -32,7 +32,7 @@ describe('generateArticle', () => {
 
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: expect.stringContaining('claude-sonnet-4-5'),
+        model: expect.stringContaining('claude-sonnet-4-6'),
       })
     );
   });
