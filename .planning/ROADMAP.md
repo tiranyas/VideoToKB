@@ -102,7 +102,11 @@ Plans:
   2. Submitting a URL containing an IPv6 private/loopback address (e.g., `http://[::1]/internal`) is rejected by URL validation
   3. Running `npm test` produces a passing suite with no signature-mismatch errors in pipeline tests
   4. Running `npm test` produces a passing suite where the article-generator test asserts `claude-sonnet-4-6`
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Persistent rate limiter (Supabase) and shared URL validation with IPv6 SSRF protection
+- [ ] 06-02-PLAN.md — Fix pipeline test signatures and article generator model assertion
 
 #### Phase 7: Performance and Cleanup
 **Goal**: The system is maintainable and efficient — dashboard stats come from the DB and SSE parsing logic lives in one place
@@ -122,9 +126,9 @@ Plans:
 | 3. Templates and Generation Quality | v1.0 | 0/TBD | Not started | - |
 | 4. Export Formats | v1.0 | 0/TBD | Not started | - |
 | 5. Usage Control and Polish | v1.0 | 0/TBD | Not started | - |
-| 6. Security and Tests | v1.1 | 0/TBD | Not started | - |
+| 6. Security and Tests | v1.1 | 0/2 | Not started | - |
 | 7. Performance and Cleanup | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-15 — v1.1 Stabilization milestone added (Phases 6-7)*
+*Last updated: 2026-03-15 — Phase 6 plans created (2 plans, 1 wave)*
