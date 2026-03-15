@@ -178,7 +178,7 @@ export function UrlForm({
           )}
           disabled={isProcessing}
         >
-          Paste Transcript
+          Paste Content
         </button>
       </div>
 
@@ -228,17 +228,20 @@ export function UrlForm({
       ) : (
         <div>
           <label htmlFor="transcript" className="block text-xs font-medium text-gray-400 mb-1.5">
-            Transcript
+            Your Content
           </label>
           <textarea
             id="transcript"
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
-            placeholder="Paste your ready-made transcript here..."
+            placeholder="Paste any content — user stories, meeting notes, feature specs, transcripts, process descriptions..."
             rows={8}
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 resize-y transition-all"
             disabled={isProcessing}
           />
+          <p className="mt-1.5 text-xs text-gray-400">
+            Works with any text: user stories, specs, transcripts, release notes, meeting summaries, and more.
+          </p>
         </div>
       )}
 

@@ -70,7 +70,7 @@ export default function LoginPage() {
           <div className="flex flex-col items-center">
             <Image src="/logo.png" alt="KBify" width={80} height={80} className="mb-3" />
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">KBify</h1>
-            <p className="mt-2 text-sm text-gray-400">Turn video recordings into KB articles</p>
+            <p className="mt-2 text-sm text-gray-400">Turn any content into KB articles</p>
           </div>
 
           {sent ? (

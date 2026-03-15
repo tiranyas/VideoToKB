@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "KBify",
-  description: "Convert video recordings into structured knowledge base articles",
+  description: "Turn any content into publish-ready knowledge base articles — videos, user stories, specs, and more",
 };
 
 export default async function RootLayout({

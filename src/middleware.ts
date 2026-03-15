@@ -29,10 +29,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Allow access to login page and auth callback without auth
-  const isAuthRoute =
+  // Allow access to public pages without auth
+  const isPublicRoute =
     request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/auth/callback');
+    request.nextUrl.pathname.startsWith('/landing') ||
+    request.nextUrl.pathname.startsWith('/auth/callback') ||
+    request.nextUrl.pathname === '/privacy' ||
+    request.nextUrl.pathname === '/terms';
 
   // If an auth code arrives at any route (e.g. from magic link), forward to callback
   const code = request.nextUrl.searchParams.get('code');
@@ -42,14 +45,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = '/landing';
     return NextResponse.redirect(url);
   }
 
-  // If logged in user visits /login, redirect to home
-  if (user && request.nextUrl.pathname === '/login') {
+  // If logged in user visits /login or /landing, redirect to home
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/landing')) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
