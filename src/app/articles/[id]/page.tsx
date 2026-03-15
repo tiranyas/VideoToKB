@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Copy, Check, FileDown, Trash2, ArrowLeft, Pencil, Code, Loader2, Save } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getArticle, deleteArticle, updateArticleTitle, updateArticleHtml, getPlatformProfiles } from '@/lib/supabase/queries';
+import { readSSEStream } from '@/lib/sse';
 import { cn } from '@/utils/cn';
 import type { Article, PlatformProfile } from '@/types';
 
@@ -159,38 +160,14 @@ export default function ArticleDetailPage() {
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response stream');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
       let resultHtml = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop() ?? '';
-
-        for (const part of parts) {
-          for (const line of part.split('\n')) {
-            if (line.startsWith('data: ')) {
-              try {
-                const event = JSON.parse(line.slice(6));
-                if (event.step === 'done' && event.html) {
-                  resultHtml = event.html;
-                } else if (event.step === 'error') {
-                  throw new Error(event.message ?? 'Generation failed');
-                }
-              } catch (e) {
-                if (e instanceof Error && e.message !== 'Generation failed') continue;
-                throw e;
-              }
-            }
-          }
+      await readSSEStream(response, (event) => {
+        if (event.step === 'done' && event.html) {
+          resultHtml = event.html;
+        } else if (event.step === 'error') {
+          throw new Error(event.message ?? 'Generation failed');
         }
-      }
+      });
 
       if (resultHtml) {
         await updateArticleHtml(supabase, article.id, resultHtml, userId);

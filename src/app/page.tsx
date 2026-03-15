@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import type { PipelineStep, StepStatus, ProgressEvent, ArticleType, PlatformProfile } from '@/types';
+import type { PipelineStep, StepStatus, ArticleType, PlatformProfile } from '@/types';
+import { readSSEStream } from '@/lib/sse';
 import { UrlForm } from '@/components/url-form';
 import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
@@ -127,7 +128,17 @@ export default function Home() {
         }),
       });
 
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 403) {
+          const errData = await response.json().catch(() => ({}));
+          if (errData.error === 'quota_exceeded') {
+            setError(errData.message ?? 'You have reached your article limit for this month.');
+            setPhase('input');
+            return;
+          }
+        }
+        throw new Error(`Server error: ${response.status}`);
+      }
 
       await readSSEStream(response, (event) => {
         if (event.step === 'error') {
@@ -407,38 +418,3 @@ export default function Home() {
   );
 }
 
-// ── SSE Reader Helper ────────────────────────────────────
-
-async function readSSEStream(
-  response: Response,
-  onEvent: (event: ProgressEvent) => void
-) {
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error('No response stream available');
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split('\n\n');
-    buffer = parts.pop() ?? '';
-
-    for (const part of parts) {
-      const lines = part.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const event: ProgressEvent = JSON.parse(line.slice(6));
-            onEvent(event);
-          } catch {
-            // Skip malformed JSON
-          }
-        }
-      }
-    }
-  }
-}
