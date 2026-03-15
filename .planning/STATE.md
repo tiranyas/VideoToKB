@@ -1,36 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: "Completed 01-03-PLAN.md (frontend UI: URL form, progress display, article view, homepage wiring)"
-last_updated: "2026-03-12T21:51:25.602Z"
-last_activity: 2026-03-12 -- Completed 01-03-PLAN.md
+milestone: v1.1
+milestone_name: stabilization
+status: ready_to_plan
+stopped_at: "Roadmap created for v1.1 Stabilization milestone (Phases 6-7)"
+last_updated: "2026-03-15"
+last_activity: 2026-03-15 -- v1.1 Stabilization roadmap created
 progress:
-  total_phases: 5
+  total_phases: 7
   completed_phases: 0
   total_plans: 4
   completed_plans: 3
-  percent: 75
+  percent: 11
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-12)
+See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** A user can take a video recording and get back a publish-ready KB article in minutes instead of days
-**Current focus:** Phase 1 - End-to-End Pipeline
+**Current focus:** Phase 6 - Security and Tests (v1.1 Stabilization)
 
 ## Current Position
 
-Phase: 1 of 5 (End-to-End Pipeline)
-Plan: 3 of 4 in current phase
-Status: Executing
-Last activity: 2026-03-12 -- Completed 01-03-PLAN.md
+Phase: 6 of 7 in v1.1 (Security and Tests)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-15 -- v1.1 Stabilization roadmap created (Phases 6-7)
 
-Progress: [████████░░] 75%
+Progress: [█░░░░░░░░░] 11% (3/4 plans in Phase 1 done; Phases 2-7 not started)
 
 ## Performance Metrics
 
@@ -58,13 +58,11 @@ Progress: [████████░░] 75%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap]: Pipeline-risk-first ordering -- prove Loom end-to-end on Vercel before expanding sources
+- [Roadmap]: Pipeline-risk-first ordering — prove Loom end-to-end on Vercel before expanding sources
 - [Roadmap]: Word export (.docx) replaces Google Doc export in v1 (Google Doc deferred to v2 per research)
-- [Roadmap]: Template selection exists from Phase 1 UI but only one template functional; all 4 distinct templates ship in Phase 3
 - [01-01]: Used create-next-app in temp directory to work around directory name casing restriction
-- [01-01]: Added .env.local.example exception to .gitignore
 - [01-02]: Lazy SDK instantiation (inside function body) for Vitest 4.x mock constructor compatibility
-- [01-02]: Used [\s\S] instead of dotAll regex flag for ES2017 target compatibility
+- [v1.1 Roadmap]: Stabilization split into Security+Tests first, then Performance+Cleanup — correctness before optimization
 
 ### Pending Todos
 
@@ -72,12 +70,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- Verify Loom oEmbed API works for public share links (research confidence: MEDIUM-LOW)
-- Verify AssemblyAI can accept YouTube URLs directly (may simplify Phase 2)
-- Verify Vercel Fluid Compute is enabled by default on Hobby tier
+- Phase 6: Rate limiter needs Upstash Redis or Supabase persistent store — evaluate which fits existing Supabase stack better
+- Phase 6: IPv6 SSRF protection requires testing against actual IPv6 loopback addresses
+- Phase 1 (v1.0): 01-04-PLAN.md (Vercel deployment) still pending before v1.0 can close
 
 ## Session Continuity
 
-Last session: 2026-03-12
-Stopped at: Completed 01-03-PLAN.md (frontend UI: URL form, progress display, article view, homepage wiring)
+Last session: 2026-03-15
+Stopped at: v1.1 Stabilization roadmap created — ready to plan Phase 6
 Resume file: None

@@ -1,27 +1,18 @@
-# Roadmap: VideoToKB
+# Roadmap: KBify
 
-## Overview
+## Milestones
 
-VideoToKB delivers a web-based pipeline that converts video recordings into structured KB articles. The roadmap is pipeline-risk-first: Phase 1 proves the end-to-end architecture works (one video source, one template, deployed on Vercel), then subsequent phases expand video sources, template quality, export options, and usage controls. Every phase delivers a vertically complete, testable capability.
+- 🚧 **v1.0 MVP** - Phases 1-5 (in progress)
+- 📋 **v1.1 Stabilization** - Phases 6-7 (planned)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+### 🚧 v1.0 MVP (In Progress)
 
-Decimal phases appear between their surrounding integers in numeric order.
+**Milestone Goal:** A deployed SaaS that converts video recordings into publish-ready KB articles across multiple sources, export formats, and usage controls.
 
-- [ ] **Phase 1: End-to-End Pipeline** - Loom URL to KB article with progress feedback, deployed on Vercel
-- [ ] **Phase 2: Multi-Source Video Input** - YouTube + Google Drive support with validation and error handling
-- [ ] **Phase 3: Templates and Generation Quality** - All 4 distinct templates, metadata, and regeneration
-- [ ] **Phase 4: Export Formats** - Markdown, HTML, code copy, and Word document export
-- [ ] **Phase 5: Usage Control and Polish** - Free tier limits, mobile responsive, navigation flow
-
-## Phase Details
-
-### Phase 1: End-to-End Pipeline
-**Goal**: A user can paste a Loom URL, see real-time progress, and view a generated KB article -- deployed and working on Vercel, not just local dev
+#### Phase 1: End-to-End Pipeline
+**Goal**: A user can paste a Loom URL, see real-time progress, and view a generated KB article — deployed and working on Vercel, not just local dev
 **Depends on**: Nothing (first phase)
 **Requirements**: UILP-01, UILP-02, VINP-01, TRNS-01, TRNS-02, GENR-02, PRUX-01, PRUX-02, PRUX-03, OUTP-01
 **Success Criteria** (what must be TRUE):
@@ -33,12 +24,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffolding, shared types, test infrastructure (Wave 0)
-- [ ] 01-02-PLAN.md — Backend pipeline services (Loom resolver, transcription, article generator, SSE API)
-- [ ] 01-03-PLAN.md — Frontend UI (URL form, progress display, article view, homepage wiring)
+- [x] 01-01-PLAN.md — Project scaffolding, shared types, test infrastructure (Wave 0)
+- [x] 01-02-PLAN.md — Backend pipeline services (Loom resolver, transcription, article generator, SSE API)
+- [x] 01-03-PLAN.md — Frontend UI (URL form, progress display, article view, homepage wiring)
 - [ ] 01-04-PLAN.md — Vercel deployment and end-to-end verification
 
-### Phase 2: Multi-Source Video Input
+#### Phase 2: Multi-Source Video Input
 **Goal**: Users can submit videos from YouTube and Google Drive in addition to Loom, with clear validation and error messages for all sources
 **Depends on**: Phase 1
 **Requirements**: VINP-02, VINP-03, VINP-04, VINP-05, VINP-06, TRNS-03
@@ -54,13 +45,13 @@ Plans:
 - [ ] 02-01: TBD
 - [ ] 02-02: TBD
 
-### Phase 3: Templates and Generation Quality
+#### Phase 3: Templates and Generation Quality
 **Goal**: Users can choose from 4 genuinely different article templates and refine output without re-transcribing
 **Depends on**: Phase 2
 **Requirements**: GENR-01, GENR-03, GENR-04, GENR-05
 **Success Criteria** (what must be TRUE):
   1. User can select one of 4 templates (How-to, Feature Explainer, Troubleshooting, Onboarding) before processing
-  2. Each template produces a visibly different article structure (different headings, sections, and formatting -- not just a title swap)
+  2. Each template produces a visibly different article structure (different headings, sections, and formatting — not just a title swap)
   3. Generated articles include a suggested title, tags, and description alongside the article body
   4. User can type adjustment instructions and regenerate the article without waiting for re-transcription
 **Plans**: TBD
@@ -69,7 +60,7 @@ Plans:
 - [ ] 03-01: TBD
 - [ ] 03-02: TBD
 
-### Phase 4: Export Formats
+#### Phase 4: Export Formats
 **Goal**: Users can get their article out of the tool in the format their KB platform needs
 **Depends on**: Phase 3
 **Requirements**: OUTP-02, OUTP-03, OUTP-04, OUTP-05
@@ -83,7 +74,7 @@ Plans:
 Plans:
 - [ ] 04-01: TBD
 
-### Phase 5: Usage Control and Polish
+#### Phase 5: Usage Control and Polish
 **Goal**: The app enforces free-tier limits, works on mobile, and feels complete as a product flow
 **Depends on**: Phase 4
 **Requirements**: USAG-01, USAG-02, UILP-03, OUTP-06
@@ -96,19 +87,44 @@ Plans:
 Plans:
 - [ ] 05-01: TBD
 
+---
+
+### 📋 v1.1 Stabilization (Planned)
+
+**Milestone Goal:** Production-reliable and maintainable — rate limiting that works in serverless, complete SSRF protection, passing test suite, DB-level dashboard aggregation, and shared SSE parsing logic.
+
+#### Phase 6: Security and Tests
+**Goal**: The system is correct and safe — rate limiting works across serverless instances, SSRF protection covers IPv6, and the test suite passes
+**Depends on**: Phase 5
+**Requirements**: SEC-01, SEC-02, TEST-01, TEST-02
+**Success Criteria** (what must be TRUE):
+  1. Submitting more requests than the rate limit allows from two different serverless cold starts results in a 429 response — not reset on cold start
+  2. Submitting a URL containing an IPv6 private/loopback address (e.g., `http://[::1]/internal`) is rejected by URL validation
+  3. Running `npm test` produces a passing suite with no signature-mismatch errors in pipeline tests
+  4. Running `npm test` produces a passing suite where the article-generator test asserts `claude-sonnet-4-6`
+**Plans**: TBD
+
+#### Phase 7: Performance and Cleanup
+**Goal**: The system is maintainable and efficient — dashboard stats come from the DB and SSE parsing logic lives in one place
+**Depends on**: Phase 6
+**Requirements**: PERF-01, PERF-02
+**Success Criteria** (what must be TRUE):
+  1. The dashboard page loads workspace stats without fetching all articles to the client — a workspace with 1000 articles returns stats as fast as one with 10
+  2. Both the URL form and progress display components parse SSE events from the same shared utility — changing the parsing logic in one place updates both
+**Plans**: TBD
+
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. End-to-End Pipeline | 3/4 | In Progress|  |
-| 2. Multi-Source Video Input | 0/? | Not started | - |
-| 3. Templates and Generation Quality | 0/? | Not started | - |
-| 4. Export Formats | 0/? | Not started | - |
-| 5. Usage Control and Polish | 0/? | Not started | - |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. End-to-End Pipeline | v1.0 | 3/4 | In progress | - |
+| 2. Multi-Source Video Input | v1.0 | 0/TBD | Not started | - |
+| 3. Templates and Generation Quality | v1.0 | 0/TBD | Not started | - |
+| 4. Export Formats | v1.0 | 0/TBD | Not started | - |
+| 5. Usage Control and Polish | v1.0 | 0/TBD | Not started | - |
+| 6. Security and Tests | v1.1 | 0/TBD | Not started | - |
+| 7. Performance and Cleanup | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-12*
+*Last updated: 2026-03-15 — v1.1 Stabilization milestone added (Phases 6-7)*
