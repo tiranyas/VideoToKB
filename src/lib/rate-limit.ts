@@ -80,12 +80,12 @@ export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions)
       .insert({ identifier, hit_at: now.toISOString() });
 
     // Fire-and-forget cleanup of expired hits
-    client
-      .from('rate_limit_hits')
-      .delete()
-      .lt('hit_at', windowStart.toISOString())
-      .then(() => {/* ignore cleanup errors */})
-      .catch(() => {/* ignore cleanup errors */});
+    Promise.resolve(
+      client
+        .from('rate_limit_hits')
+        .delete()
+        .lt('hit_at', windowStart.toISOString())
+    ).catch(() => {/* ignore cleanup errors */});
 
     return {
       ok: true,
