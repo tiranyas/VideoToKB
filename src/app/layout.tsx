@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { CookieConsent } from "@/components/cookie-consent";
+import { HelpPanel } from "@/components/help-panel";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default async function RootLayout({
               <main className="flex-1 min-w-0">
                 {children}
               </main>
+              <HelpPanel />
             </div>
           </WorkspaceProvider>
         ) : (
