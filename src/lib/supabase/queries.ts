@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Workspace, ArticleType, PlatformProfile, Article } from '@/types';
+import type { Workspace, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, PlanId } from '@/types';
 
 // ── Workspaces ──────────────────────────────────────────
 
@@ -174,6 +174,178 @@ export async function upsertWorkspacePreferences(
   if (error) throw new Error(`Failed to save workspace preferences: ${error.message}`);
 }
 
+// ── Plans & Subscriptions ────────────────────────────────
+
+export async function getPlans(
+  supabase: SupabaseClient
+): Promise<Plan[]> {
+  const { data, error } = await supabase
+    .from('plans')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw new Error(`Failed to load plans: ${error.message}`);
+
+  return (data ?? []).map((row) => ({
+    id: row.id as PlanId,
+    name: row.name,
+    priceCents: row.price_cents,
+    articleLimit: row.article_limit,
+    description: row.description ?? undefined,
+    isActive: row.is_active,
+    sortOrder: row.sort_order,
+  }));
+}
+
+export async function getUserSubscription(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    planId: data.plan_id as PlanId,
+    status: data.status,
+    bonusCredits: data.bonus_credits,
+    currentPeriodStart: data.current_period_start,
+    currentPeriodEnd: data.current_period_end,
+    stripeSubscriptionId: data.stripe_subscription_id ?? undefined,
+    stripeCustomerId: data.stripe_customer_id ?? undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+}
+
+export async function ensureSubscription(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Subscription> {
+  let sub = await getUserSubscription(supabase, userId);
+  if (sub) return sub;
+
+  // Auto-create free subscription
+  const { error } = await supabase
+    .from('subscriptions')
+    .insert({
+      user_id: userId,
+      plan_id: 'free',
+      status: 'active',
+    });
+
+  if (error) throw new Error(`Failed to create subscription: ${error.message}`);
+
+  sub = await getUserSubscription(supabase, userId);
+  if (!sub) throw new Error('Failed to retrieve created subscription');
+  return sub;
+}
+
+export async function getUserUsage(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<UserUsage | null> {
+  const { data, error } = await supabase
+    .rpc('get_user_usage', { p_user_id: userId });
+
+  if (error) throw new Error(`Failed to get usage: ${error.message}`);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+
+  return {
+    articlesThisPeriod: Number(row.articles_this_period),
+    articleLimit: row.article_limit,
+    bonusCredits: row.bonus_credits,
+    articlesRemaining: row.articles_remaining,
+    planId: row.plan_id as PlanId,
+    planName: row.plan_name,
+    periodStart: row.period_start,
+    periodEnd: row.period_end,
+  };
+}
+
+export async function checkQuota(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{ allowed: boolean; usage: UserUsage | null; message?: string }> {
+  // Ensure user has a subscription (auto-create free if not)
+  await ensureSubscription(supabase, userId);
+
+  // Check if billing period needs reset
+  const sub = await getUserSubscription(supabase, userId);
+  if (sub && new Date(sub.currentPeriodEnd) <= new Date()) {
+    // Reset the period
+    await supabase
+      .from('subscriptions')
+      .update({
+        current_period_start: new Date().toISOString().slice(0, 10) + 'T00:00:00Z',
+        current_period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString(),
+        bonus_credits: 0,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId);
+  }
+
+  const usage = await getUserUsage(supabase, userId);
+  if (!usage) {
+    return { allowed: false, usage: null, message: 'Unable to determine usage' };
+  }
+
+  if (usage.articlesRemaining <= 0) {
+    return {
+      allowed: false,
+      usage,
+      message: `You've reached your ${usage.planName} plan limit of ${usage.articleLimit + usage.bonusCredits} articles this month. Upgrade your plan or contact support for additional credits.`,
+    };
+  }
+
+  return { allowed: true, usage };
+}
+
+export async function updateSubscriptionPlan(
+  supabase: SupabaseClient,
+  userId: string,
+  planId: PlanId
+): Promise<void> {
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({
+      plan_id: planId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  if (error) throw new Error(`Failed to update plan: ${error.message}`);
+}
+
+export async function addBonusCredits(
+  supabase: SupabaseClient,
+  userId: string,
+  credits: number
+): Promise<void> {
+  // Get current bonus credits
+  const sub = await getUserSubscription(supabase, userId);
+  if (!sub) throw new Error('No subscription found');
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({
+      bonus_credits: sub.bonusCredits + credits,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  if (error) throw new Error(`Failed to add bonus credits: ${error.message}`);
+}
+
 // ── Article Types (shared/global) ───────────────────────
 
 export async function getArticleTypes(
@@ -306,6 +478,47 @@ export async function deletePlatformProfile(
     .eq('id', id);
 
   if (error) throw new Error(`Failed to delete platform profile: ${error.message}`);
+}
+
+// ── Workspace Stats (RPC) ───────────────────────────────
+
+export interface WorkspaceStats {
+  totalArticles: number;
+  thisWeek: number;
+  thisMonth: number;
+  bySource: { youtube: number; loom: number; 'google-drive': number; paste: number };
+}
+
+const ZERO_STATS: WorkspaceStats = {
+  totalArticles: 0,
+  thisWeek: 0,
+  thisMonth: 0,
+  bySource: { youtube: 0, loom: 0, 'google-drive': 0, paste: 0 },
+};
+
+export async function getWorkspaceStats(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspaceStats> {
+  const { data, error } = await supabase
+    .rpc('get_workspace_stats', { p_workspace_id: workspaceId });
+
+  if (error) throw new Error(`Failed to get workspace stats: ${error.message}`);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return { ...ZERO_STATS, bySource: { ...ZERO_STATS.bySource } };
+
+  return {
+    totalArticles: Number(row.total_articles),
+    thisWeek: Number(row.this_week),
+    thisMonth: Number(row.this_month),
+    bySource: {
+      youtube: Number(row.youtube_count),
+      loom: Number(row.loom_count),
+      'google-drive': Number(row.google_drive_count),
+      paste: Number(row.paste_count),
+    },
+  };
 }
 
 // ── Articles (workspace-scoped) ─────────────────────────

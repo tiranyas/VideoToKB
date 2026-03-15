@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { getWorkspaceStats } from '@/lib/supabase/queries';
 import { cn } from '@/utils/cn';
 
 interface DashboardStats {
@@ -33,37 +34,24 @@ export default function DashboardPage() {
     (async () => {
       setLoading(true);
 
-      const { data: articles } = await supabase
-        .from('articles')
-        .select('id, title, source_type, created_at')
-        .eq('workspace_id', activeWorkspace.id)
-        .order('created_at', { ascending: false });
-
-      const all = articles ?? [];
-
-      const now = new Date();
-      const weekAgo = new Date(now);
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const monthAgo = new Date(now);
-      monthAgo.setDate(monthAgo.getDate() - 30);
-
-      const thisWeek = all.filter(a => new Date(a.created_at) >= weekAgo).length;
-      const thisMonth = all.filter(a => new Date(a.created_at) >= monthAgo).length;
-
-      const bySource = { youtube: 0, loom: 0, 'google-drive': 0, paste: 0 };
-      for (const a of all) {
-        const src = a.source_type as keyof typeof bySource;
-        if (src in bySource) bySource[src]++;
-      }
+      const [wsStats, { data: recentArticles }] = await Promise.all([
+        getWorkspaceStats(supabase, activeWorkspace.id),
+        supabase
+          .from('articles')
+          .select('id, title, source_type, created_at')
+          .eq('workspace_id', activeWorkspace.id)
+          .order('created_at', { ascending: false })
+          .limit(5),
+      ]);
 
       const hasCompanyContext = !!(activeWorkspace.companyName || activeWorkspace.companyDescription);
 
       setStats({
-        totalArticles: all.length,
-        thisWeek,
-        thisMonth,
-        bySource,
-        recentArticles: all.slice(0, 5),
+        totalArticles: wsStats.totalArticles,
+        thisWeek: wsStats.thisWeek,
+        thisMonth: wsStats.thisMonth,
+        bySource: wsStats.bySource,
+        recentArticles: recentArticles ?? [],
         hasCompanyContext,
       });
       setLoading(false);
