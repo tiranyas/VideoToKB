@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,18 @@ import { createClient } from '@/lib/supabase/client';
 type Mode = 'password' | 'magic-link';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-violet-500" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
