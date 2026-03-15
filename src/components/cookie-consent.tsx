@@ -52,7 +52,7 @@ export function CookieConsent() {
           </div>
           <button
             onClick={handleAccept}
-            className="shrink-0 rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+            className="shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-2.5 text-sm font-medium text-white transition-all hover:from-violet-700 hover:to-blue-600"
           >
             Accept
           </button>

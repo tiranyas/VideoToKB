@@ -160,7 +160,7 @@ export function UrlForm({
           className={cn(
             'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
             mode === 'url'
-              ? 'bg-black text-white shadow-sm'
+              ? 'bg-violet-600 text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           )}
           disabled={isProcessing}
@@ -173,7 +173,7 @@ export function UrlForm({
           className={cn(
             'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
             mode === 'transcript'
-              ? 'bg-black text-white shadow-sm'
+              ? 'bg-violet-600 text-white shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           )}
           disabled={isProcessing}
@@ -249,7 +249,7 @@ export function UrlForm({
           'w-full rounded-xl px-4 py-3.5 text-sm font-medium text-white transition-all',
           isDisabled || noConfig
             ? 'cursor-not-allowed bg-gray-300'
-            : 'bg-black hover:bg-gray-800 active:bg-gray-900'
+            : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600 active:from-violet-800 active:to-blue-700'
         )}
       >
         {isProcessing ? (

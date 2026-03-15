@@ -96,7 +96,7 @@ export default function LoginPage() {
                 <button
                   onClick={() => { setMode('password'); setError(''); }}
                   className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all ${
-                    mode === 'password' ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    mode === 'password' ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Email & Password
@@ -104,7 +104,7 @@ export default function LoginPage() {
                 <button
                   onClick={() => { setMode('magic-link'); setError(''); }}
                   className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all ${
-                    mode === 'magic-link' ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    mode === 'magic-link' ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Magic Link
@@ -133,7 +133,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl bg-black px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-3.5 text-sm font-medium text-white transition-all hover:from-violet-700 hover:to-blue-600 disabled:opacity-50"
                   >
                     {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
                   </button>
@@ -158,7 +158,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl bg-black px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                    className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-3.5 text-sm font-medium text-white transition-all hover:from-violet-700 hover:to-blue-600 disabled:opacity-50"
                   >
                     {loading ? 'Sending...' : 'Send Magic Link'}
                   </button>

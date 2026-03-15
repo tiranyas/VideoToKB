@@ -37,7 +37,7 @@ export default function SettingsPage() {
           </div>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
           >
             Generate Article <ArrowRight className="h-4 w-4" />
           </Link>
@@ -52,7 +52,7 @@ export default function SettingsPage() {
               className={cn(
                 'flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-all',
                 activeTab === id
-                  ? 'bg-black text-white shadow-sm'
+                  ? 'bg-violet-600 text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               )}
             >
@@ -220,7 +220,7 @@ function CompanyContextTab() {
             onClick={() => setMode('url')}
             className={cn(
               'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
-              mode === 'url' ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              mode === 'url' ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}
           >
             From Website URL
@@ -229,7 +229,7 @@ function CompanyContextTab() {
             onClick={() => setMode('manual')}
             className={cn(
               'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
-              mode === 'manual' ? 'bg-black text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              mode === 'manual' ? 'bg-violet-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}
           >
             Write Manually
@@ -250,7 +250,7 @@ function CompanyContextTab() {
               disabled={isLoading || !url.trim()}
               className={cn(
                 'w-full rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
-                isLoading || !url.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+                isLoading || !url.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
               )}
             >
               {isLoading ? (
@@ -276,7 +276,7 @@ function CompanyContextTab() {
               disabled={!manualText.trim()}
               className={cn(
                 'w-full rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
-                !manualText.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+                !manualText.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
               )}
             >
               Save Context
@@ -445,7 +445,7 @@ function ArticleTypeEditor({
         </button>
         <button
           onClick={handleSubmit}
-          className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+          className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
         >
           Save
         </button>
@@ -634,7 +634,7 @@ function PlatformProfileEditor({
             disabled={isScraping || !scrapeUrl.trim()}
             className={cn(
               'rounded-xl px-4 py-3 text-sm font-medium text-white whitespace-nowrap transition-all',
-              isScraping || !scrapeUrl.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+              isScraping || !scrapeUrl.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
             )}
           >
             {isScraping ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Extract'}
@@ -654,7 +654,7 @@ function PlatformProfileEditor({
         </button>
         <button
           onClick={handleSubmit}
-          className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+          className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
         >
           Save
         </button>
@@ -785,7 +785,7 @@ function ApiKeysTab() {
             </button>
             <button
               onClick={handleCopyKey}
-              className="rounded-xl bg-black px-4 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+              className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-3 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </button>
@@ -814,7 +814,7 @@ function ApiKeysTab() {
             disabled={creating || keys.length >= 3}
             className={cn(
               'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
-              creating || keys.length >= 3 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+              creating || keys.length >= 3 ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
             )}
           >
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
@@ -1038,7 +1038,7 @@ function AccountTab() {
           disabled={isExporting}
           className={cn(
             'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
-            isExporting ? 'bg-gray-300 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+            isExporting ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
           )}
         >
           {isExporting ? (

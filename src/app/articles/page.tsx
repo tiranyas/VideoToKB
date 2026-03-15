@@ -64,7 +64,7 @@ export default function ArticlesPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Articles</h1>
           <Link
             href="/"
-            className="rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+            className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
           >
             + New Article
           </Link>
@@ -89,7 +89,7 @@ export default function ArticlesPage() {
           ) : (
             <div className="rounded-2xl border border-gray-100 bg-white p-10">
               <div className="text-center mb-8">
-                <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mb-4">
+                <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center mb-4">
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
                 <h2 className="text-lg font-semibold tracking-tight text-gray-900">Create your first article</h2>
@@ -99,7 +99,7 @@ export default function ArticlesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="rounded-xl bg-gray-50 p-4 text-center">
                   <div className="mx-auto h-8 w-8 rounded-lg bg-white shadow-sm flex items-center justify-center mb-2">
-                    <Link2 className="h-4 w-4 text-indigo-500" />
+                    <Link2 className="h-4 w-4 text-violet-500" />
                   </div>
                   <p className="text-xs font-medium text-gray-700">Paste a URL</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">Loom or Google Drive</p>
@@ -123,7 +123,7 @@ export default function ArticlesPage() {
               <div className="text-center">
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-3 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
                 >
                   <Sparkles className="h-4 w-4" /> Generate Your First Article
                 </Link>
@@ -150,7 +150,7 @@ export default function ArticlesPage() {
                       {(article as ArticleWithMeta).platformName && (
                         <span>{(article as ArticleWithMeta).platformName}</span>
                       )}
-                      {article.html && <span className="text-indigo-400">HTML</span>}
+                      {article.html && <span className="text-violet-400">HTML</span>}
                       <span>{new Date(article.createdAt).toLocaleDateString()}</span>
                     </div>
                   </Link>

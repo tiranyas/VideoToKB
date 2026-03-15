@@ -30,9 +30,9 @@ function StepIcon({ status }: { status: StepStatus }) {
     case 'pending':
       return <Circle className="h-4 w-4 text-gray-300" />;
     case 'in_progress':
-      return <Loader2 className="h-4 w-4 text-gray-900 animate-spin" />;
+      return <Loader2 className="h-4 w-4 text-violet-600 animate-spin" />;
     case 'complete':
-      return <CheckCircle2 className="h-4 w-4 text-gray-900" />;
+      return <CheckCircle2 className="h-4 w-4 text-violet-500" />;
     case 'error':
       return <XCircle className="h-4 w-4 text-red-500" />;
   }

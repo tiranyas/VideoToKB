@@ -108,7 +108,7 @@ export function OnboardingChecklist() {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-1">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -120,7 +120,7 @@ export function OnboardingChecklist() {
         {/* Progress bar */}
         <div className="mt-4 mb-5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-violet-600 to-blue-500 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>

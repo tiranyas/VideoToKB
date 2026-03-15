@@ -125,7 +125,7 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
       {isReview && onGenerateHTML && (
         <button
           onClick={onGenerateHTML}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-3 text-sm font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-600"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-3 text-sm font-medium text-white transition-all hover:from-violet-700 hover:to-blue-600"
         >
           <Code className="h-4 w-4" />
           Format for {platformName ?? 'Platform'}

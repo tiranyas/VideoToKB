@@ -183,7 +183,7 @@ export default function ArticleDetailPage() {
                 className={cn(
                   'rounded-full px-4 py-2 text-sm font-medium transition-all',
                   tab === t.id
-                    ? 'bg-black text-white shadow-sm'
+                    ? 'bg-violet-600 text-white shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 )}
               >

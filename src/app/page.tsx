@@ -291,7 +291,7 @@ export default function Home() {
 
             <div className="space-y-4">
               <div className="flex gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">1</div>
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">1</div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Open the video on YouTube</p>
                   {youtubeUrl && (
@@ -303,7 +303,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">2</div>
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">2</div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Click &quot;...more&quot; under the video description</p>
                   <p className="text-xs text-gray-400">Then click &quot;Show transcript&quot;</p>
@@ -311,7 +311,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">3</div>
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">3</div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Select all transcript text and copy it</p>
                   <p className="text-xs text-gray-400">Ctrl+A → Ctrl+C in the transcript panel</p>
@@ -319,7 +319,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-white">4</div>
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">4</div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Come back here and paste it</p>
                   <p className="text-xs text-gray-400">Switch to &quot;Paste Transcript&quot; mode below</p>
@@ -333,7 +333,7 @@ export default function Home() {
                 setError(null);
                 setYoutubeUrl(null);
               }}
-              className="w-full rounded-xl bg-black px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-3 text-sm font-medium text-white transition-all hover:from-violet-700 hover:to-blue-600"
             >
               Got it — paste transcript
             </button>

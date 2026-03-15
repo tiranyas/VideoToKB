@@ -97,7 +97,7 @@ export function Sidebar({ email }: { email: string }) {
           className={cn(
             'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
             pathname === '/'
-              ? 'bg-black text-white shadow-sm'
+              ? 'bg-violet-600 text-white shadow-sm'
               : 'text-gray-600 hover:bg-gray-100'
           )}
         >
@@ -160,11 +160,11 @@ export function Sidebar({ email }: { email: string }) {
             <div className="rounded-lg bg-gray-50 px-3 py-2.5 space-y-1.5">
               <p className="text-xs text-gray-500">
                 <span className="font-medium text-gray-700">1.</span> Add your company info in{' '}
-                <Link href="/settings" className="text-indigo-500 hover:text-indigo-600">Settings</Link>
+                <Link href="/settings" className="text-violet-500 hover:text-violet-600">Settings</Link>
               </p>
               <p className="text-xs text-gray-500">
                 <span className="font-medium text-gray-700">2.</span> Paste a video URL on the{' '}
-                <Link href="/" className="text-indigo-500 hover:text-indigo-600">Generate</Link> page
+                <Link href="/" className="text-violet-500 hover:text-violet-600">Generate</Link> page
               </p>
               <p className="text-xs text-gray-500">
                 <span className="font-medium text-gray-700">3.</span> Your articles will appear here
