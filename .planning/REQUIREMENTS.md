@@ -19,8 +19,8 @@ Requirements for stabilization milestone. Each maps to roadmap phases.
 
 ### Performance
 
-- [ ] **PERF-01**: Dashboard stats are computed via DB aggregation query, not client-side JS
-- [ ] **PERF-02**: SSE parsing logic is extracted into a shared utility used by both components
+- [x] **PERF-01**: Dashboard stats are computed via DB aggregation query, not client-side JS
+- [x] **PERF-02**: SSE parsing logic is extracted into a shared utility used by both components
 
 ## v2 Requirements
 
@@ -55,8 +55,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | SEC-02 | Phase 6 | Pending |
 | TEST-01 | Phase 6 | Complete |
 | TEST-02 | Phase 6 | Complete |
-| PERF-01 | Phase 7 | Pending |
-| PERF-02 | Phase 7 | Pending |
+| PERF-01 | Phase 7 | Complete |
+| PERF-02 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 6 total
