@@ -275,7 +275,7 @@ export default function Home() {
           <OnboardingChecklist />
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Create Article</h1>
-            <p className="mt-2 text-sm text-gray-400">Paste a video URL or transcript to generate a KB article</p>
+            <p className="mt-2 text-sm text-gray-400">Paste a video URL, user story, or any content to generate a KB article</p>
           </div>
           <UrlForm
             onSubmit={handleSubmit}
@@ -342,7 +342,7 @@ export default function Home() {
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-medium text-white">4</div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Come back here and paste it</p>
-                  <p className="text-xs text-gray-400">Switch to &quot;Paste Transcript&quot; mode below</p>
+                  <p className="text-xs text-gray-400">Switch to &quot;Paste Content&quot; mode below</p>
                 </div>
               </div>
             </div>
