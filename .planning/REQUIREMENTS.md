@@ -14,8 +14,8 @@ Requirements for stabilization milestone. Each maps to roadmap phases.
 
 ### Testing
 
-- [ ] **TEST-01**: Pipeline tests use the current function signature and pass
-- [ ] **TEST-02**: Article generator test asserts the correct model name (claude-sonnet-4-6)
+- [x] **TEST-01**: Pipeline tests use the current function signature and pass
+- [x] **TEST-02**: Article generator test asserts the correct model name (claude-sonnet-4-6)
 
 ### Performance
 
@@ -53,8 +53,8 @@ Deferred to future release. Tracked but not in current roadmap.
 |-------------|-------|--------|
 | SEC-01 | Phase 6 | Pending |
 | SEC-02 | Phase 6 | Pending |
-| TEST-01 | Phase 6 | Pending |
-| TEST-02 | Phase 6 | Pending |
+| TEST-01 | Phase 6 | Complete |
+| TEST-02 | Phase 6 | Complete |
 | PERF-01 | Phase 7 | Pending |
 | PERF-02 | Phase 7 | Pending |
 
