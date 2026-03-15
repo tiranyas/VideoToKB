@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2 } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/utils/cn';
@@ -17,6 +17,7 @@ interface RecentArticle {
 
 export function Sidebar({ email }: { email: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
   const { activeWorkspace, workspaces, switchWorkspace, createWorkspace } = useWorkspace();
   const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
@@ -81,6 +82,7 @@ export function Sidebar({ email }: { email: string }) {
   }
 
   const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, active: pathname === '/dashboard' },
     { href: '/', label: 'Generate', icon: PenSquare, active: pathname === '/' },
     { href: '/articles', label: 'Articles', icon: FileText, active: pathname === '/articles' },
     { href: '/settings', label: 'Settings', icon: Settings, active: pathname === '/settings' },
@@ -149,7 +151,10 @@ export function Sidebar({ email }: { email: string }) {
                 <button
                   key={ws.id}
                   onClick={() => {
-                    switchWorkspace(ws.id);
+                    if (ws.id !== activeWorkspace?.id) {
+                      switchWorkspace(ws.id);
+                      router.push('/dashboard');
+                    }
                     setWsDropdownOpen(false);
                   }}
                   className={cn(
