@@ -1,6 +1,7 @@
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
+import { checkQuota } from '@/lib/supabase/queries';
 import type { ProgressEvent } from '@/types';
 
 export const maxDuration = 300;
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   // Rate limit
-  const rl = limiter.check(user.id);
+  const rl = await limiter.check(user.id);
   if (!rl.ok) {
     return new Response(
       JSON.stringify({ error: 'Too many requests. Please try again later.' }),
@@ -63,6 +64,26 @@ export async function POST(req: Request) {
   }
 
   const { phase = 'generate' } = body;
+
+  // Quota check — only for new article generation (not HTML conversion)
+  if (phase === 'generate') {
+    try {
+      const quota = await checkQuota(supabase, user.id);
+      if (!quota.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: 'quota_exceeded',
+            message: quota.message,
+            usage: quota.usage,
+          }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {
+      // Don't block on quota check errors — let the request through
+      console.error('Quota check failed, allowing request');
+    }
+  }
 
   // Validate inputs based on phase
   if (phase === 'generate') {

@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   }
 
   // Rate limit
-  const rl = limiter.check(user.id);
+  const rl = await limiter.check(user.id);
   if (!rl.ok) {
     return Response.json(
       { error: 'Too many requests. Please try again later.' },

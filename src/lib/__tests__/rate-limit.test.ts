@@ -1,28 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Supabase client
+// Mock Supabase client that simulates chained query API
 function createMockSupabase(hitCount: number = 0) {
-  const deleteMock = {
-    lt: vi.fn().mockResolvedValue({ error: null }),
+  const deleteChain = {
+    lt: vi.fn().mockReturnValue(Promise.resolve({ error: null })),
   };
-  const insertMock = {
-    select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: {}, error: null }) }),
-  };
-  const selectMock = {
+
+  const insertChain = vi.fn().mockResolvedValue({ error: null });
+
+  const selectChain = {
     eq: vi.fn().mockReturnThis(),
     gte: vi.fn().mockResolvedValue({ count: hitCount, error: null }),
   };
 
-  const fromMock = vi.fn().mockImplementation((table: string) => {
-    if (table !== 'rate_limit_hits') throw new Error(`Unexpected table: ${table}`);
-    return {
-      select: vi.fn().mockReturnValue(selectMock),
-      insert: vi.fn().mockReturnValue(insertMock),
-      delete: vi.fn().mockReturnValue(deleteMock),
-    };
-  });
+  const fromMock = vi.fn().mockImplementation(() => ({
+    select: vi.fn().mockReturnValue(selectChain),
+    insert: insertChain,
+    delete: vi.fn().mockReturnValue(deleteChain),
+  }));
 
-  return { from: fromMock, _selectMock: selectMock, _insertMock: insertMock, _deleteMock: deleteMock };
+  return {
+    from: fromMock,
+    _selectChain: selectChain,
+    _insertChain: insertChain,
+    _deleteChain: deleteChain,
+  };
 }
 
 describe('rateLimit (Supabase-backed)', () => {
@@ -32,7 +34,7 @@ describe('rateLimit (Supabase-backed)', () => {
 
   it('returns ok: true with remaining count when under limit', async () => {
     const { rateLimit } = await import('@/lib/rate-limit');
-    const mock = createMockSupabase(2); // 2 hits out of 10 allowed
+    const mock = createMockSupabase(2); // 2 hits in window, limit is 10
     const limiter = rateLimit({ tokens: 10, interval: 60_000, supabaseAdmin: mock as any });
 
     const result = await limiter.check('user-1');
@@ -56,7 +58,7 @@ describe('rateLimit (Supabase-backed)', () => {
 
   it('does not count old hits outside the sliding window', async () => {
     const { rateLimit } = await import('@/lib/rate-limit');
-    // Mock returns 0 hits in window (old ones expired)
+    // Mock returns 0 hits in window (old ones expired via gte filter)
     const mock = createMockSupabase(0);
     const limiter = rateLimit({ tokens: 5, interval: 60_000, supabaseAdmin: mock as any });
 
@@ -64,8 +66,8 @@ describe('rateLimit (Supabase-backed)', () => {
 
     expect(result.ok).toBe(true);
     expect(result.remaining).toBe(4); // 5 - 0 - 1 = 4
-    // Verify gte was called with a timestamp (sliding window filter)
-    expect(mock._selectMock.gte).toHaveBeenCalled();
+    // Verify gte was called with a timestamp string (sliding window filter)
+    expect(mock._selectChain.gte).toHaveBeenCalledWith('hit_at', expect.any(String));
   });
 
   it('tracks different identifiers independently', async () => {
@@ -77,7 +79,7 @@ describe('rateLimit (Supabase-backed)', () => {
     await limiter.check('user-b');
 
     // Verify eq was called with different identifiers
-    const eqCalls = mock._selectMock.eq.mock.calls;
+    const eqCalls = mock._selectChain.eq.mock.calls;
     const identifiers = eqCalls
       .filter((call: any[]) => call[0] === 'identifier')
       .map((call: any[]) => call[1]);
@@ -85,16 +87,16 @@ describe('rateLimit (Supabase-backed)', () => {
     expect(identifiers).toContain('user-b');
   });
 
-  it('calls Supabase .from().select/.insert/.delete correctly', async () => {
+  it('calls Supabase from(rate_limit_hits) for select, insert, and delete', async () => {
     const { rateLimit } = await import('@/lib/rate-limit');
     const mock = createMockSupabase(2);
     const limiter = rateLimit({ tokens: 10, interval: 60_000, supabaseAdmin: mock as any });
 
     await limiter.check('test-user');
 
-    // Should have called from('rate_limit_hits') for select + insert + delete
+    // Should call from('rate_limit_hits') for select + insert + delete (fire-and-forget)
     expect(mock.from).toHaveBeenCalledWith('rate_limit_hits');
-    // At least 2 calls: one for select (count), one for insert
+    // At least 2 calls: count query + insert (delete is fire-and-forget)
     expect(mock.from.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

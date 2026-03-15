@@ -1,68 +1,97 @@
 /**
- * Simple in-memory sliding-window rate limiter.
+ * Supabase-backed sliding-window rate limiter.
+ *
+ * Persists hits across serverless cold starts by storing them
+ * in a `rate_limit_hits` table in Supabase.
  *
  * Usage in an API route:
  *   import { rateLimit } from '@/lib/rate-limit';
  *   const limiter = rateLimit({ tokens: 10, interval: 60_000 });
  *
- *   // inside handler:
- *   const limited = limiter.check(userId);
+ *   // inside async handler:
+ *   const limited = await limiter.check(userId);
  *   if (!limited.ok) return Response.json({ error: 'Too many requests' }, { status: 429 });
  */
 
-interface RateLimitOptions {
+import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
+
+export interface RateLimitOptions {
   /** Maximum number of requests allowed within the interval. */
   tokens: number;
   /** Sliding window duration in milliseconds. */
   interval: number;
+  /** Optional Supabase admin client (for testing or shared instances). */
+  supabaseAdmin?: SupabaseClient;
 }
 
-interface RateLimitResult {
+export interface RateLimitResult {
   ok: boolean;
   remaining: number;
   retryAfterMs: number;
 }
 
-export function rateLimit({ tokens, interval }: RateLimitOptions) {
-  // Map from identifier -> array of timestamps
-  const hits = new Map<string, number[]>();
+let _sharedAdmin: SupabaseClient | null = null;
 
-  // Periodically prune stale entries to prevent memory leaks
-  const PRUNE_INTERVAL = 60_000;
-  let lastPrune = Date.now();
-
-  function prune(now: number) {
-    if (now - lastPrune < PRUNE_INTERVAL) return;
-    lastPrune = now;
-    const cutoff = now - interval;
-    for (const [key, timestamps] of hits) {
-      const filtered = timestamps.filter((t) => t > cutoff);
-      if (filtered.length === 0) {
-        hits.delete(key);
-      } else {
-        hits.set(key, filtered);
-      }
-    }
+function getSharedAdmin(): SupabaseClient {
+  if (!_sharedAdmin) {
+    _sharedAdmin = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
   }
+  return _sharedAdmin;
+}
 
-  function check(identifier: string): RateLimitResult {
-    const now = Date.now();
-    prune(now);
+export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions) {
+  const getClient = () => supabaseAdmin ?? getSharedAdmin();
 
-    const cutoff = now - interval;
-    const timestamps = (hits.get(identifier) ?? []).filter((t) => t > cutoff);
+  async function check(identifier: string): Promise<RateLimitResult> {
+    const client = getClient();
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - interval);
 
-    if (timestamps.length >= tokens) {
-      // Find when the oldest hit in the window expires
-      const oldestInWindow = timestamps[0];
-      const retryAfterMs = oldestInWindow + interval - now;
-      return { ok: false, remaining: 0, retryAfterMs };
+    // Count hits in the current sliding window
+    const { count, error: countError } = await client
+      .from('rate_limit_hits')
+      .select('*', { count: 'exact', head: true })
+      .eq('identifier', identifier)
+      .gte('hit_at', windowStart.toISOString());
+
+    const hitCount = count ?? 0;
+
+    if (countError) {
+      // On DB error, fail open (allow request) but log
+      console.error('Rate limit count error:', countError);
+      return { ok: true, remaining: tokens - 1, retryAfterMs: 0 };
     }
 
-    timestamps.push(now);
-    hits.set(identifier, timestamps);
+    if (hitCount >= tokens) {
+      // Over limit
+      return {
+        ok: false,
+        remaining: 0,
+        retryAfterMs: interval, // conservative: full window
+      };
+    }
 
-    return { ok: true, remaining: tokens - timestamps.length, retryAfterMs: 0 };
+    // Under limit: record this hit
+    await client
+      .from('rate_limit_hits')
+      .insert({ identifier, hit_at: now.toISOString() });
+
+    // Fire-and-forget cleanup of expired hits
+    client
+      .from('rate_limit_hits')
+      .delete()
+      .lt('hit_at', windowStart.toISOString())
+      .then(() => {/* ignore cleanup errors */})
+      .catch(() => {/* ignore cleanup errors */});
+
+    return {
+      ok: true,
+      remaining: tokens - hitCount - 1,
+      retryAfterMs: 0,
+    };
   }
 
   return { check };

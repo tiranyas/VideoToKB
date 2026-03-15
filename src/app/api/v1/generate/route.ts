@@ -1,6 +1,7 @@
 import { createClient as createAdminClient, type SupabaseClient } from '@supabase/supabase-js';
 import { validateApiKey } from '@/lib/api-keys';
 import { rateLimit } from '@/lib/rate-limit';
+import { checkQuota } from '@/lib/supabase/queries';
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
 import type { ProgressEvent } from '@/types';
 
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   // ── Rate limit ──────────────────────────────────────
-  const rl = limiter.check(`api:${userId}`);
+  const rl = await limiter.check(`api:${userId}`);
   if (!rl.ok) {
     return Response.json(
       { error: 'Rate limit exceeded. Max 5 requests per minute.' },
@@ -85,6 +86,25 @@ export async function POST(req: Request) {
         headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) },
       }
     );
+  }
+
+  // ── Quota check ────────────────────────────────────
+  try {
+    const admin = getAdmin();
+    const quota = await checkQuota(admin, userId);
+    if (!quota.allowed) {
+      return Response.json(
+        {
+          error: 'quota_exceeded',
+          message: quota.message,
+          usage: quota.usage,
+        },
+        { status: 403 }
+      );
+    }
+  } catch {
+    // Don't block on quota check errors
+    console.error('Quota check failed, allowing request');
   }
 
   // ── Parse body ──────────────────────────────────────
@@ -255,7 +275,9 @@ export async function POST(req: Request) {
 
   const sourceType = body.transcript
     ? 'paste'
-    : (body.videoUrl?.includes('drive.google') ? 'google-drive' : 'loom');
+    : body.videoUrl?.includes('drive.google') ? 'google-drive'
+    : (body.videoUrl?.includes('youtube.com') || body.videoUrl?.includes('youtu.be')) ? 'youtube'
+    : 'loom';
 
   const { data: saved, error: saveError } = await getAdmin()
     .from('articles')
