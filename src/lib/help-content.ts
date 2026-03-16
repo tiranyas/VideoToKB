@@ -18,7 +18,7 @@ export const helpArticles: Record<string, HelpArticle> = {
       {
         heading: 'Supported video sources',
         content:
-          'KBify supports YouTube videos, Loom recordings, and Google Drive shared videos. Just paste the URL and the system will automatically detect the source and transcribe it.',
+          'KBPipe supports YouTube videos, Loom recordings, and Google Drive shared videos. Just paste the URL and the system will automatically detect the source and transcribe it.',
       },
       {
         heading: 'Paste Content mode',
@@ -98,7 +98,7 @@ export const helpArticles: Record<string, HelpArticle> = {
       {
         heading: 'API Keys',
         content:
-          'Generate API keys to use KBify programmatically. API keys are scoped to your workspace and can be used with the /api/v1/generate endpoint to create articles from any automation tool.',
+          'Generate API keys to use KBPipe programmatically. API keys are scoped to your workspace and can be used with the /api/v1/generate endpoint to create articles from any automation tool.',
       },
       {
         heading: 'Account',

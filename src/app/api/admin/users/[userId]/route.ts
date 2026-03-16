@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { updateSubscriptionPlan, addBonusCredits } from '@/lib/supabase/queries';
 import type { PlanId } from '@/types';
 
-const ADMIN_EMAILS = ['tiran@kbify.com', 'tiranyas@gmail.com'];
+const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
 
 export async function PATCH(
   request: NextRequest,

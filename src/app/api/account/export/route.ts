@@ -49,7 +49,7 @@ export async function GET() {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Content-Disposition': 'attachment; filename="kbify-data-export.json"',
+        'Content-Disposition': 'attachment; filename="kbpipe-data-export.json"',
       },
     });
   } catch (error) {

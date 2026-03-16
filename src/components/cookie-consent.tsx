@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-const CONSENT_KEY = 'kbify-cookie-consent';
+const CONSENT_KEY = 'kbpipe-cookie-consent';
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);

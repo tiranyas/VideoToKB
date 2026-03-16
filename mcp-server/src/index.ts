@@ -6,12 +6,12 @@ import { z } from "zod";
 
 // ── Configuration ──────────────────────────────────────────
 
-const API_KEY = process.env.KBIFY_API_KEY;
-const BASE_URL = process.env.KBIFY_URL || "https://video-to-kb.vercel.app";
+const API_KEY = process.env.KBPIPE_API_KEY;
+const BASE_URL = process.env.KBPIPE_URL || "https://video-to-kb.vercel.app";
 
 if (!API_KEY) {
-  console.error("Error: KBIFY_API_KEY environment variable is required");
-  console.error("Get your API key from: Settings > API in the KBify app");
+  console.error("Error: KBPIPE_API_KEY environment variable is required");
+  console.error("Get your API key from: Settings > API in the KBPipe app");
   process.exit(1);
 }
 

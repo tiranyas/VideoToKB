@@ -121,7 +121,7 @@ export function HelpPanel() {
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
           <p className="text-xs text-gray-400 text-center">
             Need more help?{' '}
-            <a href="mailto:support@kbify.com" className="text-violet-500 hover:text-violet-600 transition-colors">
+            <a href="mailto:support@kbpipe.com" className="text-violet-500 hover:text-violet-600 transition-colors">
               Contact support
             </a>
           </p>

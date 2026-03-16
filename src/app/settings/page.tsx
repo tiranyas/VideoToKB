@@ -919,8 +919,8 @@ function ApiKeysTab() {
 
         <div className="space-y-4 mt-4">
           <p className="text-xs text-gray-500">
-            Add KBify as an MCP tool in Claude Desktop or Claude Code. Then just say
-            <em className="text-gray-700"> &ldquo;generate a KB article from this Loom video&rdquo;</em> and Claude will call KBify for you.
+            Add KBPipe as an MCP tool in Claude Desktop or Claude Code. Then just say
+            <em className="text-gray-700"> &ldquo;generate a KB article from this Loom video&rdquo;</em> and Claude will call KBPipe for you.
           </p>
 
           <div>
@@ -935,12 +935,12 @@ function ApiKeysTab() {
             <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
 {`{
   "mcpServers": {
-    "kbify": {
+    "kbpipe": {
       "command": "node",
       "args": ["path/to/mcp-server/dist/index.js"],
       "env": {
-        "KBIFY_API_KEY": "vtk_your_key_here",
-        "KBIFY_URL": "${baseUrl}"
+        "KBPIPE_API_KEY": "vtk_your_key_here",
+        "KBPIPE_URL": "${baseUrl}"
       }
     }
   }
@@ -984,7 +984,7 @@ function AccountTab() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'kbify-data-export.json';
+      a.download = 'kbpipe-data-export.json';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

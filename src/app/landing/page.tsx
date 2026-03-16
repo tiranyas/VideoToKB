@@ -9,8 +9,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="KBify" width={32} height={32} />
-            <span className="text-lg font-semibold text-gray-900">KBify</span>
+            <Image src="/logo.png" alt="KBPipe" width={32} height={32} />
+            <span className="text-lg font-semibold text-gray-900">KBPipe</span>
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -59,7 +59,7 @@ export default function LandingPage() {
           <ScrollReveal delay={250} duration={800}>
             <p className="mt-6 text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
               Paste a video URL, a user story, a transcript, or any text —
-              KBify turns it into a structured, professional knowledge base article in minutes.
+              KBPipe turns it into a structured, professional knowledge base article in minutes.
             </p>
           </ScrollReveal>
 
@@ -245,7 +245,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <ScrollReveal>
             <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
-              Who uses KBify?
+              Who uses KBPipe?
             </h2>
             <p className="text-center text-gray-500 mb-14 max-w-lg mx-auto">
               Teams that need to turn tribal knowledge into searchable, shareable documentation.
@@ -290,7 +290,7 @@ export default function LandingPage() {
                     <span className="text-red-400 font-medium">The problem:</span> {useCase.pain}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <span className="text-green-500 font-medium">With KBify:</span> {useCase.solution}
+                    <span className="text-green-500 font-medium">With KBPipe:</span> {useCase.solution}
                   </p>
                 </div>
               ))}
@@ -321,7 +321,7 @@ export default function LandingPage() {
                     <span className="text-4xl font-bold text-gray-900">$0</span>
                     <span className="text-sm text-gray-400">/month</span>
                   </div>
-                  <p className="mt-2 text-sm text-gray-500">Perfect to try KBify</p>
+                  <p className="mt-2 text-sm text-gray-500">Perfect to try KBPipe</p>
                 </div>
                 <ul className="space-y-3 text-sm text-gray-600 mb-8 flex-1">
                   <li className="flex items-start gap-2">
@@ -468,8 +468,8 @@ export default function LandingPage() {
       <footer className="border-t border-gray-100 py-10 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="KBify" width={24} height={24} />
-            <span className="text-sm font-medium text-gray-500">KBify</span>
+            <Image src="/logo.png" alt="KBPipe" width={24} height={24} />
+            <span className="text-sm font-medium text-gray-500">KBPipe</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-400">
             <Link href="/privacy" className="hover:text-gray-600 transition-colors">
@@ -478,7 +478,7 @@ export default function LandingPage() {
             <Link href="/terms" className="hover:text-gray-600 transition-colors">
               Terms
             </Link>
-            <a href="mailto:support@kbify.com" className="hover:text-gray-600 transition-colors">
+            <a href="mailto:support@kbpipe.com" className="hover:text-gray-600 transition-colors">
               Contact
             </a>
           </div>

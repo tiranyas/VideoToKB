@@ -8,7 +8,7 @@ import {
 } from '@/lib/supabase/queries';
 import type { Workspace } from '@/types';
 
-const LS_KEY = 'kbify-active-workspace-id';
+const LS_KEY = 'kbpipe-active-workspace-id';
 
 interface WorkspaceContextValue {
   activeWorkspace: Workspace | null;

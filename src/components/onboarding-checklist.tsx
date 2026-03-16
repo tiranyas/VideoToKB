@@ -27,7 +27,7 @@ export function OnboardingChecklist() {
   useEffect(() => {
     (async () => {
       // Check if already dismissed
-      if (localStorage.getItem('kbify-onboarding-dismissed')) {
+      if (localStorage.getItem('kbpipe-onboarding-dismissed')) {
         setDismissed(true);
         setLoading(false);
         return;
@@ -46,7 +46,7 @@ export function OnboardingChecklist() {
 
       // If everything is done, auto-dismiss
       if (hasContext && hasArticles) {
-        localStorage.setItem('kbify-onboarding-dismissed', 'true');
+        localStorage.setItem('kbpipe-onboarding-dismissed', 'true');
         setDismissed(true);
         setLoading(false);
         return;
@@ -84,7 +84,7 @@ export function OnboardingChecklist() {
   }, [activeWorkspace?.id]);
 
   function handleDismiss() {
-    localStorage.setItem('kbify-onboarding-dismissed', 'true');
+    localStorage.setItem('kbpipe-onboarding-dismissed', 'true');
     setDismissed(true);
   }
 
@@ -111,7 +111,7 @@ export function OnboardingChecklist() {
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Get started with KBify</h3>
+            <h3 className="text-sm font-semibold text-gray-900">Get started with KBPipe</h3>
             <p className="text-xs text-gray-400">{completedCount} of {items.length} steps completed</p>
           </div>
         </div>

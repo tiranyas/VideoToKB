@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KBify",
+  title: "KBPipe",
   description: "Turn any content into publish-ready knowledge base articles — videos, user stories, specs, and more",
 };
 
