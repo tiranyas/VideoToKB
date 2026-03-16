@@ -862,12 +862,21 @@ function PlatformProfileEditor({
       const res = await fetch('/api/scrape-template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl }),
+        body: JSON.stringify({ url: scrapeUrl, analyze: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setHtmlTemplate(data.html);
-      toast.success('Template HTML extracted');
+
+      // Smart analysis: auto-fill prompt, template, and name
+      if (data.htmlPrompt) setHtmlPrompt(data.htmlPrompt);
+      if (data.htmlTemplate) setHtmlTemplate(data.htmlTemplate);
+      if (data.platformName && !name.trim()) setName(data.platformName);
+
+      toast.success(
+        data.htmlPrompt
+          ? `Analyzed! Detected "${data.platformName}" — CSS classes and components extracted`
+          : 'Template HTML extracted (raw)'
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to scrape template');
     } finally {
@@ -911,14 +920,14 @@ function PlatformProfileEditor({
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-400 mb-1.5">
-          HTML Template Reference (paste or scrape from URL)
+          Import from existing article (auto-detects platform, CSS classes &amp; components)
         </label>
         <div className="flex gap-2 mb-2">
           <input
             type="url"
             value={scrapeUrl}
             onChange={(e) => setScrapeUrl(e.target.value)}
-            placeholder="Paste URL of existing KB article to extract template..."
+            placeholder="Paste URL of any KB article to auto-detect its platform format..."
             className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
           />
           <button
@@ -929,9 +938,16 @@ function PlatformProfileEditor({
               isScraping || !scrapeUrl.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
             )}
           >
-            {isScraping ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Extract'}
+            {isScraping ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Analyzing...
+              </span>
+            ) : 'Analyze & Import'}
           </button>
         </div>
+        <p className="text-xs text-gray-400 mb-3">
+          AI will identify the platform, extract CSS classes, and generate both the prompt and template automatically.
+        </p>
         <textarea
           value={htmlTemplate}
           onChange={(e) => setHtmlTemplate(e.target.value)}
