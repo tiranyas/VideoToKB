@@ -57,26 +57,31 @@ export default function Home() {
 
   useEffect(() => {
     async function loadSettings() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setUserId(user.id);
 
-      const [types, profs] = await Promise.all([
-        getArticleTypes(supabase),
-        getPlatformProfiles(supabase),
-      ]);
+        const [types, profs] = await Promise.all([
+          getArticleTypes(supabase),
+          getPlatformProfiles(supabase),
+        ]);
 
-      setArticleTypes(types);
-      setPlatforms(profs);
+        setArticleTypes(types);
+        setPlatforms(profs);
 
-      // Load workspace-scoped preferences
-      if (activeWorkspace) {
-        const prefs = await getWorkspacePreferences(supabase, activeWorkspace.id);
-        setSelectedTypeId(prefs.selectedArticleTypeId ?? types[0]?.id ?? '');
-        setSelectedPlatId(prefs.selectedPlatformId ?? profs[0]?.id ?? '');
-      } else {
-        setSelectedTypeId(types[0]?.id ?? '');
-        setSelectedPlatId(profs[0]?.id ?? '');
+        // Load workspace-scoped preferences
+        if (activeWorkspace) {
+          const prefs = await getWorkspacePreferences(supabase, activeWorkspace.id);
+          setSelectedTypeId(prefs.selectedArticleTypeId ?? types[0]?.id ?? '');
+          setSelectedPlatId(prefs.selectedPlatformId ?? profs[0]?.id ?? '');
+        } else {
+          setSelectedTypeId(types[0]?.id ?? '');
+          setSelectedPlatId(profs[0]?.id ?? '');
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+        setError('Failed to load settings. Please refresh the page.');
       }
     }
     loadSettings();
@@ -230,8 +235,8 @@ export default function Home() {
           setFinalHTML(event.html);
           setPhase('complete');
           // Update saved article with HTML
-          if (savedArticleId) {
-            updateArticleHtml(supabase, savedArticleId, event.html, userId!).catch(() => {});
+          if (savedArticleId && userId) {
+            updateArticleHtml(supabase, savedArticleId, event.html, userId).catch(() => {});
           }
         } else {
           setStepsB((prev) =>
@@ -280,7 +285,7 @@ export default function Home() {
           </div>
           <UrlForm
             onSubmit={handleSubmit}
-            isProcessing={false}
+            isProcessing={phase !== 'input'}
             articleTypes={articleTypes}
             platforms={platforms}
             selectedTypeId={selectedTypeId}

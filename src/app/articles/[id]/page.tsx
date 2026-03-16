@@ -62,11 +62,15 @@ export default function ArticleDetailPage() {
 
   useEffect(() => {
     if (tab === 'preview' && iframeRef.current && article?.html) {
-      const doc = iframeRef.current.contentDocument;
-      if (doc) {
-        doc.open();
-        doc.write(article.html);
-        doc.close();
+      try {
+        const doc = iframeRef.current.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write(article.html);
+          doc.close();
+        }
+      } catch (err) {
+        console.error('Failed to render HTML preview:', err);
       }
     }
   }, [tab, article?.html]);
@@ -186,23 +190,25 @@ export default function ArticleDetailPage() {
   }, [article, userId, platforms, selectedPlatformId, markdownDraft, hasUnsavedChanges]);
 
   async function handleTitleSave() {
-    if (!article || !titleDraft.trim() || titleDraft.trim() === article.title) {
+    if (!article || !userId || !titleDraft.trim() || titleDraft.trim() === article.title) {
       setEditingTitle(false);
+      setTitleDraft(article?.title ?? '');
       return;
     }
     try {
-      await updateArticleTitle(supabase, article.id, titleDraft.trim(), userId!);
+      await updateArticleTitle(supabase, article.id, titleDraft.trim(), userId);
       setArticle({ ...article, title: titleDraft.trim() });
       toast.success('Title updated');
     } catch {
       toast.error('Failed to update title');
+      setTitleDraft(article.title);
     }
     setEditingTitle(false);
   }
 
   async function handleDelete() {
-    if (!article) return;
-    await deleteArticle(supabase, article.id, userId!);
+    if (!article || !userId) return;
+    await deleteArticle(supabase, article.id, userId);
     toast.success('Article deleted');
     router.push('/articles');
   }

@@ -19,8 +19,12 @@ export function collectUsageLogs(): typeof _pendingLogs {
   return logs;
 }
 
+let _client: Anthropic | null = null;
 function getClient() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  if (!_client) {
+    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  }
+  return _client;
 }
 
 async function callClaude(
@@ -62,18 +66,20 @@ async function callClaude(
       return textBlock.text;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      const isServerError =
-        lastError.message.includes('500') ||
-        lastError.message.includes('529') ||
-        lastError.message.includes('Internal server error') ||
-        lastError.message.includes('overloaded');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const status = (err as any)?.status ?? 0;
+      const msg = lastError.message;
+      const isRetryable =
+        status === 429 || status === 500 || status === 503 || status === 529 ||
+        msg.includes('overloaded') || msg.includes('Internal server error');
 
-      if (!isServerError || attempt === MAX_RETRIES) {
+      if (!isRetryable || attempt === MAX_RETRIES) {
         throw lastError;
       }
 
-      // Wait before retrying: 2s, 4s
-      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+      // Wait before retrying: 2s, 4s, 6s (longer for rate limits)
+      const delay = status === 429 ? attempt * 5000 : attempt * 2000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 

@@ -94,6 +94,32 @@ export async function POST(req: Request) {
     }
   }
 
+  // Input size validation (prevent DoS / token overflow)
+  const MAX_TRANSCRIPT = 500_000;  // ~125k tokens
+  const MAX_PROMPT = 50_000;
+  const MAX_ARTICLE = 200_000;
+
+  if (body.transcript && body.transcript.length > MAX_TRANSCRIPT) {
+    return new Response(
+      JSON.stringify({ error: 'Transcript is too long. Please shorten it and try again.' }),
+      { status: 413, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  if (body.article && body.article.length > MAX_ARTICLE) {
+    return new Response(
+      JSON.stringify({ error: 'Article is too long for HTML generation.' }),
+      { status: 413, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  if ((body.draftPrompt && body.draftPrompt.length > MAX_PROMPT) ||
+      (body.structurePrompt && body.structurePrompt.length > MAX_PROMPT) ||
+      (body.htmlPrompt && body.htmlPrompt.length > MAX_PROMPT)) {
+    return new Response(
+      JSON.stringify({ error: 'Prompt is too long.' }),
+      { status: 413, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Validate inputs based on phase
   if (phase === 'generate') {
     if (!body.videoUrl && !body.transcript) {
@@ -125,13 +151,19 @@ export async function POST(req: Request) {
 
   const encoder = new TextEncoder();
 
+  const userId = user.id;
+
   const stream = new ReadableStream({
     start(controller) {
       (async () => {
         const send = (event: ProgressEvent) => {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
-          );
+          try {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
+            );
+          } catch {
+            // Stream already closed — ignore
+          }
         };
 
         try {
@@ -157,7 +189,8 @@ export async function POST(req: Request) {
               send
             );
           }
-        } catch {
+        } catch (err) {
+          console.error('Pipeline error:', err);
           send({
             step: 'error',
             status: 'error',
@@ -165,10 +198,16 @@ export async function POST(req: Request) {
           });
         } finally {
           // Flush usage logs (best-effort, non-blocking)
-          await flushUsageLogs(user!.id).catch(() => {});
+          await flushUsageLogs(userId).catch((err) => {
+            console.error('Failed to flush usage logs:', err);
+          });
           controller.close();
         }
-      })();
+      })().catch((err) => {
+        // Safety net: catch any unhandled errors in the stream IIFE
+        console.error('Fatal stream error:', err);
+        try { controller.close(); } catch { /* already closed */ }
+      });
     },
   });
 
