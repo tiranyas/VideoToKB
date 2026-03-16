@@ -7,6 +7,7 @@ import { UrlForm } from '@/components/url-form';
 import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
 import { OnboardingChecklist } from '@/components/onboarding-checklist';
+import { FeedbackButton } from '@/components/feedback-button';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import {
@@ -419,6 +420,18 @@ export default function Home() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Feedback button — visible after article generation */}
+      {(phase === 'review' || phase === 'complete') && (
+        <FeedbackButton
+          context={{
+            articleId: savedArticleId ?? undefined,
+            workspaceId: activeWorkspace?.id,
+            platformId: selectedPlatformId,
+            platformName: selectedPlatform?.name,
+          }}
+        />
       )}
     </div>
   );
