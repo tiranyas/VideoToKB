@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Workspace, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, PlanId } from '@/types';
+import type { Workspace, WorkspaceBranding, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, PlanId } from '@/types';
 
 // ── Workspaces ──────────────────────────────────────────
 
@@ -58,7 +58,7 @@ export async function createWorkspace(
 export async function updateWorkspace(
   supabase: SupabaseClient,
   workspaceId: string,
-  ws: Partial<{ name: string; slug: string; companyName: string; companyDescription: string; industry: string; targetAudience: string }>
+  ws: Partial<{ name: string; slug: string; companyName: string; companyDescription: string; industry: string; targetAudience: string; branding: WorkspaceBranding }>
 ): Promise<void> {
   const updates: Record<string, unknown> = {};
   if (ws.name !== undefined) updates.name = ws.name;
@@ -67,6 +67,7 @@ export async function updateWorkspace(
   if (ws.companyDescription !== undefined) updates.company_description = ws.companyDescription;
   if (ws.industry !== undefined) updates.industry = ws.industry;
   if (ws.targetAudience !== undefined) updates.target_audience = ws.targetAudience;
+  if (ws.branding !== undefined) updates.branding = ws.branding;
 
   const { error } = await supabase
     .from('workspaces')
@@ -98,6 +99,7 @@ function mapWorkspaceRow(row: Record<string, unknown>): Workspace {
     companyDescription: (row.company_description as string) ?? undefined,
     industry: (row.industry as string) ?? undefined,
     targetAudience: (row.target_audience as string) ?? undefined,
+    branding: (row.branding as WorkspaceBranding) ?? undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

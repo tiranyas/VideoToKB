@@ -214,6 +214,7 @@ export default function Home() {
           article: structuredArticle,
           htmlPrompt: platform.htmlPrompt,
           htmlTemplate: platform.htmlTemplate,
+          branding: activeWorkspace?.branding,
         }),
       });
 

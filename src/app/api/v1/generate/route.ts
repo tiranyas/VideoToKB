@@ -253,6 +253,7 @@ export async function POST(req: Request) {
         article: structuredArticle,
         htmlPrompt: platform.html_prompt,
         htmlTemplate: platform.html_template ?? '',
+        branding: workspace.branding ?? undefined,
       },
       (event: ProgressEvent) => {
         if (event.step === 'error') {

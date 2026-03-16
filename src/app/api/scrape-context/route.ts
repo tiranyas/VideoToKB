@@ -69,20 +69,27 @@ export async function POST(req: Request) {
     const start = Date.now();
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      system: `You are an expert at extracting company information from websites.
-Analyze the provided HTML and extract structured company information.
+      max_tokens: 2000,
+      system: `You are an expert at extracting company information and brand identity from websites.
+Analyze the provided HTML and extract structured company information and branding.
 Return a JSON object with these fields:
 - name: Company name
 - description: What the company does (2-3 sentences)
 - industry: The industry/sector
 - targetAudience: Who the product/service is for
+- branding: An object with:
+  - primaryColor: The main brand color as hex (e.g., "#6d28d9"). Look at CSS variables, theme colors, header/button backgrounds, or prominent UI elements.
+  - secondaryColor: Secondary brand color as hex. Look for secondary buttons, accents, or complementary colors.
+  - accentColor: Accent/highlight color as hex. Look for call-to-action buttons, links, or emphasis colors.
+  - fontFamily: The primary font family used on the site (e.g., "Inter", "Roboto"). Check CSS font-family declarations.
+  - logoUrl: The URL of the company logo if found in the HTML (look for <img> in header/nav with "logo" in class/alt/src).
 
+For colors, extract ACTUAL colors used on the site, not generic guesses. If you cannot determine a color, omit it.
 Return ONLY the JSON object, no markdown or explanations.`,
       messages: [
         {
           role: 'user',
-          content: `Extract company information from this website HTML:\n\n${trimmedHtml}`,
+          content: `Extract company information and branding from this website HTML:\n\n${trimmedHtml}`,
         },
       ],
     });
@@ -120,6 +127,7 @@ Return ONLY the JSON object, no markdown or explanations.`,
       description: parsed.description ?? '',
       industry: parsed.industry ?? '',
       targetAudience: parsed.targetAudience ?? '',
+      branding: parsed.branding ?? {},
     });
   } catch {
     return Response.json({ error: 'Failed to scrape website. Please check the URL and try again.' }, { status: 500 });

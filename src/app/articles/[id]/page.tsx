@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { getArticle, deleteArticle, updateArticleTitle, updateArticleHtml, getPlatformProfiles } from '@/lib/supabase/queries';
 import { readSSEStream } from '@/lib/sse';
 import { cn } from '@/utils/cn';
+import { useWorkspace } from '@/contexts/workspace-context';
 import type { Article, PlatformProfile } from '@/types';
 
 type Tab = 'markdown' | 'html' | 'preview';
@@ -17,6 +18,7 @@ export default function ArticleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const supabase = createClient();
+  const { activeWorkspace } = useWorkspace();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('markdown');
@@ -155,6 +157,7 @@ export default function ArticleDetailPage() {
           article: markdownDraft,
           htmlPrompt: platform.htmlPrompt,
           htmlTemplate: platform.htmlTemplate,
+          branding: activeWorkspace?.branding,
         }),
       });
 

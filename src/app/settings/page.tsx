@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Key, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
-import type { ArticleType, PlatformProfile } from '@/types';
+import type { ArticleType, PlatformProfile, WorkspaceBranding, ArticleTypeControls } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import {
@@ -15,13 +15,14 @@ import {
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
 } from '@/lib/supabase/queries';
 
-type Tab = 'context' | 'article-types' | 'platforms' | 'api' | 'account';
+type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'api' | 'account';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
 
   const tabs: { id: Tab; label: string; icon: typeof Globe }[] = [
     { id: 'context', label: 'Company Context', icon: Globe },
+    { id: 'branding', label: 'Branding', icon: Palette },
     { id: 'article-types', label: 'Article Types', icon: FileText },
     { id: 'platforms', label: 'Platforms', icon: FileText },
     { id: 'api', label: 'API', icon: Key },
@@ -63,6 +64,7 @@ export default function SettingsPage() {
         </div>
 
         {activeTab === 'context' && <CompanyContextTab />}
+        {activeTab === 'branding' && <BrandingTab />}
         {activeTab === 'article-types' && <ArticleTypesTab />}
         {activeTab === 'platforms' && <PlatformProfilesTab />}
         {activeTab === 'api' && <ApiKeysTab />}
@@ -102,9 +104,10 @@ function CompanyContextTab() {
         companyDescription: data.description,
         industry: data.industry,
         targetAudience: data.targetAudience,
+        ...(data.branding && Object.keys(data.branding).length > 0 ? { branding: { ...activeWorkspace.branding, ...data.branding } } : {}),
       });
       await refreshWorkspaces();
-      toast.success('Company context extracted successfully');
+      toast.success(data.branding ? 'Company context & branding extracted' : 'Company context extracted');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to extract context');
     } finally {
@@ -280,6 +283,180 @@ function CompanyContextTab() {
   );
 }
 
+// ── Branding Tab ─────────────────────────────────────────
+
+function BrandingTab() {
+  const { activeWorkspace, refreshWorkspaces } = useWorkspace();
+  const supabase = createClient();
+  const [branding, setBranding] = useState<WorkspaceBranding>({});
+  const [saving, setSaving] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [brandUrl, setBrandUrl] = useState('');
+
+  useEffect(() => {
+    if (activeWorkspace?.branding) {
+      setBranding(activeWorkspace.branding);
+    }
+  }, [activeWorkspace?.id, activeWorkspace?.branding]);
+
+  async function handleSave() {
+    if (!activeWorkspace) return;
+    setSaving(true);
+    try {
+      await updateWorkspace(supabase, activeWorkspace.id, { branding });
+      await refreshWorkspaces();
+      toast.success('Branding saved');
+    } catch {
+      toast.error('Failed to save branding');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleExtractFromUrl() {
+    if (!brandUrl.trim() || !activeWorkspace) return;
+    setExtracting(true);
+    try {
+      const res = await fetch('/api/scrape-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: brandUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.branding) {
+        const merged = { ...branding, ...data.branding };
+        setBranding(merged);
+        toast.success('Brand colors extracted from website');
+      } else {
+        toast.error('Could not detect brand colors from this URL');
+      }
+    } catch {
+      toast.error('Failed to extract branding');
+    } finally {
+      setExtracting(false);
+    }
+  }
+
+  function updateColor(key: keyof WorkspaceBranding, value: string) {
+    setBranding((prev) => ({ ...prev, [key]: value }));
+  }
+
+  if (!activeWorkspace) return null;
+
+  return (
+    <div className="space-y-6">
+      {/* Auto-extract */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-2">Extract from Website</h3>
+        <p className="text-xs text-gray-400 mb-4">Automatically detect your brand colors and font from your website.</p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={brandUrl}
+            onChange={(e) => setBrandUrl(e.target.value)}
+            placeholder="https://your-company.com"
+            className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+          />
+          <button
+            onClick={handleExtractFromUrl}
+            disabled={extracting || !brandUrl.trim()}
+            className={cn(
+              'rounded-xl px-4 py-3 text-sm font-medium text-white transition-all whitespace-nowrap',
+              extracting || !brandUrl.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
+            )}
+          >
+            {extracting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Detect'}
+          </button>
+        </div>
+      </div>
+
+      {/* Color pickers */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-4">Brand Colors</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <ColorField label="Primary Color" value={branding.primaryColor ?? '#6d28d9'} onChange={(v) => updateColor('primaryColor', v)} />
+          <ColorField label="Secondary Color" value={branding.secondaryColor ?? '#3b82f6'} onChange={(v) => updateColor('secondaryColor', v)} />
+          <ColorField label="Accent Color" value={branding.accentColor ?? '#f59e0b'} onChange={(v) => updateColor('accentColor', v)} />
+        </div>
+
+        {/* Preview strip */}
+        <div className="mt-4 flex gap-2 items-center">
+          <span className="text-xs text-gray-400">Preview:</span>
+          <div className="flex gap-1.5">
+            <div className="w-10 h-10 rounded-lg shadow-sm border border-gray-100" style={{ backgroundColor: branding.primaryColor ?? '#6d28d9' }} />
+            <div className="w-10 h-10 rounded-lg shadow-sm border border-gray-100" style={{ backgroundColor: branding.secondaryColor ?? '#3b82f6' }} />
+            <div className="w-10 h-10 rounded-lg shadow-sm border border-gray-100" style={{ backgroundColor: branding.accentColor ?? '#f59e0b' }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Font & Logo */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-2">Typography & Logo</h3>
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5">Font Family</label>
+          <select
+            value={branding.fontFamily ?? 'Inter'}
+            onChange={(e) => updateColor('fontFamily', e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+          >
+            {['Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 'Montserrat', 'Source Sans Pro', 'Nunito', 'Raleway', 'PT Sans'].map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-1.5">Logo URL (optional)</label>
+          <input
+            type="url"
+            value={branding.logoUrl ?? ''}
+            onChange={(e) => updateColor('logoUrl', e.target.value)}
+            placeholder="https://your-company.com/logo.png"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Save */}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className={cn(
+          'w-full rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
+          saving ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
+        )}
+      >
+        {saving ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Saving...</span> : 'Save Branding'}
+      </button>
+
+      <p className="text-xs text-gray-400">Branding colors and font are automatically applied when generating HTML articles for this workspace.</p>
+    </div>
+  );
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-400 mb-1.5">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+        />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+        />
+      </div>
+    </div>
+  );
+}
+
 // ── Article Types Tab ────────────────────────────────────
 
 function ArticleTypesTab() {
@@ -373,6 +550,11 @@ function ArticleTypesTab() {
   );
 }
 
+const TONE_OPTIONS = ['formal', 'casual', 'technical', 'friendly'] as const;
+const LENGTH_OPTIONS = ['concise', 'standard', 'detailed'] as const;
+const STRUCTURE_OPTIONS = ['step-by-step', 'narrative', 'faq-heavy', 'reference'] as const;
+const AUDIENCE_OPTIONS = ['end-users', 'developers', 'managers', 'mixed'] as const;
+
 function ArticleTypeEditor({
   initial,
   onSave,
@@ -385,17 +567,64 @@ function ArticleTypeEditor({
   const [name, setName] = useState(initial?.name ?? '');
   const [draftPrompt, setDraftPrompt] = useState(initial?.draftPrompt ?? '');
   const [structurePrompt, setStructurePrompt] = useState(initial?.structurePrompt ?? '');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [controls, setControls] = useState<ArticleTypeControls>({
+    tone: 'formal',
+    length: 'standard',
+    structure: 'step-by-step',
+    audience: 'end-users',
+  });
+  const [importUrl, setImportUrl] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [importSummary, setImportSummary] = useState('');
+
+  async function handleImportFromExample() {
+    if (!importUrl.trim()) return;
+    setAnalyzing(true);
+    setImportSummary('');
+    try {
+      const res = await fetch('/api/analyze-article', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (data.controls) {
+        setControls(data.controls);
+      }
+      if (data.draftPrompt) setDraftPrompt(data.draftPrompt);
+      if (data.structurePrompt) setStructurePrompt(data.structurePrompt);
+      if (data.summary) setImportSummary(data.summary);
+      if (!name.trim()) setName('Imported Style');
+      toast.success('Style imported from example article');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to analyze article');
+    } finally {
+      setAnalyzing(false);
+    }
+  }
 
   function handleSubmit() {
-    if (!name.trim() || !draftPrompt.trim() || !structurePrompt.trim()) {
-      toast.error('All fields are required');
+    if (!name.trim()) {
+      toast.error('Name is required');
       return;
+    }
+    // If no advanced prompts, generate from controls
+    let finalDraft = draftPrompt.trim();
+    let finalStructure = structurePrompt.trim();
+    if (!finalDraft) {
+      finalDraft = `You are a knowledge base article writer. Write in a ${controls.tone} tone. Target audience: ${controls.audience}. Length: ${controls.length}. Create a comprehensive draft article from the provided transcript.`;
+    }
+    if (!finalStructure) {
+      finalStructure = `You are a knowledge base article editor. Structure the article as a ${controls.structure} guide. Tone: ${controls.tone}. Target audience: ${controls.audience}. Length: ${controls.length}. Format the draft into a well-structured article.`;
     }
     onSave({
       id: initial?.id ?? crypto.randomUUID(),
       name: name.trim(),
-      draftPrompt: draftPrompt.trim(),
-      structurePrompt: structurePrompt.trim(),
+      draftPrompt: finalDraft,
+      structurePrompt: finalStructure,
       isDefault: initial?.isDefault,
     });
   }
@@ -409,28 +638,82 @@ function ArticleTypeEditor({
         placeholder="Article type name (e.g., Screen Overview)"
         className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-medium focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
       />
-      <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1.5">
-          Draft Prompt (Agent 2 — creates initial draft from transcript)
-        </label>
-        <textarea
-          value={draftPrompt}
-          onChange={(e) => setDraftPrompt(e.target.value)}
-          rows={6}
-          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-        />
+
+      {/* Import from example */}
+      <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/50 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-violet-700">
+          <Sparkles className="h-4 w-4" />
+          Import Style from Example Article
+        </div>
+        <p className="text-xs text-gray-500">Paste a URL to a public KB article and we&apos;ll mimic its exact tone, structure, and formatting.</p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="https://help.example.com/article/..."
+            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+          />
+          <button
+            onClick={handleImportFromExample}
+            disabled={analyzing || !importUrl.trim()}
+            className={cn(
+              'rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all whitespace-nowrap',
+              analyzing || !importUrl.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-700'
+            )}
+          >
+            {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Analyze'}
+          </button>
+        </div>
+        {importSummary && (
+          <p className="text-xs text-violet-600 bg-violet-100 rounded-lg px-3 py-2">{importSummary}</p>
+        )}
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1.5">
-          Structure Prompt (Agent 3 — formats draft into structured article)
-        </label>
-        <textarea
-          value={structurePrompt}
-          onChange={(e) => setStructurePrompt(e.target.value)}
-          rows={6}
-          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
-        />
+
+      {/* Simple controls */}
+      <div className="grid grid-cols-2 gap-3">
+        <SelectField label="Tone" value={controls.tone ?? 'formal'} options={TONE_OPTIONS} onChange={(v) => setControls({ ...controls, tone: v as ArticleTypeControls['tone'] })} />
+        <SelectField label="Length" value={controls.length ?? 'standard'} options={LENGTH_OPTIONS} onChange={(v) => setControls({ ...controls, length: v as ArticleTypeControls['length'] })} />
+        <SelectField label="Structure" value={controls.structure ?? 'step-by-step'} options={STRUCTURE_OPTIONS} onChange={(v) => setControls({ ...controls, structure: v as ArticleTypeControls['structure'] })} />
+        <SelectField label="Target Audience" value={controls.audience ?? 'end-users'} options={AUDIENCE_OPTIONS} onChange={(v) => setControls({ ...controls, audience: v as ArticleTypeControls['audience'] })} />
       </div>
+
+      {/* Advanced toggle */}
+      <button
+        onClick={() => setShowAdvanced(!showAdvanced)}
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        Advanced — Edit Prompts Directly
+      </button>
+
+      {showAdvanced && (
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              Draft Prompt (Agent 2 — creates initial draft from transcript)
+            </label>
+            <textarea
+              value={draftPrompt}
+              onChange={(e) => setDraftPrompt(e.target.value)}
+              rows={6}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              Structure Prompt (Agent 3 — formats draft into structured article)
+            </label>
+            <textarea
+              value={structurePrompt}
+              onChange={(e) => setStructurePrompt(e.target.value)}
+              rows={6}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 justify-end">
         <button onClick={onCancel} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors">
           Cancel
@@ -442,6 +725,23 @@ function ArticleTypeEditor({
           Save
         </button>
       </div>
+    </div>
+  );
+}
+
+function SelectField({ label, value, options, onChange }: { label: string; value: string; options: readonly string[]; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-400 mb-1.5">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm capitalize focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+      >
+        {options.map((o) => (
+          <option key={o} value={o} className="capitalize">{o.replace(/-/g, ' ')}</option>
+        ))}
+      </select>
     </div>
   );
 }

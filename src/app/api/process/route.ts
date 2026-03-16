@@ -25,6 +25,14 @@ interface RequestBody {
   article?: string;
   htmlPrompt?: string;
   htmlTemplate?: string;
+  branding?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    logoUrl?: string;
+    fontFamily?: string;
+    customCss?: string;
+  };
 }
 
 export async function POST(req: Request) {
@@ -144,6 +152,7 @@ export async function POST(req: Request) {
                 article: body.article!,
                 htmlPrompt: body.htmlPrompt!,
                 htmlTemplate: body.htmlTemplate ?? '',
+                branding: body.branding,
               },
               send
             );

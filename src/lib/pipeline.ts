@@ -137,13 +137,21 @@ export interface PhaseBInput {
   article: string;
   htmlPrompt: string;
   htmlTemplate: string;
+  branding?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    logoUrl?: string;
+    fontFamily?: string;
+    customCss?: string;
+  };
 }
 
 export async function runPhaseB(
   input: PhaseBInput,
   onProgress: (event: ProgressEvent) => void
 ): Promise<void> {
-  const { article, htmlPrompt, htmlTemplate } = input;
+  const { article, htmlPrompt, htmlTemplate, branding } = input;
 
   try {
     onProgress({ step: 'html', status: 'in_progress', message: 'Generating platform HTML...' });
@@ -152,6 +160,18 @@ export async function runPhaseB(
     let fullPrompt = htmlPrompt;
     if (htmlTemplate) {
       fullPrompt += `\n\n## Reference HTML Template\nStudy this template carefully and produce HTML that follows this exact structure:\n\n\`\`\`html\n${htmlTemplate}\n\`\`\`\n\n## Rules\n- Output ONLY the HTML code — no explanations\n- Match exact CSS, classes, and component structure\n- Keep content in the same language as the input article`;
+    }
+
+    // Inject workspace branding
+    if (branding && (branding.primaryColor || branding.fontFamily)) {
+      fullPrompt += `\n\n## Workspace Branding\nApply these brand styles to the generated HTML:`;
+      if (branding.primaryColor) fullPrompt += `\n- Primary color: ${branding.primaryColor} (use for headings, primary buttons, key highlights)`;
+      if (branding.secondaryColor) fullPrompt += `\n- Secondary color: ${branding.secondaryColor} (use for secondary elements, borders, subtle accents)`;
+      if (branding.accentColor) fullPrompt += `\n- Accent color: ${branding.accentColor} (use for call-to-action, important callouts, badges)`;
+      if (branding.fontFamily) fullPrompt += `\n- Font family: "${branding.fontFamily}", sans-serif (apply to body and all text elements)`;
+      if (branding.logoUrl) fullPrompt += `\n- Company logo URL: ${branding.logoUrl} (include at the top of the article if appropriate)`;
+      if (branding.customCss) fullPrompt += `\n- Additional custom CSS:\n${branding.customCss}`;
+      fullPrompt += `\nReplace any hardcoded colors in the template with the brand colors above.`;
     }
 
     const html = await generateHTML(article, fullPrompt);

@@ -59,6 +59,16 @@ export interface PlatformProfile {
   isDefault?: boolean;
 }
 
+// Workspace branding
+export interface WorkspaceBranding {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  logoUrl?: string;
+  fontFamily?: string;
+  customCss?: string;
+}
+
 // Workspace — groups company context, preferences, and articles
 export interface Workspace {
   id: string;
@@ -69,8 +79,17 @@ export interface Workspace {
   companyDescription?: string;
   industry?: string;
   targetAudience?: string;
+  branding?: WorkspaceBranding;
   createdAt: string;
   updatedAt: string;
+}
+
+// Article type simple controls (stored alongside prompts)
+export interface ArticleTypeControls {
+  tone?: 'formal' | 'casual' | 'technical' | 'friendly';
+  length?: 'concise' | 'standard' | 'detailed';
+  structure?: 'step-by-step' | 'narrative' | 'faq-heavy' | 'reference';
+  audience?: 'end-users' | 'developers' | 'managers' | 'mixed';
 }
 
 // Pricing & Subscriptions
