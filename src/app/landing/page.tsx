@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ScrollReveal, StaggerReveal } from '@/components/scroll-reveal';
+import { UseCaseCarousel } from '@/components/use-case-carousel';
 
 export default function LandingPage() {
   return (
@@ -252,50 +253,9 @@ export default function LandingPage() {
             </p>
           </ScrollReveal>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <StaggerReveal staggerMs={100} distance={30}>
-              {[
-                {
-                  role: 'Customer Success Teams',
-                  pain: 'You record Loom walkthroughs for customers all day — but those videos aren\'t searchable or reusable.',
-                  solution: 'Turn every Loom into a help center article automatically.',
-                },
-                {
-                  role: 'Technical Writers',
-                  pain: 'Your backlog is full of "we recorded a video of this, can you write the article?" requests.',
-                  solution: 'Convert the video backlog into structured articles in minutes, not days.',
-                },
-                {
-                  role: 'Product Teams',
-                  pain: 'You demo features in meetings but never find time to write the release notes or docs.',
-                  solution: 'Paste the meeting recording URL and get a feature article ready to publish.',
-                },
-                {
-                  role: 'Ops Teams',
-                  pain: 'Runbooks and SOPs live in people\'s heads or scattered recordings. Onboarding takes forever.',
-                  solution: 'Convert process walkthroughs into clear, step-by-step operational docs your team can follow.',
-                },
-                {
-                  role: 'Agencies & Consultants',
-                  pain: 'You manage documentation for multiple clients and need workspace isolation.',
-                  solution: 'Separate workspaces per client, each with custom templates and branding.',
-                },
-              ].map((useCase) => (
-                <div
-                  key={useCase.role}
-                  className="rounded-2xl border border-gray-100 p-7 hover:border-violet-200 transition-all"
-                >
-                  <h3 className="font-semibold text-gray-900 text-lg mb-3">{useCase.role}</h3>
-                  <p className="text-sm text-gray-500 mb-3">
-                    <span className="text-red-400 font-medium">The problem:</span> {useCase.pain}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="text-green-500 font-medium">With KBPipe:</span> {useCase.solution}
-                  </p>
-                </div>
-              ))}
-            </StaggerReveal>
-          </div>
+          <ScrollReveal>
+            <UseCaseCarousel />
+          </ScrollReveal>
         </div>
       </section>
 
