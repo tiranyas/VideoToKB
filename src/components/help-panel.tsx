@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { HelpCircle, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Info, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { getHelpArticle, type HelpArticle } from '@/lib/help-content';
 
@@ -41,18 +41,18 @@ export function HelpPanel() {
 
   return (
     <>
-      {/* Floating help button */}
+      {/* Floating info button — top right */}
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          'fixed bottom-6 right-6 z-40 h-11 w-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200',
+          'fixed top-20 right-6 z-40 h-9 w-9 rounded-full flex items-center justify-center shadow-md transition-all duration-200',
           open
             ? 'bg-gray-800 text-white scale-90'
-            : 'bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 hover:scale-105'
+            : 'bg-white text-gray-500 border border-gray-200 hover:text-violet-600 hover:border-violet-300 hover:scale-105'
         )}
-        title="Help"
+        title="Page Info"
       >
-        {open ? <X className="h-5 w-5" /> : <HelpCircle className="h-5 w-5" />}
+        {open ? <X className="h-4 w-4" /> : <Info className="h-4 w-4" />}
       </button>
 
       {/* Backdrop */}
@@ -74,7 +74,7 @@ export function HelpPanel() {
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center">
-              <HelpCircle className="h-4.5 w-4.5 text-violet-600" />
+              <Info className="h-4.5 w-4.5 text-violet-600" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900">{article.title}</h2>
           </div>

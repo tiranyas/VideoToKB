@@ -1,9 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createAdmin } from '@supabase/supabase-js';
 import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
+
+function getAdmin() {
+  return createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const CATEGORIES = ['bug', 'quality', 'styling', 'feature', 'other'] as const;
 const SEVERITIES = ['low', 'medium', 'high', 'critical'] as const;
@@ -56,7 +64,9 @@ export async function POST(req: Request) {
     ? body.severity
     : 'medium';
 
-  const { error } = await supabase.from('feedback').insert({
+  // Use service role to bypass RLS (auth already verified above)
+  const admin = getAdmin();
+  const { error } = await admin.from('feedback').insert({
     user_id: user.id,
     article_id: body.articleId || null,
     workspace_id: body.workspaceId || null,
