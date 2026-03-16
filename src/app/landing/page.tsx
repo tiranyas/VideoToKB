@@ -5,12 +5,12 @@ import { UseCaseCarousel } from '@/components/use-case-carousel';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-white bg-grid overflow-x-hidden">
       {/* Nav */}
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="KBPipe" width={32} height={32} />
+            <Image src="/logo.png" alt="KBPipe" width={36} height={36} className="rounded-lg" />
             <span className="text-lg font-semibold text-gray-900">KBPipe</span>
           </div>
           <div className="flex items-center gap-3">
@@ -428,7 +428,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-100 py-10 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="KBPipe" width={24} height={24} />
+            <Image src="/logo.png" alt="KBPipe" width={28} height={28} className="rounded-md" />
             <span className="text-sm font-medium text-gray-500">KBPipe</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-400">
