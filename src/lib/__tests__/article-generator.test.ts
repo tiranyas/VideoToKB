@@ -26,6 +26,7 @@ describe('generateArticle', () => {
   it('calls Anthropic with claude-sonnet-4-6 model', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: '# How to Configure Security Settings' }],
+      usage: { input_tokens: 100, output_tokens: 50 },
     });
 
     await generateArticle(sampleTranscript, sampleTemplate);
@@ -40,6 +41,7 @@ describe('generateArticle', () => {
   it('passes template as system prompt', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: '# Article' }],
+      usage: { input_tokens: 100, output_tokens: 50 },
     });
 
     await generateArticle(sampleTranscript, sampleTemplate);
@@ -54,6 +56,7 @@ describe('generateArticle', () => {
   it('includes transcript in user message', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: '# Article' }],
+      usage: { input_tokens: 100, output_tokens: 50 },
     });
 
     await generateArticle(sampleTranscript, sampleTemplate);
@@ -66,6 +69,7 @@ describe('generateArticle', () => {
   it('returns text content from response', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: '# How to Configure Security Settings\n\nFollow these steps...' }],
+      usage: { input_tokens: 100, output_tokens: 50 },
     });
 
     const result = await generateArticle(sampleTranscript, sampleTemplate);
