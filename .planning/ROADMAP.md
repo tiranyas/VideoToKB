@@ -72,9 +72,9 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Template neutralization + branding placeholder system
-- [ ] 08-02-PLAN.md — Zendesk and Intercom platform templates
-- [ ] 08-03-PLAN.md — Onboarding data model (migration + types + queries)
+- [x] 08-01-PLAN.md — Template neutralization + branding placeholder system
+- [x] 08-02-PLAN.md — Zendesk and Intercom platform templates
+- [x] 08-03-PLAN.md — Onboarding data model (migration + types + queries)
 - [ ] 08-04-PLAN.md — Onboarding wizard UI (4-step wizard)
 - [ ] 08-05-PLAN.md — Middleware wiring + navigation integration
 
@@ -113,7 +113,7 @@ Plans:
 | 5. Usage Control and Polish | v1.0 | ✅ Complete | pre-existing |
 | 6. Security and Tests | v1.1 | ✅ Complete | 2026-03-15 |
 | 7. Performance and Cleanup | v1.1 | ✅ Complete | 2026-03-15 |
-| 8. Generic Templates & Onboarding | v2.0 | Planning complete | - |
+| 8. Generic Templates & Onboarding | v2.0 | 3/5 plans complete | - |
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
 
@@ -127,4 +127,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-18 — Phase 8 planned (5 plans in 3 waves)*
+*Last updated: 2026-03-18 — Phase 8 plan 03 complete (3/5)*

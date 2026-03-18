@@ -49,6 +49,7 @@ Key findings:
 - Onboarding reuses existing scraping infrastructure (/api/scrape-context, /api/scrape-template)
 - Intercom template must be minimal HTML — API strips divs, styles, custom attrs
 - [Phase 08]: Zendesk uses CSS classes (c-callout) not inline styles; Intercom strict HTML allowlist only
+- [Phase 08-03]: OnboardingState as JSONB with 4-step booleans; applyBranding defaults true for built-in templates
 
 ### Pending Todos
 
@@ -60,6 +61,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-18T15:35:13.525Z
-Stopped at: Completed 08-02-PLAN.md
-Resume file: None
+Last session: 2026-03-18T17:35:40Z
+Stopped at: Completed 08-03-PLAN.md
+Resume file: .planning/phases/08-generic-templates-onboarding/08-03-SUMMARY.md
