@@ -17,20 +17,26 @@ export async function POST(req: Request) {
     hasAnthropic: !!process.env.ANTHROPIC_API_KEY,
   });
 
-  // Auth check
+  // Auth check — step-by-step tracing to find crash point
+  console.log('[scrape-context] STEP 1: before createClient');
   let supabase;
   try {
     supabase = await createClient();
+    console.log('[scrape-context] STEP 2: createClient OK');
   } catch (e) {
-    console.error('[scrape-context] createClient failed:', e);
+    console.error('[scrape-context] STEP 2-ERR: createClient failed:', e);
     return Response.json({ error: 'Server configuration error' }, { status: 500 });
   }
+
+  console.log('[scrape-context] STEP 3: before getUser');
   const { data: { user } } = await supabase.auth.getUser();
+  console.log('[scrape-context] STEP 4: getUser done, hasUser:', !!user);
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Rate limit
+  console.log('[scrape-context] STEP 5: before rate limit');
   const rl = await limiter.check(user.id);
   if (!rl.ok) {
     return Response.json(
