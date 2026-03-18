@@ -46,9 +46,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Fetch the page HTML
+    // Fetch the page HTML with browser-like headers
     const response = await fetch(validation.url.toString(), {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KBPipe/1.0)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
     });
 
     if (!response.ok) {
@@ -60,8 +65,17 @@ export async function POST(req: Request) {
 
     const html = await response.text();
 
-    // Trim HTML to avoid sending too much to Claude
-    const trimmedHtml = html.slice(0, 30000);
+    // Extract inline <style> blocks for color analysis
+    const styleBlocks: string[] = [];
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let styleMatch;
+    while ((styleMatch = styleRegex.exec(html)) !== null) {
+      styleBlocks.push(styleMatch[1]);
+    }
+    const cssContext = styleBlocks.join('\n').slice(0, 8000);
+
+    // Trim HTML + append CSS for Claude
+    const trimmedHtml = html.slice(0, 25000) + (cssContext ? `\n\n<!-- Extracted CSS -->\n<style>\n${cssContext}\n</style>` : '');
 
     // Use Claude to extract company info
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
@@ -71,21 +85,30 @@ export async function POST(req: Request) {
       model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: `You are an expert at extracting company information and brand identity from websites.
-Analyze the provided HTML and extract structured company information and branding.
+Analyze the provided HTML (including any CSS) and extract structured company information and branding.
+
 Return a JSON object with these fields:
 - name: Company name
 - description: What the company does (2-3 sentences)
 - industry: The industry/sector
 - targetAudience: Who the product/service is for
 - branding: An object with:
-  - primaryColor: The main brand color as hex (e.g., "#6d28d9"). Look at CSS variables, theme colors, header/button backgrounds, or prominent UI elements.
-  - secondaryColor: Secondary brand color as hex. Look for secondary buttons, accents, or complementary colors.
-  - accentColor: Accent/highlight color as hex. Look for call-to-action buttons, links, or emphasis colors.
-  - fontFamily: The primary font family used on the site (e.g., "Inter", "Roboto"). Check CSS font-family declarations.
-  - logoUrl: The URL of the company logo if found in the HTML (look for <img> in header/nav with "logo" in class/alt/src).
+  - primaryColor: The MAIN brand color as hex (e.g., "#6d28d9"). You MUST find this. Look at ALL of these sources in order:
+    1. CSS custom properties / variables (--primary, --brand-color, --theme-color, etc.)
+    2. meta theme-color tag
+    3. Header/navbar background color
+    4. Button background colors (especially CTA buttons)
+    5. Link colors (a tags)
+    6. Inline style attributes on prominent elements
+    7. SVG fill colors in the logo area
+    8. Any color that appears 3+ times in the CSS
+  - secondaryColor: Secondary brand color as hex. Look for secondary buttons, borders, hover states.
+  - accentColor: Accent/highlight color as hex. Look for call-to-action elements, badges, highlights.
+  - fontFamily: The primary font family (e.g., "Inter", "Roboto"). Check CSS font-family declarations, Google Fonts links.
+  - logoUrl: The URL of the company logo (look for <img> in header/nav with "logo" in class/alt/src).
 
-For colors, extract ACTUAL colors used on the site, not generic guesses. If you cannot determine a color, omit it.
-Return ONLY the JSON object, no markdown or explanations.`,
+IMPORTANT: You MUST return at least primaryColor. Search thoroughly through CSS variables, inline styles, class definitions, and SVG elements. Every website has a primary brand color — find it.
+Return ONLY the JSON object, no markdown fences or explanations.`,
       messages: [
         {
           role: 'user',

@@ -27,13 +27,8 @@ interface ScrapeResult {
   description?: string;
   industry?: string;
   targetAudience?: string;
-  branding?: {
-    primaryColor?: string;
-    secondaryColor?: string;
-    accentColor?: string;
-    fontFamily?: string;
-    logoUrl?: string;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  branding?: Record<string, any>;
 }
 
 export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, workspaceName }: StepBrandProps) {
@@ -69,15 +64,52 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
       if (data.name) setCompanyName(data.name);
       if (data.description) setDescription(data.description);
       if (data.industry) setIndustry(data.industry);
-      // Map individual color properties to array
+
+      // Extract colors from branding — handle any format Claude returns
       const extractedColors: string[] = [];
-      if (data.branding?.primaryColor) extractedColors.push(data.branding.primaryColor);
-      if (data.branding?.secondaryColor) extractedColors.push(data.branding.secondaryColor);
-      if (data.branding?.accentColor) extractedColors.push(data.branding.accentColor);
+      const b = data.branding;
+      if (b && typeof b === 'object') {
+        // Log for debugging
+        console.log('[KBPipe] Branding response:', JSON.stringify(b));
+
+        // Check named color properties (camelCase and snake_case)
+        const colorKeys = [
+          'primaryColor', 'primary_color', 'primary',
+          'secondaryColor', 'secondary_color', 'secondary',
+          'accentColor', 'accent_color', 'accent',
+        ];
+        for (const key of colorKeys) {
+          const val = b[key];
+          if (typeof val === 'string' && val.length >= 4 && val.startsWith('#')) {
+            if (!extractedColors.includes(val)) extractedColors.push(val);
+          }
+        }
+
+        // Also check if colors came as array
+        if (Array.isArray(b.colors)) {
+          for (const c of b.colors) {
+            if (typeof c === 'string' && c.startsWith('#') && !extractedColors.includes(c)) {
+              extractedColors.push(c);
+            }
+          }
+        }
+
+        // Last resort: scan all string values for hex colors
+        if (extractedColors.length === 0) {
+          for (const val of Object.values(b)) {
+            if (typeof val === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(val)) {
+              if (!extractedColors.includes(val)) extractedColors.push(val);
+            }
+          }
+        }
+      }
+
       if (extractedColors.length > 0) {
         setColors(extractedColors);
         setPrimaryIdx(0);
         if (extractedColors.length > 1) setAccentIdx(1);
+      } else {
+        console.log('[KBPipe] No colors extracted from branding:', data.branding);
       }
       setScraped(true);
 
