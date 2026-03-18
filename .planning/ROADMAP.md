@@ -1,137 +1,130 @@
-# Roadmap: KBify
+# Roadmap: KBPipe
 
 ## Milestones
 
-- 🚧 **v1.0 MVP** - Phases 1-5 (in progress)
-- 📋 **v1.1 Stabilization** - Phases 6-7 (planned)
+- ✅ **v1.0 MVP** - Phases 1-5 (complete)
+- ✅ **v1.1 Stabilization** - Phases 6-7 (complete)
+- 🚧 **v2.0 Onboarding & Multi-Platform** - Phases 8-10 (in progress)
 
 ## Phases
 
-### 🚧 v1.0 MVP (In Progress)
+### ✅ v1.0 MVP (Complete)
 
 **Milestone Goal:** A deployed SaaS that converts video recordings into publish-ready KB articles across multiple sources, export formats, and usage controls.
 
-#### Phase 1: End-to-End Pipeline
-**Goal**: A user can paste a Loom URL, see real-time progress, and view a generated KB article — deployed and working on Vercel, not just local dev
-**Depends on**: Nothing (first phase)
-**Requirements**: UILP-01, UILP-02, VINP-01, TRNS-01, TRNS-02, GENR-02, PRUX-01, PRUX-02, PRUX-03, OUTP-01
-**Success Criteria** (what must be TRUE):
-  1. User can paste a Loom share URL on the homepage and submit it for processing
-  2. User sees step-by-step progress updates in real time as the pipeline runs (Resolving, Transcribing, Generating, Done)
-  3. User sees a specific, actionable error message if any pipeline stage fails
-  4. User can view the generated article in an editable text area after processing completes
-  5. The entire pipeline works on a Vercel deployment (not just localhost)
-**Plans**: 4 plans
+**Status:** All core features deployed and running in production. Minor gaps remain (duration limit, speaker diarization, tags/description metadata) — moved to Active requirements for future work.
+
+#### Phase 1: End-to-End Pipeline ✅
+**Status**: Complete (core pipeline working in production)
 
 Plans:
-- [x] 01-01-PLAN.md — Project scaffolding, shared types, test infrastructure (Wave 0)
-- [x] 01-02-PLAN.md — Backend pipeline services (Loom resolver, transcription, article generator, SSE API)
-- [x] 01-03-PLAN.md — Frontend UI (URL form, progress display, article view, homepage wiring)
-- [ ] 01-04-PLAN.md — Vercel deployment and end-to-end verification
+- [x] 01-01-PLAN.md — Project scaffolding, shared types, test infrastructure
+- [x] 01-02-PLAN.md — Backend pipeline services
+- [x] 01-03-PLAN.md — Frontend UI
+- [~] 01-04-PLAN.md — Vercel deployment (skipped — deployed organically)
 
-#### Phase 2: Multi-Source Video Input
-**Goal**: Users can submit videos from YouTube and Google Drive in addition to Loom, with clear validation and error messages for all sources
-**Depends on**: Phase 1
-**Requirements**: VINP-02, VINP-03, VINP-04, VINP-05, VINP-06, TRNS-03
-**Success Criteria** (what must be TRUE):
-  1. User can paste a YouTube URL (including unlisted videos) and get a generated article
-  2. User can paste a Google Drive video link (MP4, MOV) and get a generated article
-  3. System validates URL format and video accessibility before starting the pipeline, showing specific errors ("video is private", "unsupported format", "URL not recognized")
-  4. System rejects videos longer than 15 minutes with a clear message before processing starts
-  5. Multi-speaker videos produce transcripts with speaker attribution
-**Plans**: TBD
+#### Phase 2: Multi-Source Video Input ✅
+**Status**: Complete — YouTube, Google Drive, URL validation with SSRF protection
 
-Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+#### Phase 3: Templates and Generation Quality ✅
+**Status**: Complete — 2 built-in + custom article types, title extraction
 
-#### Phase 3: Templates and Generation Quality
-**Goal**: Users can choose from 4 genuinely different article templates and refine output without re-transcribing
-**Depends on**: Phase 2
-**Requirements**: GENR-01, GENR-03, GENR-04, GENR-05
-**Success Criteria** (what must be TRUE):
-  1. User can select one of 4 templates (How-to, Feature Explainer, Troubleshooting, Onboarding) before processing
-  2. Each template produces a visibly different article structure (different headings, sections, and formatting — not just a title swap)
-  3. Generated articles include a suggested title, tags, and description alongside the article body
-  4. User can type adjustment instructions and regenerate the article without waiting for re-transcription
-**Plans**: TBD
+#### Phase 4: Export Formats ✅
+**Status**: Complete — Markdown, HTML, code clipboard + Word (.docx) export
 
-Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-
-#### Phase 4: Export Formats
-**Goal**: Users can get their article out of the tool in the format their KB platform needs
-**Depends on**: Phase 3
-**Requirements**: OUTP-02, OUTP-03, OUTP-04, OUTP-05
-**Success Criteria** (what must be TRUE):
-  1. User can copy the article as Markdown to clipboard with one click
-  2. User can copy the article as HTML to clipboard with one click
-  3. User can copy the article as a code-only format to clipboard
-  4. User can export the article as a Word document (.docx) that downloads to their machine
-**Plans**: TBD
-
-Plans:
-- [ ] 04-01: TBD
-
-#### Phase 5: Usage Control and Polish
-**Goal**: The app enforces free-tier limits, works on mobile, and feels complete as a product flow
-**Depends on**: Phase 4
-**Requirements**: USAG-01, USAG-02, UILP-03, OUTP-06
-**Success Criteria** (what must be TRUE):
-  1. Guest users can generate exactly 3 free articles; the 4th attempt shows a clear limit-reached message with a call-to-action
-  2. The app is usable on mobile devices (input, progress, and result views are responsive)
-  3. User can go back from the results page and generate another article without refreshing the browser
-**Plans**: TBD
-
-Plans:
-- [ ] 05-01: TBD
+#### Phase 5: Usage Control and Polish ✅
+**Status**: Complete — quota enforcement, responsive UI, stateful navigation
 
 ---
 
-### 📋 v1.1 Stabilization (Planned)
+### ✅ v1.1 Stabilization (Complete)
 
-**Milestone Goal:** Production-reliable and maintainable — rate limiting that works in serverless, complete SSRF protection, passing test suite, DB-level dashboard aggregation, and shared SSE parsing logic.
+**Milestone Goal:** Production-reliable — persistent rate limiting, SSRF protection, passing tests, DB-level stats, shared SSE parser.
 
-#### Phase 6: Security and Tests
-**Goal**: The system is correct and safe — rate limiting works across serverless instances, SSRF protection covers IPv6, and the test suite passes
-**Depends on**: Phase 5
-**Requirements**: SEC-01, SEC-02, TEST-01, TEST-02
+#### Phase 6: Security and Tests ✅
+Plans:
+- [x] 06-01-PLAN.md — Persistent rate limiter + IPv6 SSRF protection
+- [x] 06-02-PLAN.md — Fix test signatures and model assertions
+
+#### Phase 7: Performance and Cleanup ✅
+Plans:
+- [x] 07-01-PLAN.md — DB aggregation for dashboard stats + shared SSE utility
+
+---
+
+### 🚧 v2.0 Onboarding & Multi-Platform (In Progress)
+
+**Milestone Goal:** New users get a guided onboarding that captures their brand, platform, and style reference — so the very first article matches their KB. Platform templates are generic (not FinBot-branded), and we support Zendesk and Intercom in addition to existing platforms.
+
+**Research:** `.planning/research/platform-templates-research.md` (2026-03-18)
+
+#### Phase 8: Generic Templates & Onboarding
+**Goal**: New users go through a guided setup that captures their brand/context/platform/style before generating their first article. Default templates use neutral colors instead of FinBot branding.
+**Depends on**: v1.1 (complete)
 **Success Criteria** (what must be TRUE):
-  1. Submitting more requests than the rate limit allows from two different serverless cold starts results in a 429 response — not reset on cold start
-  2. Submitting a URL containing an IPv6 private/loopback address (e.g., `http://[::1]/internal`) is rejected by URL validation
-  3. Running `npm test` produces a passing suite with no signature-mismatch errors in pipeline tests
-  4. Running `npm test` produces a passing suite where the article-generator test asserts `claude-sonnet-4-6`
-**Plans**: 2 plans
+  1. A new user who signs up sees an onboarding flow before reaching the article generator
+  2. Onboarding collects: workspace name, company website URL (for branding/context scrape), KB platform selection, and optional existing article URL (for style scraping)
+  3. Onboarding is skippable — user can skip and return to it later from settings
+  4. After onboarding, the workspace has: company context populated, branding colors extracted from website, platform profile selected, and (if article URL provided) a custom HTML template scraped from their existing article
+  5. The default Helpjuice template uses neutral blue (`#2563eb`) instead of FinBot purple (`#6d28d9`) as the accent color fallback
+  6. The Generic HTML template uses neutral colors throughout
+  7. A user who skips onboarding and generates an article gets a clean, professionally-styled result with no FinBot-specific colors
+**Plans**: 5 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Persistent rate limiter (Supabase) and shared URL validation with IPv6 SSRF protection
-- [ ] 06-02-PLAN.md — Fix pipeline test signatures and article generator model assertion
+- [ ] 08-01-PLAN.md — Template neutralization + branding placeholder system
+- [ ] 08-02-PLAN.md — Zendesk and Intercom platform templates
+- [ ] 08-03-PLAN.md — Onboarding data model (migration + types + queries)
+- [ ] 08-04-PLAN.md — Onboarding wizard UI (4-step wizard)
+- [ ] 08-05-PLAN.md — Middleware wiring + navigation integration
 
-#### Phase 7: Performance and Cleanup
-**Goal**: The system is maintainable and efficient — dashboard stats come from the DB and SSE parsing logic lives in one place
-**Depends on**: Phase 6
-**Requirements**: PERF-01, PERF-02
+#### Phase 9: More Platforms (Zendesk, Intercom)
+**Goal**: Users on Zendesk Help Center or Intercom can select their platform and get articles formatted with the correct HTML structure and CSS classes for that platform
+**Depends on**: Phase 8
 **Success Criteria** (what must be TRUE):
-  1. The dashboard page loads workspace stats without fetching all articles to the client — a workspace with 1000 articles returns stats as fast as one with 10
-  2. Both the URL form and progress display components parse SSE events from the same shared utility — changing the parsing logic in one place updates both
-**Plans**: 1 plan
+  1. User can select "Zendesk Help Center" as their platform and get HTML using Zendesk-compatible classes (`article-body`, `c-callout--info/warning/tip`, `wysiwyg-table`, semantic HTML with CSS classes instead of inline styles)
+  2. User can select "Intercom" as their platform and get clean HTML using only Intercom-allowed tags (h1, h2, p, ul, ol, table, img, a, hr, pre/code) with Intercom-specific classes (`intercom-align-center`, `intercom-h2b-button`)
+  3. Intercom output does NOT contain any tags that Intercom's API strips (no div, span, style, script, or custom attributes)
+  4. Each platform's template produces output that can be pasted into that platform's editor and render correctly without manual cleanup
+  5. Platform selection in onboarding includes all supported platforms: Generic HTML, Helpjuice, Zendesk, Intercom, Confluence, Notion, Markdown
+**Plans**: TBD
 
-Plans:
-- [ ] 07-01-PLAN.md — DB aggregation for dashboard stats and shared SSE parsing utility
+#### Phase 10: Shared Workspaces & Team Access
+**Goal**: Multiple team members can access the same workspace, with role-based permissions and a team subscription model
+**Depends on**: Phase 9
+**Success Criteria** (what must be TRUE):
+  1. Workspace owner can invite team members by email
+  2. Invited members can accept and access the shared workspace
+  3. Members see shared articles, settings, and platform profiles
+  4. Owner can remove members from the workspace
+  5. Team subscription allows higher article quota than individual free tier
+**Plans**: TBD
+
+---
 
 ## Progress
 
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|----------------|--------|-----------|
-| 1. End-to-End Pipeline | v1.0 | 3/4 | In progress | - |
-| 2. Multi-Source Video Input | v1.0 | 0/TBD | Not started | - |
-| 3. Templates and Generation Quality | v1.0 | 0/TBD | Not started | - |
-| 4. Export Formats | v1.0 | 0/TBD | Not started | - |
-| 5. Usage Control and Polish | v1.0 | 0/TBD | Not started | - |
-| 6. Security and Tests | 1/2 | In Progress|  | - |
-| 7. Performance and Cleanup | 1/1 | Complete   | 2026-03-15 | - |
+| Phase | Milestone | Status | Completed |
+|-------|-----------|--------|-----------|
+| 1. End-to-End Pipeline | v1.0 | ✅ Complete | 2026-03-12 |
+| 2. Multi-Source Video Input | v1.0 | ✅ Complete | pre-existing |
+| 3. Templates and Generation Quality | v1.0 | ✅ Complete | pre-existing |
+| 4. Export Formats | v1.0 | ✅ Complete | pre-existing |
+| 5. Usage Control and Polish | v1.0 | ✅ Complete | pre-existing |
+| 6. Security and Tests | v1.1 | ✅ Complete | 2026-03-15 |
+| 7. Performance and Cleanup | v1.1 | ✅ Complete | 2026-03-15 |
+| 8. Generic Templates & Onboarding | v2.0 | Planning complete | - |
+| 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
+| 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
+
+## Known Gaps (carried from v1.0/v1.1)
+
+- Video duration limit (15 min)
+- Speaker diarization
+- Tags/description metadata in articles
+- Regenerate from edited text without re-transcription
+- rate-limit.ts TypeScript build error
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-15 — Phase 7 plans created (1 plan, 1 wave)*
+*Last updated: 2026-03-18 — Phase 8 planned (5 plans in 3 waves)*
