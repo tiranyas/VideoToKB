@@ -102,16 +102,16 @@ export async function POST(req: Request) {
         text: `Look at this screenshot of the website AND analyze the HTML below.
 
 BRAND COLORS (from SCREENSHOT only — extract ALL distinct brand colors you see):
-Scan the entire screenshot systematically:
-- Navigation bar / header background
-- CTA buttons (primary and secondary)
-- Banners and highlighted sections
-- Section backgrounds (colored sections)
-- Links, icons, and accent elements
-- Footer background
-- Any gradient start/end colors
+ONLY look at the screenshot image. Do NOT extract colors from the HTML/CSS code below — those contain framework defaults that are NOT brand colors.
 
-Return every distinct non-white, non-black, non-gray color as a hex code. Aim for 4-6 colors that represent the full brand palette. Order them by visual prominence (most dominant first).
+Scan the screenshot visually — what colors do you SEE with your eyes?
+- CTA buttons (what color are they?)
+- Top banner / announcement bar (what color?)
+- Headings and highlighted text (what color?)
+- Section backgrounds that are NOT white/gray
+- Navigation highlights or active states
+
+Return ONLY colors you can point to in the screenshot as intentional brand design choices. If a color doesn't appear as a visible design element in the screenshot, do NOT include it. Aim for 3-5 colors. Order by prominence.
 
 COMPANY INFO (from HTML):
 Extract name, description, industry, and target audience from the text content.
@@ -188,6 +188,20 @@ Rules for the colors array:
     // Parse the JSON response
     const jsonStr = textBlock.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const parsed = JSON.parse(jsonStr);
+
+    // Filter out common framework default colors that aren't real brand colors
+    const FRAMEWORK_COLORS = new Set([
+      '#0073aa', '#23282d', '#0693e3', '#9b51e0', '#2196f3', '#1976d2',  // WordPress
+      '#3b82f6', '#6366f1', '#8b5cf6',  // Tailwind defaults
+      '#007bff', '#6c757d', '#17a2b8',  // Bootstrap
+      '#1e88e5', '#1565c0',  // Material Design blues
+    ]);
+
+    if (parsed.branding?.colors && Array.isArray(parsed.branding.colors)) {
+      parsed.branding.colors = parsed.branding.colors.filter(
+        (c: string) => typeof c === 'string' && !FRAMEWORK_COLORS.has(c.toLowerCase())
+      );
+    }
 
     return Response.json({
       name: parsed.name ?? '',
