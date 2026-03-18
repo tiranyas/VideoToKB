@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Workspace, WorkspaceBranding, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, PlanId } from '@/types';
+import type { Workspace, WorkspaceBranding, OnboardingState, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, PlanId } from '@/types';
 
 // ── Workspaces ──────────────────────────────────────────
 
@@ -58,7 +58,7 @@ export async function createWorkspace(
 export async function updateWorkspace(
   supabase: SupabaseClient,
   workspaceId: string,
-  ws: Partial<{ name: string; slug: string; companyName: string; companyDescription: string; industry: string; targetAudience: string; branding: WorkspaceBranding }>
+  ws: Partial<{ name: string; slug: string; companyName: string; companyDescription: string; industry: string; targetAudience: string; branding: WorkspaceBranding; onboardingState: OnboardingState }>
 ): Promise<void> {
   const updates: Record<string, unknown> = {};
   if (ws.name !== undefined) updates.name = ws.name;
@@ -68,6 +68,7 @@ export async function updateWorkspace(
   if (ws.industry !== undefined) updates.industry = ws.industry;
   if (ws.targetAudience !== undefined) updates.target_audience = ws.targetAudience;
   if (ws.branding !== undefined) updates.branding = ws.branding;
+  if (ws.onboardingState !== undefined) updates.onboarding_state = ws.onboardingState;
 
   const { error } = await supabase
     .from('workspaces')
@@ -100,6 +101,9 @@ function mapWorkspaceRow(row: Record<string, unknown>): Workspace {
     industry: (row.industry as string) ?? undefined,
     targetAudience: (row.target_audience as string) ?? undefined,
     branding: (row.branding as WorkspaceBranding) ?? undefined,
+    onboardingState: row.onboarding_state
+      ? (row.onboarding_state as OnboardingState)
+      : undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -464,6 +468,7 @@ export async function getPlatformProfiles(
     htmlPrompt: row.html_prompt,
     htmlTemplate: row.html_template,
     isDefault: row.is_default,
+    applyBranding: row.apply_branding ?? true,
   }));
 
   // Auto-seed missing default profiles
@@ -492,6 +497,7 @@ export async function getPlatformProfiles(
       htmlPrompt: row.html_prompt,
       htmlTemplate: row.html_template,
       isDefault: row.is_default,
+      applyBranding: row.apply_branding ?? true,
     }));
   }
 
@@ -508,6 +514,7 @@ export async function addPlatformProfile(
     html_prompt: pp.htmlPrompt,
     html_template: pp.htmlTemplate,
     is_default: pp.isDefault ?? false,
+    apply_branding: pp.applyBranding ?? true,
   });
 
   if (error) throw new Error(`Failed to add platform profile: ${error.message}`);
@@ -522,6 +529,7 @@ export async function updatePlatformProfile(
   if (pp.name !== undefined) updates.name = pp.name;
   if (pp.htmlPrompt !== undefined) updates.html_prompt = pp.htmlPrompt;
   if (pp.htmlTemplate !== undefined) updates.html_template = pp.htmlTemplate;
+  if (pp.applyBranding !== undefined) updates.apply_branding = pp.applyBranding;
 
   const { error } = await supabase
     .from('platform_profiles')

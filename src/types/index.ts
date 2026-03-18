@@ -57,6 +57,19 @@ export interface PlatformProfile {
   htmlPrompt: string;
   htmlTemplate: string;
   isDefault?: boolean;
+  applyBranding?: boolean; // true = workspace brand colors override template colors; false = keep template colors as-is
+}
+
+// Onboarding state — tracks wizard step completion per workspace
+export interface OnboardingState {
+  completed: boolean;
+  steps: {
+    workspace: boolean;
+    brand: boolean;
+    platform: boolean;
+    template: boolean;
+  };
+  skippedAt?: string; // ISO timestamp
 }
 
 // Workspace branding
@@ -80,6 +93,7 @@ export interface Workspace {
   industry?: string;
   targetAudience?: string;
   branding?: WorkspaceBranding;
+  onboardingState?: OnboardingState;
   createdAt: string;
   updatedAt: string;
 }
