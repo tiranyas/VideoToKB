@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
@@ -37,12 +37,21 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h1>
             <p className="text-xs text-gray-400 mt-1">Configure your article generation pipeline</p>
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
-          >
-            Generate Article <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
+              title="Re-run the setup wizard to update your workspace configuration"
+            >
+              <Wand2 className="h-4 w-4" /> Setup Wizard
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2.5 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
+            >
+              Generate Article <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -788,6 +797,12 @@ function PlatformProfilesTab() {
     toast.success('Platform profile removed');
   }
 
+  async function handleToggleBranding(id: string, value: boolean) {
+    await updatePlatformProfile(supabase, id, { applyBranding: value });
+    setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, applyBranding: value } : p)));
+    toast.success(value ? 'Brand colors will be applied' : 'Template styling preserved');
+  }
+
   return (
     <div className="space-y-3">
       {profiles.map((profile) =>
@@ -818,6 +833,34 @@ function PlatformProfilesTab() {
                   </button>
                 )}
               </div>
+            </div>
+            {/* Apply workspace brand colors toggle */}
+            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-700">Apply workspace brand colors</p>
+                <p className="text-xs text-gray-400">
+                  {profile.applyBranding !== false
+                    ? 'Workspace colors override template colors'
+                    : 'Template uses its own styling'}
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  const newValue = !(profile.applyBranding !== false);
+                  await handleToggleBranding(profile.id, newValue);
+                }}
+                className={cn(
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                  profile.applyBranding !== false ? 'bg-violet-600' : 'bg-gray-200'
+                )}
+              >
+                <span
+                  className={cn(
+                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
+                    profile.applyBranding !== false ? 'translate-x-6' : 'translate-x-1'
+                  )}
+                />
+              </button>
             </div>
           </div>
         )
