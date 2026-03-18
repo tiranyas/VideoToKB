@@ -101,12 +101,17 @@ export async function POST(req: Request) {
         type: 'text',
         text: `Look at this screenshot of the website AND analyze the HTML below.
 
-BRAND COLORS (from SCREENSHOT only):
-1. primaryColor: The single most dominant NON-WHITE, NON-BLACK, NON-GRAY brand color. Look at CTA buttons, navigation highlights, banners, and accent elements. This is the color that defines the brand.
-2. secondaryColor: The second most prominent brand color. Often used in banners, secondary buttons, or highlights.
-3. accentColor: A third accent color if clearly present.
+BRAND COLORS (from SCREENSHOT only — extract ALL distinct brand colors you see):
+Scan the entire screenshot systematically:
+- Navigation bar / header background
+- CTA buttons (primary and secondary)
+- Banners and highlighted sections
+- Section backgrounds (colored sections)
+- Links, icons, and accent elements
+- Footer background
+- Any gradient start/end colors
 
-IMPORTANT: Only return colors you can CLEARLY SEE in the screenshot. Do NOT guess. Do NOT return generic grays, whites, or blacks as brand colors. Do NOT return WordPress default colors. If a bright colored banner or button is visible, that IS a brand color.
+Return every distinct non-white, non-black, non-gray color as a hex code. Aim for 4-6 colors that represent the full brand palette. Order them by visual prominence (most dominant first).
 
 COMPANY INFO (from HTML):
 Extract name, description, industry, and target audience from the text content.
@@ -135,21 +140,21 @@ Return ONLY a JSON object (no markdown fences):
   "industry": "Industry/sector",
   "targetAudience": "Who the product is for",
   "branding": {
-    "primaryColor": "#hexcode (the dominant brand color from buttons/CTAs/accents — NEVER white/black/gray)",
-    "secondaryColor": "#hexcode (second brand color from banners/highlights)",
-    "accentColor": "#hexcode (third color if present, omit if not)",
+    "colors": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"],
     "fontFamily": "Font name",
     "logoUrl": "URL if found in HTML"
   }
 }
 
-Rules for colors:
+Rules for the colors array:
+- Return 4-6 distinct brand colors, ordered by visual prominence
 - ONLY return colors clearly visible in the screenshot as brand elements
-- NEVER return #ffffff, #000000, #333333, or any gray as a brand color
-- NEVER return WordPress/framework default palette colors
-- primaryColor = the color of CTA buttons or the most eye-catching accent
-- secondaryColor = a clearly different second brand color (banners, highlights)
-- If you can only find one clear brand color, set secondaryColor to a darker/lighter shade of it`,
+- NEVER return #ffffff, #000000, #333333, or any near-white/near-black/gray
+- NEVER return WordPress/framework default palette colors (like #0073aa, #23282d)
+- Include: CTA button colors, banner backgrounds, link colors, section backgrounds, accent/highlight colors, navigation highlights, gradient colors
+- Each color must be visually distinct from the others (not just slight shade variations)
+- First color = the most dominant/eye-catching brand color (usually CTA buttons)
+- Second color = the second most prominent (banners, secondary buttons)`,
       messages: [{ role: 'user', content: messageContent }],
     });
     const durationMs = Date.now() - start;

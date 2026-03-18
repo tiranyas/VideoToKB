@@ -87,31 +87,32 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
       if (data.description) setDescription(data.description);
       if (data.industry) setIndustry(data.industry);
 
-      // Extract colors from branding — handle any format Claude returns
+      // Extract colors from branding — handle both array and named formats
       const extractedColors: string[] = [];
       const b = data.branding;
       if (b && typeof b === 'object') {
-        // Log for debugging
         console.log('[KBPipe] Branding response:', JSON.stringify(b));
 
-        // Check named color properties (camelCase and snake_case)
-        const colorKeys = [
-          'primaryColor', 'primary_color', 'primary',
-          'secondaryColor', 'secondary_color', 'secondary',
-          'accentColor', 'accent_color', 'accent',
-        ];
-        for (const key of colorKeys) {
-          const val = b[key];
-          if (typeof val === 'string' && val.length >= 4 && val.startsWith('#')) {
-            if (!extractedColors.includes(val)) extractedColors.push(val);
+        // Primary format: colors array (new)
+        if (Array.isArray(b.colors)) {
+          for (const c of b.colors) {
+            if (typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c) && !extractedColors.includes(c)) {
+              extractedColors.push(c);
+            }
           }
         }
 
-        // Also check if colors came as array
-        if (Array.isArray(b.colors)) {
-          for (const c of b.colors) {
-            if (typeof c === 'string' && c.startsWith('#') && !extractedColors.includes(c)) {
-              extractedColors.push(c);
+        // Fallback: named color properties (legacy)
+        if (extractedColors.length === 0) {
+          const colorKeys = [
+            'primaryColor', 'primary_color', 'primary',
+            'secondaryColor', 'secondary_color', 'secondary',
+            'accentColor', 'accent_color', 'accent',
+          ];
+          for (const key of colorKeys) {
+            const val = b[key];
+            if (typeof val === 'string' && val.length >= 4 && val.startsWith('#')) {
+              if (!extractedColors.includes(val)) extractedColors.push(val);
             }
           }
         }
