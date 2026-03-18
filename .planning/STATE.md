@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Onboarding & Multi-Platform
 status: executing
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-03-18T17:35:40Z"
+stopped_at: Completed 08-04-PLAN.md
+last_updated: "2026-03-18T15:44:30Z"
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 Milestone: v2.0 Onboarding & Multi-Platform
 Phase: 8 of 10 — Generic Templates & Onboarding (in progress)
-Current Plan: 3 of 5 complete
-Status: Executing — Plan 03 (onboarding data model) complete
+Current Plan: 4 of 5 complete
+Status: Executing — Plan 04 (onboarding wizard UI) complete
 
 Progress: [░░░░░░░░░░] 0% (0/3 v2.0 phases)
 
@@ -50,6 +50,7 @@ Key findings:
 - Intercom template must be minimal HTML — API strips divs, styles, custom attrs
 - [Phase 08]: Zendesk uses CSS classes (c-callout) not inline styles; Intercom strict HTML allowlist only
 - [Phase 08-03]: OnboardingState as JSONB with 4-step booleans; applyBranding defaults true for built-in templates
+- [Phase 08-04]: Wizard persists each step immediately; scraped templates saved with applyBranding=false; PlatformCard uses SVG thumbnails from public/platforms/
 
 ### Pending Todos
 
@@ -61,6 +62,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-18T17:35:40Z
-Stopped at: Completed 08-03-PLAN.md
-Resume file: .planning/phases/08-generic-templates-onboarding/08-03-SUMMARY.md
+Last session: 2026-03-18T15:44:30Z
+Stopped at: Completed 08-04-PLAN.md
+Resume file: .planning/phases/08-generic-templates-onboarding/08-04-SUMMARY.md

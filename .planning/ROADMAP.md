@@ -113,7 +113,7 @@ Plans:
 | 5. Usage Control and Polish | v1.0 | ✅ Complete | pre-existing |
 | 6. Security and Tests | v1.1 | ✅ Complete | 2026-03-15 |
 | 7. Performance and Cleanup | v1.1 | ✅ Complete | 2026-03-15 |
-| 8. Generic Templates & Onboarding | v2.0 | 3/5 plans complete | - |
+| 8. Generic Templates & Onboarding | 4/5 | In Progress|  |
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
 
