@@ -311,36 +311,85 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
 
           {/* Color palette */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Brand colors <span className="text-gray-400 font-normal">(click to assign as primary/accent)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Brand colors
             </label>
-            <div className="flex gap-3 flex-wrap">
-              {colors.map((color, idx) => (
-                <ColorSwatch
-                  key={`${color}-${idx}`}
-                  color={color}
-                  label={primaryIdx === idx ? 'Primary' : accentIdx === idx ? 'Accent' : undefined}
-                  selected={primaryIdx === idx || accentIdx === idx}
-                  onClick={() => handleColorClick(idx)}
-                />
-              ))}
-              {/* Manual color picker */}
-              <div className="flex flex-col items-center gap-1">
-                <label className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 cursor-pointer hover:border-gray-400 overflow-hidden relative">
+            <p className="text-xs text-gray-400 mb-3">Click a color to cycle: <span className="text-violet-500 font-medium">Primary</span> → <span className="text-emerald-500 font-medium">Accent</span> → unset</p>
+
+            {colors.length > 0 ? (
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="flex gap-5 flex-wrap items-start">
+                  {colors.map((color, idx) => (
+                    <ColorSwatch
+                      key={`${color}-${idx}`}
+                      color={color}
+                      label={primaryIdx === idx ? 'Primary' : accentIdx === idx ? 'Accent' : undefined}
+                      selected={primaryIdx === idx || accentIdx === idx}
+                      onClick={() => handleColorClick(idx)}
+                      onDelete={() => {
+                        const next = colors.filter((_, i) => i !== idx);
+                        setColors(next);
+                        // Fix indices after deletion
+                        if (primaryIdx === idx) setPrimaryIdx(null);
+                        else if (primaryIdx !== null && primaryIdx > idx) setPrimaryIdx(primaryIdx - 1);
+                        if (accentIdx === idx) setAccentIdx(null);
+                        else if (accentIdx !== null && accentIdx > idx) setAccentIdx(accentIdx - 1);
+                      }}
+                    />
+                  ))}
+                  {/* Add color button */}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <label className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 cursor-pointer hover:border-violet-400 hover:bg-violet-50 overflow-hidden relative transition-colors">
+                      <input
+                        type="color"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={(e) => {
+                          const newColor = e.target.value;
+                          if (!colors.includes(newColor)) {
+                            setColors((prev) => [...prev, newColor]);
+                          }
+                        }}
+                      />
+                      <span className="flex items-center justify-center w-full h-full text-gray-400 text-lg">+</span>
+                    </label>
+                    <span className="text-[10px] text-gray-400">Add</span>
+                  </div>
+                </div>
+
+                {/* Preview bar */}
+                {(primaryIdx !== null || accentIdx !== null) && (
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-2">Preview</p>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-8 rounded-md flex-1 transition-colors"
+                        style={{ backgroundColor: primaryIdx !== null ? colors[primaryIdx] : '#e5e7eb' }}
+                      />
+                      <div
+                        className="h-8 rounded-md w-20 transition-colors"
+                        style={{ backgroundColor: accentIdx !== null ? colors[accentIdx] : '#e5e7eb' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center">
+                <p className="text-sm text-gray-400 mb-2">No colors detected</p>
+                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-violet-300 text-sm text-gray-600 hover:text-violet-600 transition-colors">
                   <input
                     type="color"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    className="w-0 h-0 opacity-0 absolute"
                     onChange={(e) => {
                       const newColor = e.target.value;
-                      if (!colors.includes(newColor)) {
-                        setColors((prev) => [...prev, newColor]);
-                      }
+                      setColors([newColor]);
+                      setPrimaryIdx(0);
                     }}
                   />
-                  <span className="flex items-center justify-center w-full h-full text-gray-400 text-xs">+</span>
+                  + Add a color manually
                 </label>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
