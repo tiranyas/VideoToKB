@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Onboarding & Multi-Platform
-status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-18T14:26:55.693Z"
+status: executing
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-03-18T17:35:40Z"
 progress:
   total_phases: 10
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 6
+  total_plans: 12
+  completed_plans: 9
   percent: 0
 ---
 
@@ -25,8 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Milestone: v2.0 Onboarding & Multi-Platform
-Phase: 8 of 10 — Generic Templates & Onboarding (not started)
-Status: Planning — roadmap created, research complete, ready to plan phase
+Phase: 8 of 10 — Generic Templates & Onboarding (in progress)
+Current Plan: 3 of 5 complete
+Status: Executing — Plan 03 (onboarding data model) complete
 
 Progress: [░░░░░░░░░░] 0% (0/3 v2.0 phases)
 
@@ -47,6 +48,7 @@ Key findings:
 - Neutral default color: #2563eb (blue-600) replaces #6d28d9 (FinBot purple)
 - Onboarding reuses existing scraping infrastructure (/api/scrape-context, /api/scrape-template)
 - Intercom template must be minimal HTML — API strips divs, styles, custom attrs
+- [Phase 08]: Zendesk uses CSS classes (c-callout) not inline styles; Intercom strict HTML allowlist only
 
 ### Pending Todos
 
@@ -58,6 +60,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-18T14:26:55.686Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-generic-templates-onboarding/08-CONTEXT.md
+Last session: 2026-03-18T15:35:13.525Z
+Stopped at: Completed 08-02-PLAN.md
+Resume file: None
