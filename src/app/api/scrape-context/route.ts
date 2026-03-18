@@ -1,5 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateUrl } from '@/lib/url-validation';
@@ -141,22 +140,25 @@ Return ONLY the JSON object, no markdown fences or explanations.`,
     });
     const durationMs = Date.now() - start;
 
-    // Log usage (best-effort)
-    try {
-      const admin = createSupabaseAdmin(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-      await admin.from('api_usage_logs').insert({
-        user_id: user.id,
-        model: 'claude-sonnet-4-20250514',
-        agent: 'scrape-context',
-        input_tokens: message.usage.input_tokens,
-        output_tokens: message.usage.output_tokens,
-        duration_ms: durationMs,
-      });
-    } catch {
-      // Don't fail the request if logging fails
+    // Log usage (best-effort, skip if service role key not configured)
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        const { createClient: createAdmin } = await import('@supabase/supabase-js');
+        const admin = createAdmin(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY
+        );
+        await admin.from('api_usage_logs').insert({
+          user_id: user.id,
+          model: 'claude-sonnet-4-20250514',
+          agent: 'scrape-context',
+          input_tokens: message.usage.input_tokens,
+          output_tokens: message.usage.output_tokens,
+          duration_ms: durationMs,
+        });
+      } catch {
+        // Don't fail the request if logging fails
+      }
     }
 
     const textBlock = message.content.find((b) => b.type === 'text');
