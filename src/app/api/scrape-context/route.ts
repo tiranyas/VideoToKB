@@ -66,16 +66,25 @@ export async function POST(req: Request) {
     const html = await response.text();
 
     // Extract inline <style> blocks for color analysis
-    const styleBlocks: string[] = [];
-    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-    let styleMatch;
-    while ((styleMatch = styleRegex.exec(html)) !== null) {
-      styleBlocks.push(styleMatch[1]);
+    let cssContext = '';
+    try {
+      const styleMatches = html.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+      if (styleMatches) {
+        cssContext = styleMatches
+          .map(block => block.replace(/<\/?style[^>]*>/gi, ''))
+          .join('\n')
+          .slice(0, 8000);
+      }
+    } catch {
+      // CSS extraction failed, continue without it
     }
-    const cssContext = styleBlocks.join('\n').slice(0, 8000);
+
+    // Also extract meta theme-color
+    const themeColorMatch = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["']([^"']+)["']/i);
+    const themeColor = themeColorMatch ? `\n/* meta theme-color: ${themeColorMatch[1]} */` : '';
 
     // Trim HTML + append CSS for Claude
-    const trimmedHtml = html.slice(0, 25000) + (cssContext ? `\n\n<!-- Extracted CSS -->\n<style>\n${cssContext}\n</style>` : '');
+    const trimmedHtml = html.slice(0, 25000) + (cssContext || themeColor ? `\n\n<!-- Extracted CSS -->\n<style>\n${cssContext}${themeColor}\n</style>` : '');
 
     // Use Claude to extract company info
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
@@ -152,7 +161,12 @@ Return ONLY the JSON object, no markdown fences or explanations.`,
       targetAudience: parsed.targetAudience ?? '',
       branding: parsed.branding ?? {},
     });
-  } catch {
-    return Response.json({ error: 'Failed to scrape website. Please check the URL and try again.' }, { status: 500 });
+  } catch (err) {
+    console.error('[scrape-context] Error:', err);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return Response.json(
+      { error: `Failed to scrape website: ${message}` },
+      { status: 500 }
+    );
   }
 }
