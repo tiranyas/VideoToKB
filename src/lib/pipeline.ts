@@ -4,6 +4,7 @@ import { resolveGoogleDriveUrl } from '@/lib/gdrive-resolver';
 import { isYouTubeUrl, getYouTubeTranscript, YouTubeExtractionError } from '@/lib/youtube-resolver';
 import { transcribeVideo, preprocessTranscript } from '@/lib/transcription';
 import { generateDraft, generateStructured, generateHTML } from '@/lib/article-generator';
+import { buildHtmlPrompt } from '@/lib/templates/agent4-html';
 
 function detectProvider(url: string): 'loom' | 'gdrive' | 'youtube' {
   if (url.includes('drive.google.com')) return 'gdrive';
@@ -145,6 +146,8 @@ export interface PhaseBInput {
     fontFamily?: string;
     customCss?: string;
   };
+  /** When false, branding is NOT applied to the template (e.g. scraped custom templates). Default: true. */
+  applyBranding?: boolean;
 }
 
 export async function runPhaseB(
@@ -156,14 +159,15 @@ export async function runPhaseB(
   try {
     onProgress({ step: 'html', status: 'in_progress', message: 'Generating platform HTML...' });
 
-    // Build the full prompt with template reference
-    let fullPrompt = htmlPrompt;
-    if (htmlTemplate) {
-      fullPrompt += `\n\n## Reference HTML Template\nStudy this template carefully and produce HTML that follows this exact structure:\n\n\`\`\`html\n${htmlTemplate}\n\`\`\`\n\n## Rules\n- Output ONLY the HTML code — no explanations\n- Match exact CSS, classes, and component structure\n- Keep content in the same language as the input article`;
-    }
+    // Determine effective branding: skip when applyBranding is explicitly false
+    // (e.g. scraped custom templates should keep their own styling)
+    const effectiveBranding = input.applyBranding === false ? undefined : branding;
 
-    // Inject workspace branding
-    if (branding && (branding.primaryColor || branding.fontFamily)) {
+    // Build the full prompt with template reference and placeholder replacement
+    let fullPrompt = buildHtmlPrompt(htmlPrompt, htmlTemplate, effectiveBranding);
+
+    // Inject workspace branding into prompt text (only when branding should be applied)
+    if (input.applyBranding !== false && branding && (branding.primaryColor || branding.fontFamily)) {
       fullPrompt += `\n\n## Workspace Branding\nApply these brand styles to the generated HTML:`;
       if (branding.primaryColor) fullPrompt += `\n- Primary color: ${branding.primaryColor} (use for headings, primary buttons, key highlights)`;
       if (branding.secondaryColor) fullPrompt += `\n- Secondary color: ${branding.secondaryColor} (use for secondary elements, borders, subtle accents)`;

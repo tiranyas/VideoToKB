@@ -520,11 +520,16 @@ const MARKDOWN_ONLY_PROMPT = 'Output the article as clean, well-formatted Markdo
 
 export function buildHtmlPrompt(
   htmlPrompt: string,
-  htmlTemplate: string
+  htmlTemplate: string,
+  branding?: WorkspaceBranding
 ): string {
+  // Replace {{placeholder}} variables in prompt and template with branding values
+  const resolvedPrompt = replacePlaceholders(htmlPrompt, branding);
+  const resolvedTemplate = replacePlaceholders(htmlTemplate, branding);
+
   // If no template, just use the prompt
-  if (!htmlTemplate) {
-    return `${htmlPrompt}
+  if (!resolvedTemplate) {
+    return `${resolvedPrompt}
 
 ## Critical Rules
 - Output ONLY the final content — no explanations, comments, or anything outside the output
@@ -532,13 +537,13 @@ export function buildHtmlPrompt(
 - If the article is in a right-to-left language (Hebrew, Arabic), maintain RTL direction`;
   }
 
-  return `${htmlPrompt}
+  return `${resolvedPrompt}
 
 ## Reference HTML Template
 Study the following HTML template carefully. You MUST produce HTML that follows this exact structure, CSS styling, classes, and component patterns:
 
 \`\`\`html
-${htmlTemplate}
+${resolvedTemplate}
 \`\`\`
 
 ## Critical Rules
