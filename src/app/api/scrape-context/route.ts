@@ -9,8 +9,22 @@ export const dynamic = 'force-dynamic';
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
 
 export async function POST(req: Request) {
+  // Debug: log env var availability
+  console.log('[scrape-context] ENV check:', {
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    hasService: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasAnthropic: !!process.env.ANTHROPIC_API_KEY,
+  });
+
   // Auth check
-  const supabase = await createClient();
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch (e) {
+    console.error('[scrape-context] createClient failed:', e);
+    return Response.json({ error: 'Server configuration error' }, { status: 500 });
+  }
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
