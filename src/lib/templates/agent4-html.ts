@@ -1,4 +1,5 @@
-import type { PlatformProfile } from '@/types';
+import type { PlatformProfile, WorkspaceBranding } from '@/types';
+import { replacePlaceholders } from '@/lib/branding';
 
 /**
  * Agent 4 — HTML Generator
@@ -56,12 +57,12 @@ Generate portable, semantic HTML that works in any knowledge base or CMS.
 
 const GENERIC_TEMPLATE = `<style>
   :root {
-    --kb-primary: #6d28d9;
-    --kb-secondary: #e5e7eb;
-    --kb-accent: #f59e0b;
-    --kb-font: system-ui, -apple-system, sans-serif;
-    --kb-text: #1f2937;
-    --kb-muted: #6b7280;
+    --kb-primary: {{primaryColor}};
+    --kb-secondary: {{secondaryColor}};
+    --kb-accent: {{accentColor}};
+    --kb-font: {{fontFamily}};
+    --kb-text: {{textColor}};
+    --kb-muted: {{mutedColor}};
     --kb-bg: #ffffff;
     --kb-border: #e5e7eb;
   }
@@ -305,7 +306,7 @@ Each major section uses this centered header pattern:
 \`\`\`
 
 ### Styling Rules
-- Use an accent color for borders, underlines, and checkmarks (default: #6d28d9 — will be overridden by workspace branding)
+- Use an accent color for borders, underlines, and checkmarks (default: {{primaryColor}} — will be overridden by workspace branding)
 - Use \`data-toc="true"\` on h2 elements for table of contents
 - Maintain sequential IDs on headings
 - Be creative inside accordion bodies: use grid layouts, colored boxes, icon placement
@@ -315,11 +316,11 @@ Each major section uses this centered header pattern:
 ### Output
 - Output ONLY the HTML code — no explanations
 - No external image URLs — use placeholder comments like [Icon] where section icons would go
-- Colors default to accent (#6d28d9) — workspace branding will override`;
+- Colors default to accent ({{primaryColor}}) — workspace branding will override`;
 
 const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
     <hr>
-    <div style="background-color:white;border-radius:10px;border-right:5px solid var(--accent, #6d28d9);box-shadow:0 2px 5px rgba(0,0,0,0.05);margin-bottom:25px;padding:20px;">
+    <div style="background-color:white;border-radius:10px;border-right:5px solid var(--accent, {{primaryColor}});box-shadow:0 2px 5px rgba(0,0,0,0.05);margin-bottom:25px;padding:20px;">
         <p style="font-size:18px;line-height:1.6;margin:0;">
             <strong style="color:#3A3F41;">[Opening title]</strong>
         </p>
@@ -330,16 +331,16 @@ const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
     <h2 id="-0" data-toc="true">
         <span style="color:hsl(196,4%,52%);"><strong>Important </strong>Highlights</span>
     </h2>
-    <div style="background-color:var(--accent, #6d28d9);height:3px;margin:10px auto 20px;width:150px;">&nbsp;</div>
+    <div style="background-color:var(--accent, {{primaryColor}});height:3px;margin:10px auto 20px;width:150px;">&nbsp;</div>
 </div>
-<div style="background-color:white;border-radius:10px;border-right:5px solid var(--accent, #6d28d9);box-shadow:0 2px 5px rgba(0,0,0,0.05);margin:20px 0;padding:20px;">
+<div style="background-color:white;border-radius:10px;border-right:5px solid var(--accent, {{primaryColor}});box-shadow:0 2px 5px rgba(0,0,0,0.05);margin:20px 0;padding:20px;">
     <ul style="list-style-type:none;">
         <li style="border-bottom:1px solid #E4EBED;margin-bottom:12px;padding-bottom:15px;padding-left:25px;position:relative;">
-            <span style="color:var(--accent, #6d28d9);font-size:20px;position:absolute;left:0;">&#10003;</span>
+            <span style="color:var(--accent, {{primaryColor}});font-size:20px;position:absolute;left:0;">&#10003;</span>
             <span style="color:#3A3F41;font-size:18px;"><strong>[Highlight 1]</strong></span>
         </li>
         <li style="margin-bottom:12px;padding-left:25px;position:relative;">
-            <span style="color:var(--accent, #6d28d9);font-size:20px;position:absolute;left:0;">&#10003;</span>
+            <span style="color:var(--accent, {{primaryColor}});font-size:20px;position:absolute;left:0;">&#10003;</span>
             <span style="color:#3A3F41;font-size:18px;"><strong>[Highlight 2]</strong></span>
         </li>
     </ul>
@@ -348,7 +349,7 @@ const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
     <h2 id="-1" data-toc="true">
         <span style="color:hsl(196,4%,52%);"><strong>Execution Steps </strong>[Process Title]</span>
     </h2>
-    <div style="background-color:var(--accent, #6d28d9);height:3px;margin:10px auto 20px;width:200px;">&nbsp;</div>
+    <div style="background-color:var(--accent, {{primaryColor}});height:3px;margin:10px auto 20px;width:200px;">&nbsp;</div>
 </div>
 <div class="helpjuice-accordion" data-controller="editor--toggle-element">
     <h2 class="helpjuice-accordion-title" id="1-2" data-toc="true">[Step 1 Title]</h2>
@@ -363,7 +364,7 @@ const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
     <h2 id="-9" data-toc="true">
         <span style="color:hsl(196,4%,52%);"><strong>Links</strong> to Additional Processes</span>
     </h2>
-    <div style="background-color:var(--accent, #6d28d9);height:3px;margin:10px auto 20px;width:200px;">&nbsp;</div>
+    <div style="background-color:var(--accent, {{primaryColor}});height:3px;margin:10px auto 20px;width:200px;">&nbsp;</div>
 </div>
 <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:30px 0;">
     <div style="background-color:white;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,0.1);flex:1;min-width:250px;overflow:hidden;">
@@ -373,7 +374,7 @@ const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
         <div style="padding:15px;">
             <p>[Short description]</p>
             <div style="text-align:center;">
-                <a style="background-color:var(--accent, #6d28d9);border-radius:5px;color:white;display:inline-block;padding:8px 15px;text-decoration:none;" href="#">Learn More</a>
+                <a style="background-color:var(--accent, {{primaryColor}});border-radius:5px;color:white;display:inline-block;padding:8px 15px;text-decoration:none;" href="#">Learn More</a>
             </div>
         </div>
     </div>
@@ -383,7 +384,7 @@ const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
     <h2 id="-4" data-toc="true">
         <span style="color:hsl(196,4%,52%);"><strong>Frequently</strong> Asked Questions</span>
     </h2>
-    <div style="background-color:var(--accent, #6d28d9);height:3px;margin:10px auto 20px;width:200px;">&nbsp;</div>
+    <div style="background-color:var(--accent, {{primaryColor}});height:3px;margin:10px auto 20px;width:200px;">&nbsp;</div>
 </div>
 <div class="helpjuice-accordion" data-controller="editor--toggle-element">
     <h2 class="helpjuice-accordion-title" id="1-5" data-toc="true">[Question 1]</h2>
@@ -393,6 +394,124 @@ const HELPJUICE_TEMPLATE = `<div style="margin-bottom:40px;position:relative;">
     <div class="helpjuice-accordion-toggle">&nbsp;</div>
     <div class="helpjuice-accordion-delete">&nbsp;</div>
 </div>`;
+
+// ── Zendesk Help Center ──────────────────────────────────────
+const ZENDESK_PROMPT = `${COMPONENT_BASE}
+
+## Platform: Zendesk Help Center
+Generate HTML for Zendesk Help Center articles. Use semantic HTML with CSS classes
+that map to Zendesk Guide theme conventions.
+
+### Component Mapping
+- **Summary/Opening** -> \`<div class="article-intro">\` with intro paragraph
+- **Key Highlights** -> \`<ul>\` with \`<li>\` items
+- **Step-by-Step** -> \`<ol>\` with \`<li>\` for each step
+- **Explanatory Sections** -> \`<h2>\` / \`<h3>\` + \`<p>\` paragraphs
+- **Callouts** -> \`<div class="c-callout c-callout--[type]">\` where type is: info, warning, tip, note
+- **Tables** -> \`<table>\` (Zendesk wraps in \`<figure class="wysiwyg-table">\` automatically in new editor)
+- **Code Blocks** -> \`<pre><code>\`
+- **FAQ** -> \`<details><summary>Question</summary><p>Answer</p></details>\`
+
+### Styling Rules
+- Prefer CSS classes over inline styles (Zendesk themes control appearance)
+- Use semantic HTML5 elements (article, section, details/summary)
+- Keep markup clean -- Zendesk theme CSS handles most visual styling
+- No \`<style>\` block needed -- Zendesk themes provide global styles
+
+### Output
+- Output ONLY the HTML -- no markdown fences, no explanations
+- Start with \`<h1>\` for the article title`;
+
+const ZENDESK_TEMPLATE = `<h1>[Article Title]</h1>
+<div class="article-intro">
+  <p>[Summary paragraph describing what this article covers]</p>
+</div>
+<h2>[Key Points]</h2>
+<ul>
+  <li><strong>[Point 1]</strong> -- [explanation]</li>
+  <li><strong>[Point 2]</strong> -- [explanation]</li>
+</ul>
+<h2>[Steps Heading]</h2>
+<ol>
+  <li><strong>[Step 1]</strong><br>[Description]</li>
+  <li><strong>[Step 2]</strong><br>[Description]</li>
+</ol>
+<div class="c-callout c-callout--tip">
+  <p><strong>Tip:</strong> [Tip content]</p>
+</div>
+<h2>[Details Heading]</h2>
+<p>[Explanatory content]</p>
+<table>
+  <thead><tr><th>[Col 1]</th><th>[Col 2]</th></tr></thead>
+  <tbody><tr><td>[Data]</td><td>[Data]</td></tr></tbody>
+</table>
+<h2>FAQ</h2>
+<details><summary>[Question 1]</summary><p>[Answer 1]</p></details>
+<details><summary>[Question 2]</summary><p>[Answer 2]</p></details>`;
+
+// ── Intercom ─────────────────────────────────────────────────
+const INTERCOM_PROMPT = `${COMPONENT_BASE}
+
+## Platform: Intercom Articles
+Generate HTML for Intercom Help Center articles. Intercom's API has a strict HTML allowlist
+-- only use elements that Intercom supports. Any disallowed elements will be silently stripped.
+
+### Allowed Elements ONLY
+p, br, h1, h2, b, strong, i, em, ul, ol, li, img, a, iframe, pre, code,
+table, tr, td, hr
+
+### Special Classes (the ONLY classes Intercom supports)
+- \`intercom-align-center\` -- center-aligns content (on a div)
+- \`intercom-h2b-button\` -- styles an anchor as a button
+
+### Important Restrictions
+- h3-h6 are converted to h1/h2 by Intercom -- use h1 and h2 only
+- NO <div> tags except \`<div class="intercom-align-center">\`
+- NO <span>, <section>, <article>, <style>, <script>
+- NO inline styles -- they will be stripped
+- NO custom classes -- they will be stripped
+- Callouts/accordions are NOT supported via API
+
+### Component Mapping
+- **Summary/Opening** -> \`<p><strong>[intro]</strong></p>\` (bold paragraph)
+- **Key Highlights** -> \`<ul>\` with \`<li>\` items
+- **Step-by-Step** -> \`<ol>\` with \`<li>\` steps
+- **Explanatory Sections** -> \`<h2>\` + \`<p>\` paragraphs
+- **Callouts** -> \`<p><b>Tip:</b> [content]</p>\` (bold prefix only -- no visual box)
+- **Tables** -> \`<table><tr><td>\` (no thead, th -- just tr/td)
+- **Code Blocks** -> \`<pre><code>\`
+- **Links as buttons** -> \`<a href="#" class="intercom-h2b-button">Button Text</a>\`
+
+### Output
+- Output ONLY the HTML -- no markdown fences
+- Start with \`<h1>\` for the article title
+- Keep it clean and simple`;
+
+const INTERCOM_TEMPLATE = `<h1>[Article Title]</h1>
+<p><strong>[Opening summary -- what this article covers]</strong></p>
+<hr>
+<h2>[Key Highlights]</h2>
+<ul>
+  <li><strong>[Highlight 1]</strong> -- [explanation]</li>
+  <li><strong>[Highlight 2]</strong> -- [explanation]</li>
+</ul>
+<h2>[Steps Heading]</h2>
+<ol>
+  <li><strong>[Step 1]</strong><br>[Description]</li>
+  <li><strong>[Step 2]</strong><br>[Description]</li>
+</ol>
+<p><b>Tip:</b> [Important tip or note]</p>
+<h2>[Details Heading]</h2>
+<p>[Explanatory paragraph]</p>
+<table>
+  <tr><td><b>[Col 1]</b></td><td><b>[Col 2]</b></td></tr>
+  <tr><td>[Data]</td><td>[Data]</td></tr>
+</table>
+<h2>[Related Resources]</h2>
+<ul>
+  <li><a href="#">[Resource 1]</a></li>
+  <li><a href="#">[Resource 2]</a></li>
+</ul>`;
 
 // ── Markdown Only ────────────────────────────────────────────
 const MARKDOWN_ONLY_PROMPT = 'Output the article as clean, well-formatted Markdown. Do not convert to HTML. Use proper Markdown syntax: # for headings, - for bullets, 1. for numbered lists, > for callouts, ```lang for code blocks.';
@@ -458,6 +577,20 @@ export const DEFAULT_PLATFORM_PROFILES: PlatformProfile[] = [
     name: 'HelpJuice',
     htmlPrompt: HELPJUICE_PROMPT,
     htmlTemplate: HELPJUICE_TEMPLATE,
+    isDefault: true,
+  },
+  {
+    id: 'zendesk',
+    name: 'Zendesk Help Center',
+    htmlPrompt: ZENDESK_PROMPT,
+    htmlTemplate: ZENDESK_TEMPLATE,
+    isDefault: true,
+  },
+  {
+    id: 'intercom',
+    name: 'Intercom',
+    htmlPrompt: INTERCOM_PROMPT,
+    htmlTemplate: INTERCOM_TEMPLATE,
     isDefault: true,
   },
   {
