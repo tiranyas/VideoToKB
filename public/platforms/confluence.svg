@@ -1,20 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" width="200" height="140">
-  <rect width="200" height="140" rx="4" fill="#fff" stroke="#e5e7eb" stroke-width="1"/>
-  <rect width="200" height="24" rx="4 4 0 0" fill="#0052CC"/>
-  <rect x="12" y="8" width="60" height="8" rx="2" fill="#4c9aff"/>
-  <!-- Sidebar hint -->
-  <rect x="0" y="24" width="40" height="116" fill="#f4f5f7"/>
-  <rect x="8" y="32" width="24" height="4" rx="1" fill="#0052CC"/>
-  <rect x="8" y="42" width="20" height="3" rx="1" fill="#97a0af"/>
-  <rect x="8" y="50" width="22" height="3" rx="1" fill="#97a0af"/>
-  <!-- Content area -->
-  <rect x="52" y="34" width="130" height="8" rx="2" fill="#172b4d"/>
-  <rect x="52" y="50" width="136" height="5" rx="1.5" fill="#cbd5e1"/>
-  <rect x="52" y="60" width="120" height="5" rx="1.5" fill="#cbd5e1"/>
-  <!-- Info panel -->
-  <rect x="52" y="74" width="136" height="24" rx="3" fill="#deebff" stroke="#b3d4ff" stroke-width="1"/>
-  <rect x="60" y="82" width="80" height="4" rx="1" fill="#0052CC"/>
-  <rect x="60" y="90" width="60" height="3" rx="1" fill="#4c9aff"/>
-  <rect x="52" y="106" width="136" height="5" rx="1.5" fill="#cbd5e1"/>
-  <rect x="52" y="116" width="100" height="5" rx="1.5" fill="#cbd5e1"/>
+  <rect width="200" height="140" rx="8" fill="#1868db"/>
+  <text x="100" y="65" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Confluence</text>
+  <text x="100" y="90" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif" font-size="12">Atlassian Wiki</text>
 </svg>

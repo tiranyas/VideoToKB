@@ -27,7 +27,13 @@ interface ScrapeResult {
   description?: string;
   industry?: string;
   targetAudience?: string;
-  branding?: { colors?: string[] };
+  branding?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    fontFamily?: string;
+    logoUrl?: string;
+  };
 }
 
 export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, workspaceName }: StepBrandProps) {
@@ -63,10 +69,15 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
       if (data.name) setCompanyName(data.name);
       if (data.description) setDescription(data.description);
       if (data.industry) setIndustry(data.industry);
-      if (data.branding?.colors && data.branding.colors.length > 0) {
-        setColors(data.branding.colors);
+      // Map individual color properties to array
+      const extractedColors: string[] = [];
+      if (data.branding?.primaryColor) extractedColors.push(data.branding.primaryColor);
+      if (data.branding?.secondaryColor) extractedColors.push(data.branding.secondaryColor);
+      if (data.branding?.accentColor) extractedColors.push(data.branding.accentColor);
+      if (extractedColors.length > 0) {
+        setColors(extractedColors);
         setPrimaryIdx(0);
-        if (data.branding.colors.length > 1) setAccentIdx(1);
+        if (extractedColors.length > 1) setAccentIdx(1);
       }
       setScraped(true);
 

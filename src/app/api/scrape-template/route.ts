@@ -86,9 +86,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Step 1: Fetch the page HTML
+    // Step 1: Fetch the page HTML (follow redirects, handle locale URLs)
     const response = await fetch(validation.url.toString(), {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KBPipe/1.0)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
     });
 
     if (!response.ok) {
@@ -100,11 +105,16 @@ export async function POST(req: Request) {
 
     const fullHtml = await response.text();
 
-    // Step 2: Extract article body via common patterns
+    // Step 2: Extract article body via platform-specific and common patterns
     let articleHtml = fullHtml;
     const contentPatterns = [
-      /<div[^>]*class="[^"]*article[_-]?body[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i,
+      // Helpjuice-specific: article-body or content-body classes
+      /<div[^>]*class="[^"]*(?:article|content)[_-]?body[^"]*"[^>]*>[\s\S]*$/i,
+      // Helpjuice also uses .document-content or #article-content
+      /<div[^>]*(?:id|class)="[^"]*(?:document-content|article-content|answer-body)[^"]*"[^>]*>[\s\S]*$/i,
+      // Generic article tag
       /<article[^>]*>([\s\S]*?)<\/article>/i,
+      // Common CMS patterns
       /<div[^>]*class="[^"]*(?:entry|post|content)[_-]?(?:body|content|text)[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
       /<div[^>]*id="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*$/im,
       /<main[^>]*>([\s\S]*?)<\/main>/i,
@@ -168,7 +178,7 @@ ${url}`;
       const result = JSON.parse(jsonStr);
 
       return Response.json({
-        platformName: result.platformName ?? 'Custom',
+        detectedPlatform: result.platformName ?? 'Custom',
         htmlPrompt: result.htmlPrompt ?? '',
         htmlTemplate: result.htmlTemplate ?? '',
         rawHtml: articleHtml,
@@ -176,7 +186,7 @@ ${url}`;
     } catch {
       // If JSON parsing fails, return what we can
       return Response.json({
-        platformName: 'Custom',
+        detectedPlatform: 'Custom',
         htmlPrompt: '',
         htmlTemplate: articleHtml,
         rawHtml: articleHtml,

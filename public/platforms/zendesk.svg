@@ -1,17 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" width="200" height="140">
-  <rect width="200" height="140" rx="4" fill="#fff" stroke="#e5e7eb" stroke-width="1"/>
-  <rect width="200" height="24" rx="4 4 0 0" fill="#17494D"/>
-  <rect x="12" y="8" width="60" height="8" rx="2" fill="#5cb8b2"/>
-  <!-- Breadcrumb -->
-  <rect x="12" y="32" width="40" height="4" rx="1" fill="#78a9af"/>
-  <rect x="58" y="32" width="50" height="4" rx="1" fill="#78a9af"/>
-  <rect x="12" y="44" width="140" height="8" rx="2" fill="#1e293b"/>
-  <rect x="12" y="60" width="176" height="5" rx="1.5" fill="#cbd5e1"/>
-  <rect x="12" y="70" width="160" height="5" rx="1.5" fill="#cbd5e1"/>
-  <!-- Callout -->
-  <rect x="12" y="84" width="176" height="24" rx="3" fill="#f0fdf9" stroke="#99f6e4" stroke-width="1"/>
-  <rect x="20" y="92" width="90" height="4" rx="1" fill="#17494D"/>
-  <rect x="20" y="100" width="70" height="3" rx="1" fill="#5cb8b2"/>
-  <rect x="12" y="116" width="176" height="5" rx="1.5" fill="#cbd5e1"/>
-  <rect x="12" y="126" width="130" height="5" rx="1.5" fill="#cbd5e1"/>
+  <rect width="200" height="140" rx="8" fill="#03363d"/>
+  <text x="100" y="65" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Zendesk</text>
+  <text x="100" y="90" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif" font-size="12">Help Center</text>
 </svg>
