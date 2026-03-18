@@ -9,34 +9,14 @@ export const dynamic = 'force-dynamic';
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
 
 export async function POST(req: Request) {
-  // Debug: log env var availability
-  console.log('[scrape-context] ENV check:', {
-    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    hasService: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    hasAnthropic: !!process.env.ANTHROPIC_API_KEY,
-  });
-
-  // Auth check — step-by-step tracing to find crash point
-  console.log('[scrape-context] STEP 1: before createClient');
-  let supabase;
-  try {
-    supabase = await createClient();
-    console.log('[scrape-context] STEP 2: createClient OK');
-  } catch (e) {
-    console.error('[scrape-context] STEP 2-ERR: createClient failed:', e);
-    return Response.json({ error: 'Server configuration error' }, { status: 500 });
-  }
-
-  console.log('[scrape-context] STEP 3: before getUser');
+  // Auth check
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  console.log('[scrape-context] STEP 4: getUser done, hasUser:', !!user);
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Rate limit
-  console.log('[scrape-context] STEP 5: before rate limit');
   const rl = await limiter.check(user.id);
   if (!rl.ok) {
     return Response.json(
