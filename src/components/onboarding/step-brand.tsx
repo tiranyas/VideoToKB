@@ -53,10 +53,16 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
     setLoading(true);
     setError(null);
     try {
+      // Auto-prepend https:// if user didn't type a protocol
+      let cleanUrl = url.trim();
+      if (!/^https?:\/\//i.test(cleanUrl)) {
+        cleanUrl = `https://${cleanUrl}`;
+      }
+
       const res = await fetch('/api/scrape-context', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: cleanUrl }),
       });
       if (!res.ok) throw new Error('Failed to analyze website');
       const data: ScrapeResult = await res.json();
