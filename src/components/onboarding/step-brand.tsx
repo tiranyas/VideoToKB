@@ -34,6 +34,7 @@ interface ScrapeResult {
 export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, workspaceName }: StepBrandProps) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [scraped, setScraped] = useState(false);
 
@@ -51,7 +52,22 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
   const analyze = useCallback(async () => {
     if (!url.trim()) return;
     setLoading(true);
+    setLoadingStep(0);
     setError(null);
+
+    // Animated loading steps
+    const steps = [
+      'Capturing website screenshot...',
+      'Analyzing visual brand identity...',
+      'Extracting company information...',
+      'Identifying brand colors...',
+    ];
+    let stepIdx = 0;
+    const stepInterval = setInterval(() => {
+      stepIdx = Math.min(stepIdx + 1, steps.length - 1);
+      setLoadingStep(stepIdx);
+    }, 4000);
+
     try {
       // Auto-prepend https:// if user didn't type a protocol
       let cleanUrl = url.trim();
@@ -127,6 +143,7 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
       setError('Could not analyze that URL. You can enter your brand info manually below.');
       setScraped(true); // Show manual form
     } finally {
+      clearInterval(stepInterval);
       setLoading(false);
     }
   }, [url, workspaceName]);
@@ -174,7 +191,7 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
       </div>
 
       {/* URL input */}
-      {!scraped && (
+      {!scraped && !loading && (
         <div className="mb-6">
           <label htmlFor="brand-url" className="block text-sm font-medium text-gray-700 mb-1.5">
             Company website
@@ -192,15 +209,10 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
             <button
               type="button"
               onClick={analyze}
-              disabled={loading || !url.trim()}
+              disabled={!url.trim()}
               className="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors whitespace-nowrap"
             >
-              {loading ? (
-                <span className="flex items-center gap-1.5">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing...
-                </span>
-              ) : 'Analyze'}
+              Analyze
             </button>
           </div>
           {error && (
@@ -209,6 +221,34 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
               <span className="text-xs text-amber-700">{error}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Animated loading state */}
+      {loading && (
+        <div className="mb-6 py-8 flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-violet-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-violet-600 border-t-transparent animate-spin" />
+            <Globe className="absolute inset-0 m-auto w-6 h-6 text-violet-600" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-900">
+              {['Capturing website screenshot...', 'Analyzing visual brand identity...', 'Extracting company information...', 'Identifying brand colors...'][loadingStep]}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">This takes 10-20 seconds</p>
+          </div>
+          {/* Progress dots */}
+          <div className="flex gap-1.5">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full transition-colors duration-500 ${
+                  i <= loadingStep ? 'bg-violet-600' : 'bg-gray-200'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       )}
 

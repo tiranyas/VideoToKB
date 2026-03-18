@@ -99,11 +99,17 @@ export async function POST(req: Request) {
       });
       messageContent.push({
         type: 'text',
-        text: `Look at this screenshot of the website AND analyze the HTML below to extract company information and brand colors.
+        text: `Look at this screenshot of the website AND analyze the HTML below.
 
-For BRAND COLORS: Use the SCREENSHOT — identify the 2-3 most prominent brand colors you can SEE on the page (buttons, headers, banners, accents). These are the actual visual colors, not CSS variable names.
+BRAND COLORS (from SCREENSHOT only):
+1. primaryColor: The single most dominant NON-WHITE, NON-BLACK, NON-GRAY brand color. Look at CTA buttons, navigation highlights, banners, and accent elements. This is the color that defines the brand.
+2. secondaryColor: The second most prominent brand color. Often used in banners, secondary buttons, or highlights.
+3. accentColor: A third accent color if clearly present.
 
-For COMPANY INFO: Use the HTML text content below.
+IMPORTANT: Only return colors you can CLEARLY SEE in the screenshot. Do NOT guess. Do NOT return generic grays, whites, or blacks as brand colors. Do NOT return WordPress default colors. If a bright colored banner or button is visible, that IS a brand color.
+
+COMPANY INFO (from HTML):
+Extract name, description, industry, and target audience from the text content.
 
 HTML content:
 ${html.slice(0, 15000)}`,
@@ -120,23 +126,30 @@ ${html.slice(0, 15000)}`,
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
-      system: `You are an expert at extracting company information and brand identity from websites.
-Extract structured company information and branding.
+      system: `You extract company info and brand identity from websites. When a screenshot is provided, use it for color extraction — it shows the ACTUAL rendered colors.
 
-Return a JSON object with these fields:
-- name: Company name
-- description: What the company does (2-3 sentences)
-- industry: The industry/sector
-- targetAudience: Who the product/service is for
-- branding: An object with:
-  - primaryColor: The MAIN brand color as hex (e.g., "#f75c33"). This is the most prominent non-white, non-black, non-gray color used for buttons, links, or accents.
-  - secondaryColor: A second prominent brand color as hex. Look for banner backgrounds, secondary buttons, or highlights.
-  - accentColor: A third accent color if present.
-  - fontFamily: The primary font family (e.g., "Inter", "Roboto").
-  - logoUrl: The URL of the company logo if visible in HTML.
+Return ONLY a JSON object (no markdown fences):
+{
+  "name": "Company Name",
+  "description": "What the company does (2-3 sentences)",
+  "industry": "Industry/sector",
+  "targetAudience": "Who the product is for",
+  "branding": {
+    "primaryColor": "#hexcode (the dominant brand color from buttons/CTAs/accents — NEVER white/black/gray)",
+    "secondaryColor": "#hexcode (second brand color from banners/highlights)",
+    "accentColor": "#hexcode (third color if present, omit if not)",
+    "fontFamily": "Font name",
+    "logoUrl": "URL if found in HTML"
+  }
+}
 
-CRITICAL: You MUST return at least primaryColor and secondaryColor. Every brand has colors — identify them from the visual appearance.
-Return ONLY the JSON object, no markdown fences or explanations.`,
+Rules for colors:
+- ONLY return colors clearly visible in the screenshot as brand elements
+- NEVER return #ffffff, #000000, #333333, or any gray as a brand color
+- NEVER return WordPress/framework default palette colors
+- primaryColor = the color of CTA buttons or the most eye-catching accent
+- secondaryColor = a clearly different second brand color (banners, highlights)
+- If you can only find one clear brand color, set secondaryColor to a darker/lighter shade of it`,
       messages: [{ role: 'user', content: messageContent }],
     });
     const durationMs = Date.now() - start;
