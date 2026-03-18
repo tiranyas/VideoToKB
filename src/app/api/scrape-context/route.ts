@@ -14,7 +14,7 @@ const limiter = rateLimit({ tokens: 5, interval: 60_000 });
  */
 async function fetchScreenshot(url: string): Promise<string | null> {
   try {
-    const screenshotUrl = `https://image.thum.io/get/width/1280/crop/900/png/noanimate/${encodeURIComponent(url)}`;
+    const screenshotUrl = `https://image.thum.io/get/width/1280/crop/900/png/noanimate/${url}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20_000);
 
