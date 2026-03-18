@@ -58,6 +58,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Redirect un-onboarded users to /onboarding (cookie-only check, no DB hit)
+  if (user &&
+      !request.nextUrl.pathname.startsWith('/onboarding') &&
+      !request.nextUrl.pathname.startsWith('/api/') &&
+      !request.nextUrl.pathname.startsWith('/auth/') &&
+      !isPublicRoute) {
+    const onboarded = request.cookies.get('kbpipe-onboarded')?.value;
+    if (onboarded !== 'true') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/onboarding';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 
