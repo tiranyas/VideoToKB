@@ -46,15 +46,29 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Fetch the page HTML with browser-like headers
-    const response = await fetch(validation.url.toString(), {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      redirect: 'follow',
-    });
+    // Fetch the page HTML with browser-like headers and timeout
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), 15_000);
+
+    let response: Response;
+    try {
+      response = await fetch(validation.url.toString(), {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        redirect: 'follow',
+        signal: controller.signal,
+      });
+    } catch (fetchErr) {
+      clearTimeout(fetchTimeout);
+      const msg = fetchErr instanceof Error && fetchErr.name === 'AbortError'
+        ? 'Website took too long to respond'
+        : 'Could not reach the website';
+      return Response.json({ error: msg }, { status: 400 });
+    }
+    clearTimeout(fetchTimeout);
 
     if (!response.ok) {
       return Response.json(
@@ -91,7 +105,7 @@ export async function POST(req: Request) {
 
     const start = Date.now();
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       system: `You are an expert at extracting company information and brand identity from websites.
 Analyze the provided HTML (including any CSS) and extract structured company information and branding.
@@ -135,7 +149,7 @@ Return ONLY the JSON object, no markdown fences or explanations.`,
       );
       await admin.from('api_usage_logs').insert({
         user_id: user.id,
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         agent: 'scrape-context',
         input_tokens: message.usage.input_tokens,
         output_tokens: message.usage.output_tokens,

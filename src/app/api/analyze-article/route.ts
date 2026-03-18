@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
     const start = Date.now();
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 3000,
       system: `You are an expert at analyzing knowledge base articles and extracting their writing style, tone, and structure patterns.
 
@@ -140,7 +140,7 @@ Return ONLY the JSON object, no markdown fences or explanations.`,
       );
       await admin.from('api_usage_logs').insert({
         user_id: user.id,
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-20250514',
         agent: 'analyze-article',
         input_tokens: message.usage.input_tokens,
         output_tokens: message.usage.output_tokens,
