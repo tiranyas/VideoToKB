@@ -102,6 +102,20 @@ Plans:
 
 ---
 
+### Phase 11: Full QA Suite — Vitest expansion and Playwright E2E tests
+
+**Goal:** Expand test coverage to untested resolvers and API routes (Vitest), install Playwright with Chromium-only E2E tests covering login redirect and page rendering, and add v8 coverage reporting.
+**Requirements**: [TEST-03, TEST-04, TEST-05, TEST-06, E2E-01, E2E-02, E2E-03, E2E-04]
+**Depends on:** Phase 10
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — YouTube + Google Drive resolver unit tests
+- [ ] 11-02-PLAN.md — API key utilities + API route integration tests
+- [ ] 11-03-PLAN.md — Playwright setup + login/articles E2E tests
+
+---
+
 ## Progress
 
 | Phase | Milestone | Status | Completed |
@@ -116,6 +130,7 @@ Plans:
 | 8. Generic Templates & Onboarding | 4/5 | In Progress|  |
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
+| 11. Full QA Suite | v2.0 | Not started | - |
 
 ## Known Gaps (carried from v1.0/v1.1)
 
@@ -127,4 +142,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-18 — Phase 8 plan 03 complete (3/5)*
+*Last updated: 2026-03-19 — Phase 11 planned (3 plans, 1 wave)*

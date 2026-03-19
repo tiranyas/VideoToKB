@@ -1,4 +1,4 @@
-# Requirements: KBify Stabilization
+# Requirements: KBPipe Stabilization
 
 **Defined:** 2026-03-15
 **Core Value:** Production reliability and code quality for a deployed SaaS
@@ -24,13 +24,16 @@ Requirements for stabilization milestone. Each maps to roadmap phases.
 
 ## v2 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+### Testing (Phase 11)
 
-### Testing
-
-- **TEST-03**: Add test coverage for YouTube resolver
-- **TEST-04**: Add test coverage for Google Drive resolver
-- **TEST-05**: Add test coverage for API routes
+- [ ] **TEST-03**: Add test coverage for YouTube resolver (ID extraction, URL validation, fallback logic)
+- [ ] **TEST-04**: Add test coverage for Google Drive resolver (URL parsing, download URL resolution)
+- [ ] **TEST-05**: Add test coverage for API routes (/api/process auth/validation, /api/v1/generate auth/validation)
+- [ ] **TEST-06**: API key utility functions (generateApiKey, hashApiKey, keyPrefix) have unit tests
+- [ ] **E2E-01**: Playwright is installed and configured with webServer pointing to Next.js dev server
+- [ ] **E2E-02**: Unauthenticated user is redirected to /login
+- [ ] **E2E-03**: Login page renders correctly with email input and submit button
+- [ ] **E2E-04**: Article list page renders for authenticated users (with mocked data)
 
 ### Code Quality
 
@@ -57,12 +60,21 @@ Deferred to future release. Tracked but not in current roadmap.
 | TEST-02 | Phase 6 | Complete |
 | PERF-01 | Phase 7 | Complete |
 | PERF-02 | Phase 7 | Complete |
+| TEST-03 | Phase 11 | Pending |
+| TEST-04 | Phase 11 | Pending |
+| TEST-05 | Phase 11 | Pending |
+| TEST-06 | Phase 11 | Pending |
+| E2E-01 | Phase 11 | Pending |
+| E2E-02 | Phase 11 | Pending |
+| E2E-03 | Phase 11 | Pending |
+| E2E-04 | Phase 11 | Pending |
 
 **Coverage:**
 - v1 requirements: 6 total
-- Mapped to phases: 6
-- Unmapped: 0 ✓
+- v2 requirements (Phase 11): 8 total
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 — traceability complete (Phase 6: SEC-01, SEC-02, TEST-01, TEST-02; Phase 7: PERF-01, PERF-02)*
+*Last updated: 2026-03-19 — Phase 11 requirements added (TEST-03..06, E2E-01..04)*
