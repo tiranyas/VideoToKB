@@ -107,7 +107,7 @@ Plans:
 **Goal:** Expand test coverage to untested resolvers and API routes (Vitest), install Playwright with Chromium-only E2E tests covering login redirect and page rendering, and add v8 coverage reporting.
 **Requirements**: [TEST-03, TEST-04, TEST-05, TEST-06, E2E-01, E2E-02, E2E-03, E2E-04]
 **Depends on:** Phase 10
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 11-01-PLAN.md — YouTube + Google Drive resolver unit tests
@@ -130,7 +130,7 @@ Plans:
 | 8. Generic Templates & Onboarding | 4/5 | In Progress|  |
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
-| 11. Full QA Suite | v2.0 | Not started | - |
+| 11. Full QA Suite | 1/3 | In Progress|  |
 
 ## Known Gaps (carried from v1.0/v1.1)
 

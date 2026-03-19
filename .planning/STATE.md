@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Onboarding & Multi-Platform
+current_plan: 1 of 3 complete
 status: executing
-stopped_at: Completed 08-04-PLAN.md
-last_updated: "2026-03-18T15:44:30Z"
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-19T16:38:44.470Z"
 progress:
-  total_phases: 10
-  completed_phases: 2
-  total_plans: 12
-  completed_plans: 10
-  percent: 0
+  total_phases: 11
+  completed_phases: 3
+  total_plans: 15
+  completed_plans: 12
+  percent: 80
 ---
 
 # Project State
@@ -20,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A user can take a video recording and get back a publish-ready KB article in minutes instead of days
-**Current focus:** v2.0 Phase 8 — Generic Templates & Onboarding
+**Current focus:** v2.0 Phase 11 — Full QA Suite
 
 ## Current Position
 
 Milestone: v2.0 Onboarding & Multi-Platform
-Phase: 8 of 10 — Generic Templates & Onboarding (in progress)
-Current Plan: 4 of 5 complete
-Status: Executing — Plan 04 (onboarding wizard UI) complete
+Phase: 11 — Full QA Suite (in progress)
+Current Plan: 1 of 3 complete
+Status: Executing — Plan 01 (video resolver unit tests) complete
 
-Progress: [░░░░░░░░░░] 0% (0/3 v2.0 phases)
+Progress: [████████░░] 80% (12/15 plans)
 
 ## Research Completed
 
@@ -51,10 +52,15 @@ Key findings:
 - [Phase 08]: Zendesk uses CSS classes (c-callout) not inline styles; Intercom strict HTML allowlist only
 - [Phase 08-03]: OnboardingState as JSONB with 4-step booleans; applyBranding defaults true for built-in templates
 - [Phase 08-04]: Wizard persists each step immediately; scraped templates saved with applyBranding=false; PlatformCard uses SVG thumbnails from public/platforms/
+- [Phase 11]: Used class-based mock for @supadata/js; tested unexported GDrive functions indirectly
 
 ### Pending Todos
 
 None.
+
+### Roadmap Evolution
+
+- Phase 11 added: Full QA Suite — Vitest expansion and Playwright E2E tests
 
 ### Blockers/Concerns
 
@@ -62,6 +68,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-18T15:44:30Z
-Stopped at: Completed 08-04-PLAN.md
-Resume file: .planning/phases/08-generic-templates-onboarding/08-04-SUMMARY.md
+Last session: 2026-03-19T16:37:37Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: .planning/phases/11-full-qa-suite-vitest-expansion-and-playwright-e2e-tests/11-01-SUMMARY.md

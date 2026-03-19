@@ -26,8 +26,8 @@ Requirements for stabilization milestone. Each maps to roadmap phases.
 
 ### Testing (Phase 11)
 
-- [ ] **TEST-03**: Add test coverage for YouTube resolver (ID extraction, URL validation, fallback logic)
-- [ ] **TEST-04**: Add test coverage for Google Drive resolver (URL parsing, download URL resolution)
+- [x] **TEST-03**: Add test coverage for YouTube resolver (ID extraction, URL validation, fallback logic)
+- [x] **TEST-04**: Add test coverage for Google Drive resolver (URL parsing, download URL resolution)
 - [ ] **TEST-05**: Add test coverage for API routes (/api/process auth/validation, /api/v1/generate auth/validation)
 - [ ] **TEST-06**: API key utility functions (generateApiKey, hashApiKey, keyPrefix) have unit tests
 - [ ] **E2E-01**: Playwright is installed and configured with webServer pointing to Next.js dev server
@@ -60,8 +60,8 @@ Requirements for stabilization milestone. Each maps to roadmap phases.
 | TEST-02 | Phase 6 | Complete |
 | PERF-01 | Phase 7 | Complete |
 | PERF-02 | Phase 7 | Complete |
-| TEST-03 | Phase 11 | Pending |
-| TEST-04 | Phase 11 | Pending |
+| TEST-03 | Phase 11 | Complete |
+| TEST-04 | Phase 11 | Complete |
 | TEST-05 | Phase 11 | Pending |
 | TEST-06 | Phase 11 | Pending |
 | E2E-01 | Phase 11 | Pending |
