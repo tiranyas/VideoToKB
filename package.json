@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "npx playwright test",
+    "test:coverage": "npx vitest run --coverage"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -26,6 +28,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/file-saver": "^2.0.7",
@@ -33,6 +36,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
