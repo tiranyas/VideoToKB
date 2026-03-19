@@ -130,7 +130,7 @@ Plans:
 | 8. Generic Templates & Onboarding | 4/5 | In Progress|  |
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
-| 11. Full QA Suite | 3/3 | Complete   | 2026-03-19 |
+| 11. Full QA Suite | 3/3 | Complete    | 2026-03-19 |
 
 ## Known Gaps (carried from v1.0/v1.1)
 

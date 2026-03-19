@@ -6,18 +6,17 @@ test.describe('Articles page (authenticated)', () => {
     await loginAsTestUser(context);
   });
 
-  test('authenticated user can access / without redirect to /landing', async ({ page }) => {
+  test('authenticated user can access article list at / without redirect', async ({ page }) => {
     await page.goto('/');
-    // Authenticated + onboarded users should stay on / (not redirect to /landing or /login)
-    await expect(page).not.toHaveURL(/\/landing/);
-    await expect(page).not.toHaveURL(/\/login/);
+    // Authenticated + onboarded users should stay on / (the article list page)
+    await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/$/);
   });
 
   test('articles page renders article list or empty state', async ({ page }) => {
     await page.goto('/');
-    // Should not redirect away
-    await expect(page).not.toHaveURL(/\/landing/);
-    await expect(page).not.toHaveURL(/\/login/);
+    // Should stay on the article list page
+    await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/$/);
+
 
     // Page should render either article cards or an empty-state message
     const hasArticles = await page
