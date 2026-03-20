@@ -238,7 +238,7 @@ export default function Home() {
           setPhase('complete');
           // Update saved article with HTML
           if (savedArticleId && userId) {
-            updateArticleHtml(supabase, savedArticleId, event.html, userId).catch(() => {});
+            updateArticleHtml(supabase, savedArticleId, event.html).catch(() => {});
           }
         } else {
           setStepsB((prev) =>

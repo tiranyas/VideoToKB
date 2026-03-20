@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Workspace, WorkspaceBranding, OnboardingState, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, WorkspaceUsage, WorkspaceMember, WorkspaceRole, PlanId } from '@/types';
+import type { Workspace, WorkspaceBranding, OnboardingState, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, WorkspaceUsage, WorkspaceMember, WorkspaceRole, WorkspaceInvite, PlanId } from '@/types';
 
 // ── Workspaces ──────────────────────────────────────────
 
@@ -810,4 +810,85 @@ export async function getWorkspaceUsage(
     periodStart: row.period_start,
     periodEnd: row.period_end,
   };
+}
+
+// ── Workspace Invites ────────────────────────────────────
+
+function mapInviteRow(row: Record<string, unknown>): WorkspaceInvite {
+  return {
+    id: row.id as string,
+    workspaceId: row.workspace_id as string,
+    email: row.email as string,
+    role: row.role as WorkspaceRole,
+    invitedBy: row.invited_by as string,
+    token: row.token as string,
+    status: row.status as 'pending' | 'accepted' | 'expired',
+    expiresAt: row.expires_at as string,
+    createdAt: row.created_at as string,
+  };
+}
+
+export async function createWorkspaceInvite(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  email: string,
+  invitedBy: string,
+  role: WorkspaceRole = 'member'
+): Promise<{ token: string }> {
+  const { data, error } = await supabase
+    .from('workspace_invites')
+    .insert({
+      workspace_id: workspaceId,
+      email: email.toLowerCase().trim(),
+      role,
+      invited_by: invitedBy,
+    })
+    .select('token')
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('An invite for this email already exists in this workspace');
+    }
+    throw new Error(`Failed to create invite: ${error.message}`);
+  }
+  return { token: data.token };
+}
+
+export async function getWorkspaceInvites(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspaceInvite[]> {
+  const { data, error } = await supabase
+    .from('workspace_invites')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to load invites: ${error.message}`);
+  return (data ?? []).map(mapInviteRow);
+}
+
+export async function revokeInvite(
+  supabase: SupabaseClient,
+  inviteId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('workspace_invites')
+    .delete()
+    .eq('id', inviteId);
+
+  if (error) throw new Error(`Failed to revoke invite: ${error.message}`);
+}
+
+export async function acceptInvite(
+  supabase: SupabaseClient,
+  token: string
+): Promise<{ workspaceId: string } | { error: string }> {
+  const { data, error } = await supabase
+    .rpc('accept_workspace_invite', { p_token: token });
+
+  if (error) throw new Error(`Failed to accept invite: ${error.message}`);
+  if (data?.error) return { error: data.error };
+  return { workspaceId: data.workspace_id };
 }

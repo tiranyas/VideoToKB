@@ -35,7 +35,7 @@ export default function ArticlesPage() {
   async function handleDelete(id: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await deleteArticle(supabase, id, user.id);
+    await deleteArticle(supabase, id);
     setArticles((prev) => prev.filter((a) => a.id !== id));
     toast.success('Article deleted');
   }

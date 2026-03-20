@@ -61,6 +61,7 @@ export async function middleware(request: NextRequest) {
   // Redirect un-onboarded users to /onboarding (cookie-only check, no DB hit)
   if (user &&
       !request.nextUrl.pathname.startsWith('/onboarding') &&
+      !request.nextUrl.pathname.startsWith('/invite/') &&
       !request.nextUrl.pathname.startsWith('/api/') &&
       !request.nextUrl.pathname.startsWith('/auth/') &&
       !isPublicRoute) {

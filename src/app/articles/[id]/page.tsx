@@ -46,7 +46,7 @@ export default function ArticleDetailPage() {
       if (!user) return;
       setUserId(user.id);
       const [data, profs] = await Promise.all([
-        getArticle(supabase, id, user.id),
+        getArticle(supabase, id),
         getPlatformProfiles(supabase),
       ]);
       setArticle(data);
@@ -179,7 +179,7 @@ export default function ArticleDetailPage() {
       });
 
       if (resultHtml) {
-        await updateArticleHtml(supabase, article.id, resultHtml, userId);
+        await updateArticleHtml(supabase, article.id, resultHtml);
         setArticle({ ...article, markdown: markdownDraft, html: resultHtml });
         setTab('preview');
         toast.success('HTML generated successfully');
@@ -198,7 +198,7 @@ export default function ArticleDetailPage() {
       return;
     }
     try {
-      await updateArticleTitle(supabase, article.id, titleDraft.trim(), userId);
+      await updateArticleTitle(supabase, article.id, titleDraft.trim());
       setArticle({ ...article, title: titleDraft.trim() });
       toast.success('Title updated');
     } catch {
@@ -210,7 +210,7 @@ export default function ArticleDetailPage() {
 
   async function handleDelete() {
     if (!article || !userId) return;
-    await deleteArticle(supabase, article.id, userId);
+    await deleteArticle(supabase, article.id);
     toast.success('Article deleted');
     router.push('/articles');
   }
