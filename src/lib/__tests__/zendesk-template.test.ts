@@ -51,4 +51,22 @@ describe('Zendesk Help Center template', () => {
     expect(zendesk!.htmlPrompt).toContain('CSS classes');
     expect(zendesk!.htmlPrompt).toContain('No `<style>` block needed');
   });
+
+  it('htmlTemplate has no branding placeholders', () => {
+    expect(zendesk!.htmlTemplate).not.toMatch(/\{\{.*?\}\}/);
+  });
+
+  it('htmlTemplate uses thead and tbody for tables', () => {
+    expect(zendesk!.htmlTemplate).toContain('<thead>');
+    expect(zendesk!.htmlTemplate).toContain('<tbody>');
+  });
+
+  it('htmlPrompt mentions c-callout class variants', () => {
+    const prompt = zendesk!.htmlPrompt;
+    // The prompt documents callout types via c-callout--[type] pattern
+    expect(prompt).toContain('c-callout');
+    expect(prompt).toContain('info');
+    expect(prompt).toContain('warning');
+    expect(prompt).toContain('tip');
+  });
 });

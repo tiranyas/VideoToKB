@@ -466,11 +466,22 @@ table, tr, td, hr
 
 ### Important Restrictions
 - h3-h6 are converted to h1/h2 by Intercom -- use h1 and h2 only
+- <strong> is converted to <b> and <em> to <i> by Intercom's API -- use <b> and <i> directly for consistency
 - NO <div> tags except \`<div class="intercom-align-center">\`
 - NO <span>, <section>, <article>, <style>, <script>
 - NO inline styles -- they will be stripped
 - NO custom classes -- they will be stripped
 - Callouts/accordions are NOT supported via API
+
+### NEVER USE These Tags (Intercom silently strips them)
+- NO <thead>, <th>, <tbody> -- tables must use only <tr> and <td>
+- NO <details>, <summary> -- Intercom has no accordion/toggle support
+- NO <h3>, <h4>, <h5>, <h6> -- only h1 and h2 are supported
+- NO <div> (except with class="intercom-align-center")
+- NO <span>, <section>, <article>, <figure>, <figcaption>
+- NO <style>, <script>, <form>, <input>, <textarea>
+- NO inline style="" attributes on any element
+- NO custom class="" attributes (only intercom-align-center and intercom-h2b-button)
 
 ### Component Mapping
 - **Summary/Opening** -> \`<p><strong>[intro]</strong></p>\` (bold paragraph)
@@ -478,7 +489,7 @@ table, tr, td, hr
 - **Step-by-Step** -> \`<ol>\` with \`<li>\` steps
 - **Explanatory Sections** -> \`<h2>\` + \`<p>\` paragraphs
 - **Callouts** -> \`<p><b>Tip:</b> [content]</p>\` (bold prefix only -- no visual box)
-- **Tables** -> \`<table><tr><td>\` (no thead, th -- just tr/td)
+- **Tables** -> \`<table><tr><td>\` (NO thead, NO th -- Intercom strips them)
 - **Code Blocks** -> \`<pre><code>\`
 - **Links as buttons** -> \`<a href="#" class="intercom-h2b-button">Button Text</a>\`
 

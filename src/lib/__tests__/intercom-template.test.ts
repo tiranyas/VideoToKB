@@ -68,4 +68,30 @@ describe('Intercom template', () => {
     expect(intercom!.htmlPrompt).toContain('intercom-align-center');
     expect(intercom!.htmlPrompt).toContain('intercom-h2b-button');
   });
+
+  it('htmlPrompt explicitly warns against thead/th/tbody', () => {
+    const prompt = intercom!.htmlPrompt;
+    // These should appear in a NEVER USE / restriction context
+    expect(prompt).toContain('NEVER USE');
+    expect(prompt).toContain('<thead>');
+    expect(prompt).toContain('<th>');
+    expect(prompt).toContain('<tbody>');
+  });
+
+  it('htmlPrompt documents strong-to-b conversion', () => {
+    const prompt = intercom!.htmlPrompt;
+    expect(prompt).toContain('<strong>');
+    expect(prompt).toContain('<b>');
+    // Verify the conversion relationship is documented
+    expect(prompt).toMatch(/strong.*converted to.*b/i);
+  });
+
+  it('htmlTemplate has no branding placeholders', () => {
+    expect(intercom!.htmlTemplate).not.toMatch(/\{\{.*?\}\}/);
+  });
+
+  it('htmlTemplate does NOT contain thead or th', () => {
+    expect(intercom!.htmlTemplate).not.toContain('<thead');
+    expect(intercom!.htmlTemplate).not.toContain('<th');
+  });
 });
