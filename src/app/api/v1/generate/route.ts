@@ -195,7 +195,7 @@ export async function POST(req: Request) {
   }
 
   // Load platform profile
-  let platform: { id: string; name: string; html_prompt: string; html_template: string } | null = null;
+  let platform: { id: string; name: string; html_prompt: string; html_template: string; apply_branding?: boolean } | null = null;
   if (platformId) {
     const { data } = await getAdmin()
       .from('platform_profiles')
@@ -254,6 +254,7 @@ export async function POST(req: Request) {
         htmlPrompt: platform.html_prompt,
         htmlTemplate: platform.html_template ?? '',
         branding: workspace.branding ?? undefined,
+        applyBranding: platform.apply_branding ?? true,
       },
       (event: ProgressEvent) => {
         if (event.step === 'error') {

@@ -221,6 +221,7 @@ export default function Home() {
           htmlPrompt: platform.htmlPrompt,
           htmlTemplate: platform.htmlTemplate,
           branding: activeWorkspace?.branding,
+          applyBranding: platform.applyBranding,
         }),
       });
 

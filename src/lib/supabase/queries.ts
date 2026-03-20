@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Workspace, WorkspaceBranding, OnboardingState, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, PlanId } from '@/types';
+import type { Workspace, WorkspaceBranding, OnboardingState, ArticleType, PlatformProfile, Article, Plan, Subscription, UserUsage, WorkspaceUsage, WorkspaceMember, WorkspaceRole, PlanId } from '@/types';
 
 // ── Workspaces ──────────────────────────────────────────
 
@@ -8,14 +8,17 @@ export async function getWorkspaces(
   userId: string
 ): Promise<Workspace[]> {
   const { data, error } = await supabase
-    .from('workspaces')
-    .select('*')
+    .from('workspace_members')
+    .select('workspace:workspaces(*)')
     .eq('user_id', userId)
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(`Failed to load workspaces: ${error.message}`);
 
-  return (data ?? []).map(mapWorkspaceRow);
+  return (data ?? [])
+    .map((row: Record<string, unknown>) => row.workspace as Record<string, unknown>)
+    .filter(Boolean)
+    .map(mapWorkspaceRow);
 }
 
 export async function getWorkspace(
@@ -52,6 +55,14 @@ export async function createWorkspace(
     .single();
 
   if (error) throw new Error(`Failed to create workspace: ${error.message}`);
+
+  // Insert creator as owner in workspace_members
+  await supabase.from('workspace_members').insert({
+    workspace_id: data.id,
+    user_id: userId,
+    role: 'owner',
+  });
+
   return data.id;
 }
 
@@ -280,8 +291,9 @@ export async function getUserUsage(
 
 export async function checkQuota(
   supabase: SupabaseClient,
-  userId: string
-): Promise<{ allowed: boolean; usage: UserUsage | null; message?: string }> {
+  userId: string,
+  workspaceId?: string
+): Promise<{ allowed: boolean; usage: UserUsage | WorkspaceUsage | null; message?: string }> {
   // Ensure user has a subscription (auto-create free if not)
   await ensureSubscription(supabase, userId);
 
@@ -300,7 +312,11 @@ export async function checkQuota(
       .eq('user_id', userId);
   }
 
-  const usage = await getUserUsage(supabase, userId);
+  // Use workspace-scoped usage when workspaceId is provided
+  const usage = workspaceId
+    ? await getWorkspaceUsage(supabase, workspaceId)
+    : await getUserUsage(supabase, userId);
+
   if (!usage) {
     return { allowed: false, usage: null, message: 'Unable to determine usage' };
   }
@@ -623,14 +639,12 @@ export async function saveArticle(
 export async function updateArticleTitle(
   supabase: SupabaseClient,
   articleId: string,
-  title: string,
-  userId: string
+  title: string
 ): Promise<void> {
   const { error } = await supabase
     .from('articles')
     .update({ title })
-    .eq('id', articleId)
-    .eq('user_id', userId);
+    .eq('id', articleId);
 
   if (error) throw new Error(`Failed to update article title: ${error.message}`);
 }
@@ -638,14 +652,12 @@ export async function updateArticleTitle(
 export async function updateArticleHtml(
   supabase: SupabaseClient,
   articleId: string,
-  html: string,
-  userId: string
+  html: string
 ): Promise<void> {
   const { error } = await supabase
     .from('articles')
     .update({ html })
-    .eq('id', articleId)
-    .eq('user_id', userId);
+    .eq('id', articleId);
 
   if (error) throw new Error(`Failed to update article HTML: ${error.message}`);
 }
@@ -681,14 +693,12 @@ export async function getArticles(
 
 export async function getArticle(
   supabase: SupabaseClient,
-  articleId: string,
-  userId: string
+  articleId: string
 ): Promise<Article | null> {
   const { data, error } = await supabase
     .from('articles')
     .select('*')
     .eq('id', articleId)
-    .eq('user_id', userId)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -710,14 +720,94 @@ export async function getArticle(
 
 export async function deleteArticle(
   supabase: SupabaseClient,
-  articleId: string,
-  userId: string
+  articleId: string
 ): Promise<void> {
   const { error } = await supabase
     .from('articles')
     .delete()
-    .eq('id', articleId)
-    .eq('user_id', userId);
+    .eq('id', articleId);
 
   if (error) throw new Error(`Failed to delete article: ${error.message}`);
+}
+
+// ── Workspace Members ───────────────────────────────────
+
+function mapMemberRow(row: Record<string, unknown>): WorkspaceMember {
+  return {
+    id: row.id as string,
+    workspaceId: row.workspace_id as string,
+    userId: row.user_id as string,
+    role: row.role as WorkspaceRole,
+    email: (row.email as string) ?? undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function getWorkspaceMembers(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspaceMember[]> {
+  const { data, error } = await supabase
+    .from('workspace_members')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(`Failed to load members: ${error.message}`);
+  return (data ?? []).map(mapMemberRow);
+}
+
+export async function removeWorkspaceMember(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  userId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('workspace_members')
+    .delete()
+    .eq('workspace_id', workspaceId)
+    .eq('user_id', userId);
+
+  if (error) throw new Error(`Failed to remove member: ${error.message}`);
+}
+
+export async function getUserWorkspaceRole(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  userId: string
+): Promise<WorkspaceRole | null> {
+  const { data, error } = await supabase
+    .from('workspace_members')
+    .select('role')
+    .eq('workspace_id', workspaceId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.role as WorkspaceRole;
+}
+
+export async function getWorkspaceUsage(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspaceUsage | null> {
+  const { data, error } = await supabase
+    .rpc('get_workspace_usage', { p_workspace_id: workspaceId });
+
+  if (error) throw new Error(`Failed to get workspace usage: ${error.message}`);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+
+  return {
+    articlesThisPeriod: Number(row.articles_this_period),
+    articleLimit: row.article_limit,
+    bonusCredits: row.bonus_credits,
+    articlesRemaining: row.articles_remaining,
+    planId: row.plan_id as PlanId,
+    planName: row.plan_name,
+    periodStart: row.period_start,
+    periodEnd: row.period_end,
+  };
 }

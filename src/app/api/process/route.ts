@@ -33,6 +33,7 @@ interface RequestBody {
     fontFamily?: string;
     customCss?: string;
   };
+  applyBranding?: boolean;
 }
 
 export async function POST(req: Request) {
@@ -185,6 +186,7 @@ export async function POST(req: Request) {
                 htmlPrompt: body.htmlPrompt!,
                 htmlTemplate: body.htmlTemplate ?? '',
                 branding: body.branding,
+                applyBranding: body.applyBranding,
               },
               send
             );
