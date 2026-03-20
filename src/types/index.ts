@@ -98,6 +98,33 @@ export interface Workspace {
   updatedAt: string;
 }
 
+// Team access
+export type WorkspaceRole = 'owner' | 'admin' | 'member';
+
+export interface WorkspaceMember {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  role: WorkspaceRole;
+  email?: string;    // joined from auth.users for display
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InviteStatus = 'pending' | 'accepted' | 'expired';
+
+export interface WorkspaceInvite {
+  id: string;
+  workspaceId: string;
+  email: string;
+  role: WorkspaceRole;
+  invitedBy: string;
+  token: string;
+  status: InviteStatus;
+  expiresAt: string;
+  createdAt: string;
+}
+
 // Article type simple controls (stored alongside prompts)
 export interface ArticleTypeControls {
   tone?: 'formal' | 'casual' | 'technical' | 'friendly';
@@ -135,6 +162,17 @@ export interface Subscription {
 }
 
 export interface UserUsage {
+  articlesThisPeriod: number;
+  articleLimit: number;
+  bonusCredits: number;
+  articlesRemaining: number;
+  planId: PlanId;
+  planName: string;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export interface WorkspaceUsage {
   articlesThisPeriod: number;
   articleLimit: number;
   bonusCredits: number;
