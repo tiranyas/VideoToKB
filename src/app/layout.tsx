@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { CookieConsent } from "@/components/cookie-consent";
@@ -18,9 +20,48 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://kbpipe.io";
+
 export const metadata: Metadata = {
-  title: "KBPipe",
-  description: "Turn any content into publish-ready knowledge base articles — videos, user stories, specs, and more",
+  title: {
+    default: "KBPipe — AI-Powered Knowledge Base Generator",
+    template: "%s | KBPipe",
+  },
+  description:
+    "Turn any video, transcript, or text into publish-ready knowledge base articles. Supports Loom, YouTube, Google Drive. Export to HelpJuice, Zendesk, Intercom & more.",
+  metadataBase: new URL(siteUrl),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "KBPipe",
+    title: "KBPipe — Turn any content into KB articles with AI",
+    description:
+      "Paste a video URL or text, pick a template, get a structured knowledge base article in minutes. Free to start.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "KBPipe — AI-Powered Knowledge Base Generator",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KBPipe — Turn any content into KB articles with AI",
+    description:
+      "Paste a video URL or text, pick a template, get a structured knowledge base article in minutes.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/favicon-32.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default async function RootLayout({
@@ -60,6 +101,8 @@ export default async function RootLayout({
         )}
         <Toaster />
         <CookieConsent />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

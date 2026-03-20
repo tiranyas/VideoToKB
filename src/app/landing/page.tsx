@@ -295,13 +295,16 @@ export default function LandingPage() {
             <span className="text-sm font-medium text-gray-500">KBPipe</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-400">
+            <Link href="/docs" className="hover:text-gray-600 transition-colors">
+              API Docs
+            </Link>
             <Link href="/privacy" className="hover:text-gray-600 transition-colors">
               Privacy
             </Link>
             <Link href="/terms" className="hover:text-gray-600 transition-colors">
               Terms
             </Link>
-            <a href="mailto:support@kbpipe.com" className="hover:text-gray-600 transition-colors">
+            <a href="mailto:support@kbpipe.io" className="hover:text-gray-600 transition-colors">
               Contact
             </a>
           </div>

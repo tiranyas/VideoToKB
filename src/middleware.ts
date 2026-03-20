@@ -35,7 +35,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/landing') ||
     request.nextUrl.pathname.startsWith('/auth/callback') ||
     request.nextUrl.pathname === '/privacy' ||
-    request.nextUrl.pathname === '/terms';
+    request.nextUrl.pathname === '/terms' ||
+    request.nextUrl.pathname === '/docs';
 
   // If an auth code arrives at any route (e.g. from magic link), forward to callback
   const code = request.nextUrl.searchParams.get('code');
