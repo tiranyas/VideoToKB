@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import {
   getWorkspaces, createWorkspace as createWs,
   getActiveWorkspaceId, setActiveWorkspaceId,
+  getUserWorkspaceRole,
 } from '@/lib/supabase/queries';
-import type { Workspace } from '@/types';
+import type { Workspace, WorkspaceRole } from '@/types';
 
 const LS_KEY = 'kbpipe-active-workspace-id';
 
@@ -14,6 +15,7 @@ interface WorkspaceContextValue {
   activeWorkspace: Workspace | null;
   workspaces: Workspace[];
   isLoading: boolean;
+  userRole: WorkspaceRole | null;
   switchWorkspace: (id: string) => void;
   createWorkspace: (name: string) => Promise<string>;
   refreshWorkspaces: () => Promise<void>;
@@ -23,6 +25,7 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
   activeWorkspace: null,
   workspaces: [],
   isLoading: true,
+  userRole: null,
   switchWorkspace: () => {},
   createWorkspace: async () => '',
   refreshWorkspaces: async () => {},
@@ -46,6 +49,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<WorkspaceRole | null>(null);
 
   const loadWorkspaces = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -89,6 +93,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     loadWorkspaces();
   }, [loadWorkspaces]);
 
+  // Load user role for the active workspace
+  useEffect(() => {
+    if (activeId && userId) {
+      getUserWorkspaceRole(supabase, activeId, userId)
+        .then(setUserRole)
+        .catch(() => setUserRole(null));
+    } else {
+      setUserRole(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, userId]);
+
   const switchWorkspace = useCallback((id: string) => {
     setActiveId(id);
     localStorage.setItem(LS_KEY, id);
@@ -119,6 +135,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         activeWorkspace,
         workspaces,
         isLoading,
+        userRole,
         switchWorkspace,
         createWorkspace: handleCreateWorkspace,
         refreshWorkspaces: loadWorkspaces,

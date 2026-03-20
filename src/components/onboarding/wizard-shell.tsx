@@ -92,9 +92,14 @@ export function WizardShell() {
 
   const finishOnboarding = useCallback(async () => {
     if (!activeWorkspace) return;
+    // Preserve actual step completion state — don't overwrite skipped steps as true
+    const current = activeWorkspace.onboardingState ?? {
+      completed: false,
+      steps: { workspace: false, brand: false, platform: false, template: false },
+    };
     const finalState: OnboardingState = {
       completed: true,
-      steps: { workspace: true, brand: true, platform: true, template: true },
+      steps: { ...current.steps },
     };
     try {
       await updateWorkspace(supabase, activeWorkspace.id, { onboardingState: finalState });

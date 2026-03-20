@@ -1,30 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2, Wand2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Users, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2, Wand2, Mail, Shield, Crown, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
-import type { ArticleType, PlatformProfile, WorkspaceBranding, ArticleTypeControls } from '@/types';
+import type { ArticleType, PlatformProfile, WorkspaceBranding, ArticleTypeControls, WorkspaceMember, WorkspaceInvite, WorkspaceRole } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import {
   updateWorkspace,
   getArticleTypes, addArticleType, updateArticleType, deleteArticleType,
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
+  getWorkspaceMembers, getWorkspaceInvites, removeWorkspaceMember, revokeInvite,
 } from '@/lib/supabase/queries';
 
-type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'api' | 'account';
+type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'team' | 'api' | 'account';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
+  const { userRole } = useWorkspace();
 
   const tabs: { id: Tab; label: string; icon: typeof Globe }[] = [
     { id: 'context', label: 'Company Context', icon: Globe },
     { id: 'branding', label: 'Branding', icon: Palette },
     { id: 'article-types', label: 'Article Types', icon: FileText },
     { id: 'platforms', label: 'Platforms', icon: FileText },
+    ...(userRole && userRole !== 'member' ? [{ id: 'team' as Tab, label: 'Team', icon: Users }] : []),
     { id: 'api', label: 'API', icon: Key },
     { id: 'account', label: 'Account', icon: User },
   ];
@@ -76,6 +79,7 @@ export default function SettingsPage() {
         {activeTab === 'branding' && <BrandingTab />}
         {activeTab === 'article-types' && <ArticleTypesTab />}
         {activeTab === 'platforms' && <PlatformProfilesTab />}
+        {activeTab === 'team' && <TeamTab />}
         {activeTab === 'api' && <ApiKeysTab />}
         {activeTab === 'account' && <AccountTab />}
       </div>
@@ -1317,6 +1321,265 @@ function ApiKeysTab() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Team Tab ─────────────────────────────────────────────
+
+function TeamTab() {
+  const { activeWorkspace, userRole } = useWorkspace();
+  const supabase = createClient();
+  const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  const [invites, setInvites] = useState<WorkspaceInvite[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<WorkspaceRole>('member');
+  const [isInviting, setIsInviting] = useState(false);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [isLoadingTeam, setIsLoadingTeam] = useState(true);
+
+  const loadTeamData = useCallback(async () => {
+    if (!activeWorkspace) return;
+    try {
+      const [m, i] = await Promise.all([
+        getWorkspaceMembers(supabase, activeWorkspace.id),
+        getWorkspaceInvites(supabase, activeWorkspace.id),
+      ]);
+      setMembers(m);
+      setInvites(i.filter(inv => inv.status === 'pending'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load team data');
+    } finally {
+      setIsLoadingTeam(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id]);
+
+  useEffect(() => {
+    loadTeamData();
+  }, [loadTeamData]);
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!activeWorkspace || !inviteEmail.trim()) return;
+    setIsInviting(true);
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: activeWorkspace.id,
+          email: inviteEmail.trim(),
+          role: inviteRole,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create invite');
+      toast.success('Invite created!');
+      setInviteEmail('');
+      setInviteRole('member');
+      await loadTeamData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send invite');
+    } finally {
+      setIsInviting(false);
+    }
+  }
+
+  async function handleRemoveMember(userId: string) {
+    if (!activeWorkspace) return;
+    try {
+      await removeWorkspaceMember(supabase, activeWorkspace.id, userId);
+      toast.success('Member removed');
+      await loadTeamData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove member');
+    }
+  }
+
+  async function handleRevokeInvite(inviteId: string) {
+    try {
+      await revokeInvite(supabase, inviteId);
+      toast.success('Invite revoked');
+      await loadTeamData();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to revoke invite');
+    }
+  }
+
+  function handleCopyLink(token: string) {
+    const url = `${window.location.origin}/invite/accept?token=${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken(null), 2000);
+  }
+
+  function roleBadge(role: WorkspaceRole) {
+    const styles = {
+      owner: 'bg-purple-100 text-purple-700',
+      admin: 'bg-blue-100 text-blue-700',
+      member: 'bg-gray-100 text-gray-600',
+    };
+    return (
+      <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', styles[role])}>
+        {role === 'owner' && <Crown className="h-3 w-3" />}
+        {role === 'admin' && <Shield className="h-3 w-3" />}
+        {role.charAt(0).toUpperCase() + role.slice(1)}
+      </span>
+    );
+  }
+
+  if (isLoadingTeam) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Members List */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Users className="h-5 w-5 text-gray-400" />
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Members</h3>
+            <p className="text-xs text-gray-400">{members.length} member{members.length !== 1 ? 's' : ''} in this workspace</p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {members.map((member) => (
+            <div key={member.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-400 to-blue-400 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {(member.email ?? member.userId).charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{member.email ?? member.userId.slice(0, 8) + '...'}</p>
+                  <p className="text-xs text-gray-400">Joined {new Date(member.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {roleBadge(member.role)}
+                {member.role !== 'owner' && (userRole === 'owner' || userRole === 'admin') && (
+                  <button
+                    onClick={() => handleRemoveMember(member.userId)}
+                    className="text-gray-300 hover:text-red-400 transition-colors"
+                    title="Remove member"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Invite Form */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Mail className="h-5 w-5 text-gray-400" />
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Invite Members</h3>
+            <p className="text-xs text-gray-400">Send an invite link to add team members</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleInvite} className="flex items-end gap-3">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Email address</label>
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="team@company.com"
+              required
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+            />
+          </div>
+          <div className="w-32">
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Role</label>
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value as WorkspaceRole)}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={isInviting || !inviteEmail.trim()}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
+              isInviting || !inviteEmail.trim()
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
+            )}
+          >
+            {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Send Invite
+          </button>
+        </form>
+      </div>
+
+      {/* Pending Invites */}
+      {invites.length > 0 && (
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Link2 className="h-5 w-5 text-gray-400" />
+            <div>
+              <h3 className="text-lg font-semibold tracking-tight text-gray-900">Pending Invites</h3>
+              <p className="text-xs text-gray-400">{invites.length} pending invite{invites.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {invites.map((invite) => (
+              <div key={invite.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{invite.email}</p>
+                    <p className="text-xs text-gray-400">
+                      Expires {new Date(invite.expiresAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {roleBadge(invite.role)}
+                  <button
+                    onClick={() => handleCopyLink(invite.token)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                    title="Copy invite link"
+                  >
+                    {copiedToken === invite.token ? (
+                      <><Check className="h-3 w-3 text-green-500" /> Copied</>
+                    ) : (
+                      <><Copy className="h-3 w-3" /> Copy Link</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleRevokeInvite(invite.id)}
+                    className="text-gray-300 hover:text-red-400 transition-colors"
+                    title="Revoke invite"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
