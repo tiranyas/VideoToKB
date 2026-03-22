@@ -79,7 +79,7 @@ Plans:
 - [ ] 08-05-PLAN.md — Middleware wiring + navigation integration
 
 #### Phase 9: More Platforms (Zendesk, Intercom)
-**Goal**: Users on Zendesk Help Center or Intercom can select their platform and get articles formatted with the correct HTML structure and CSS classes for that platform
+**Goal**: Users on Zendesk Help Center or Intercom can select their platform and get articles formatted with the correct HTML structure and CSS classes for that platform. All 7 platform templates produce correct, paste-ready output.
 **Depends on**: Phase 8
 **Success Criteria** (what must be TRUE):
   1. User can select "Zendesk Help Center" as their platform and get HTML using Zendesk-compatible classes (`article-body`, `c-callout--info/warning/tip`, `wysiwyg-table`, semantic HTML with CSS classes instead of inline styles)
@@ -87,18 +87,28 @@ Plans:
   3. Intercom output does NOT contain any tags that Intercom's API strips (no div, span, style, script, or custom attributes)
   4. Each platform's template produces output that can be pasted into that platform's editor and render correctly without manual cleanup
   5. Platform selection in onboarding includes all supported platforms: Generic HTML, Helpjuice, Zendesk, Intercom, Confluence, Notion, Markdown
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — Harden Intercom/Zendesk prompts + edge-case tests + registry guard
 
 #### Phase 10: Shared Workspaces & Team Access
-**Goal**: Multiple team members can access the same workspace, with role-based permissions and a team subscription model
+**Goal**: Multiple team members can access the same workspace, with role-based permissions and invite-link system. Workspace quota inherits owner's plan.
 **Depends on**: Phase 9
+**Requirements**: [TEAM-01, TEAM-02, TEAM-03, TEAM-04, TEAM-05]
 **Success Criteria** (what must be TRUE):
   1. Workspace owner can invite team members by email
   2. Invited members can accept and access the shared workspace
   3. Members see shared articles, settings, and platform profiles
   4. Owner can remove members from the workspace
   5. Team subscription allows higher article quota than individual free tier
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Database migration (team tables, RLS, helper functions, backfill)
+- [ ] 10-02-PLAN.md — Query layer + workspace context (membership-based access)
+- [ ] 10-03-PLAN.md — Invite system (API route + accept page)
+- [ ] 10-04-PLAN.md — Team settings UI + end-to-end verification
 
 ---
 
@@ -116,6 +126,20 @@ Plans:
 
 ---
 
+### Phase 12: Auth overhaul: remove magic link, add password reset and Google SSO
+
+**Goal:** Remove magic link authentication (causing client confusion), add a password reset flow via Supabase email, and implement Google SSO with automatic account linking. The login page becomes a clean email/password + Google SSO experience with inline forgot/reset password forms.
+**Requirements**: [AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09]
+**Depends on:** Phase 11
+**Plans:** 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Auth confirm route + middleware updates for password reset flow
+- [ ] 12-02-PLAN.md — Login page rewrite (remove magic link, add Google SSO + password reset)
+- [ ] 12-03-PLAN.md — External dashboard configuration + end-to-end verification
+
+---
+
 ## Progress
 
 | Phase | Milestone | Status | Completed |
@@ -128,9 +152,10 @@ Plans:
 | 6. Security and Tests | v1.1 | ✅ Complete | 2026-03-15 |
 | 7. Performance and Cleanup | v1.1 | ✅ Complete | 2026-03-15 |
 | 8. Generic Templates & Onboarding | 4/5 | In Progress|  |
-| 9. More Platforms (Zendesk, Intercom) | v2.0 | Not started | - |
-| 10. Shared Workspaces & Team Access | v2.0 | Not started | - |
+| 9. More Platforms (Zendesk, Intercom) | v2.0 | Planned | - |
+| 10. Shared Workspaces & Team Access | v2.0 | Planned | - |
 | 11. Full QA Suite | 3/3 | Complete    | 2026-03-19 |
+| 12. Auth Overhaul | v2.0 | Planned | - |
 
 ## Known Gaps (carried from v1.0/v1.1)
 
@@ -142,4 +167,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-19 — Phase 11 planned (3 plans, 1 wave)*
+*Last updated: 2026-03-22 — Phase 12 planned (3 plans, 2 waves)*
