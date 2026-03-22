@@ -131,7 +131,7 @@ Plans:
 **Goal:** Remove magic link authentication (causing client confusion), add a password reset flow via Supabase email, and implement Google SSO with automatic account linking. The login page becomes a clean email/password + Google SSO experience with inline forgot/reset password forms.
 **Requirements**: [AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09]
 **Depends on:** Phase 11
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 12-01-PLAN.md — Auth confirm route + middleware updates for password reset flow
@@ -155,7 +155,7 @@ Plans:
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Planned | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Planned | - |
 | 11. Full QA Suite | 3/3 | Complete    | 2026-03-19 |
-| 12. Auth Overhaul | 1/3 | In Progress | - |
+| 12. Auth Overhaul | 2/3 | In Progress|  |
 
 ## Known Gaps (carried from v1.0/v1.1)
 
