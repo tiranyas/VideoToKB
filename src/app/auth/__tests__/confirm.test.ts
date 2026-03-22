@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockVerifyOtp = vi.fn();
+const { mockVerifyOtp } = vi.hoisted(() => ({
+  mockVerifyOtp: vi.fn(),
+}));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
