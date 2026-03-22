@@ -134,7 +134,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — Auth confirm route + middleware updates for password reset flow
+- [x] 12-01-PLAN.md — Auth confirm route + middleware updates for password reset flow
 - [ ] 12-02-PLAN.md — Login page rewrite (remove magic link, add Google SSO + password reset)
 - [ ] 12-03-PLAN.md — External dashboard configuration + end-to-end verification
 
@@ -155,7 +155,7 @@ Plans:
 | 9. More Platforms (Zendesk, Intercom) | v2.0 | Planned | - |
 | 10. Shared Workspaces & Team Access | v2.0 | Planned | - |
 | 11. Full QA Suite | 3/3 | Complete    | 2026-03-19 |
-| 12. Auth Overhaul | v2.0 | Planned | - |
+| 12. Auth Overhaul | 1/3 | In Progress | - |
 
 ## Known Gaps (carried from v1.0/v1.1)
 
@@ -167,4 +167,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-03-12*
-*Last updated: 2026-03-22 — Phase 12 planned (3 plans, 2 waves)*
+*Last updated: 2026-03-22 — Phase 12 plan 01 complete*

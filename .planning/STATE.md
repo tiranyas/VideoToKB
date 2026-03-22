@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Onboarding & Multi-Platform
-current_plan: 3 of 3 complete
-status: verifying
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-22T18:51:30.291Z"
+current_plan: 2 of 4 complete
+status: executing
+stopped_at: "Completed 12-02-PLAN.md"
+last_updated: "2026-03-22T19:12:00Z"
 progress:
   total_phases: 12
   completed_phases: 4
-  total_plans: 20
-  completed_plans: 16
-  percent: 93
+  total_plans: 21
+  completed_plans: 18
+  percent: 86
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A user can take a video recording and get back a publish-ready KB article in minutes instead of days
-**Current focus:** v2.0 Phase 11 — Full QA Suite
+**Current focus:** v2.0 Phase 12 — Auth Overhaul
 
 ## Current Position
 
 Milestone: v2.0 Onboarding & Multi-Platform
-Phase: 11 — Full QA Suite (in progress)
-Current Plan: 3 of 3 complete
-Status: All plans executed, awaiting verification
+Phase: 12 — Auth Overhaul (in progress)
+Current Plan: 2 of 4 complete
+Status: Executing
 
-Progress: [█████████░] 93% (14/15 plans)
+Progress: [████████░░] 86% (18/21 plans)
 
 ## Research Completed
 
@@ -53,6 +53,9 @@ Key findings:
 - [Phase 08-03]: OnboardingState as JSONB with 4-step booleans; applyBranding defaults true for built-in templates
 - [Phase 08-04]: Wizard persists each step immediately; scraped templates saved with applyBranding=false; PlatformCard uses SVG thumbnails from public/platforms/
 - [Phase 11]: Used class-based mock for @supadata/js; tested unexported GDrive functions indirectly
+- [Phase 12-01]: Widened middleware public route from /auth/callback to /auth/* for all auth routes
+- [Phase 12-01]: Used mode=reset-password query param for login page state during password reset
+- [Phase 12-02]: Login page uses 4-mode state machine driven by URL params; signup shows email banner instead of auto-redirect
 
 ### Pending Todos
 
@@ -69,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22T18:51:30.286Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-auth-overhaul-remove-magic-link-add-password-reset-and-google-sso/12-CONTEXT.md
+Last session: 2026-03-22T19:12:00Z
+Stopped at: Completed 12-02-PLAN.md
+Resume file: .planning/phases/12-auth-overhaul-remove-magic-link-add-password-reset-and-google-sso/12-03-PLAN.md
