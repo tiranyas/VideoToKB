@@ -4,13 +4,13 @@ milestone: v2.0
 milestone_name: Onboarding & Multi-Platform
 current_plan: 3 of 3 complete
 status: verifying
-stopped_at: All 3 plans complete, awaiting phase verification
-last_updated: "2026-03-19T17:03:54.061Z"
+stopped_at: Phase 12 context gathered
+last_updated: "2026-03-22T18:51:30.291Z"
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 4
-  total_plans: 15
-  completed_plans: 14
+  total_plans: 20
+  completed_plans: 16
   percent: 93
 ---
 
@@ -61,6 +61,7 @@ None.
 ### Roadmap Evolution
 
 - Phase 11 added: Full QA Suite — Vitest expansion and Playwright E2E tests
+- Phase 12 added: Auth overhaul — remove magic link, add password reset and Google SSO
 
 ### Blockers/Concerns
 
@@ -68,6 +69,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:45:00Z
-Stopped at: All 3 plans complete, awaiting phase verification
-Resume file: .planning/phases/11-full-qa-suite-vitest-expansion-and-playwright-e2e-tests/
+Last session: 2026-03-22T18:51:30.286Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-auth-overhaul-remove-magic-link-add-password-reset-and-google-sso/12-CONTEXT.md
