@@ -40,30 +40,21 @@ export async function createWorkspace(
   userId: string,
   ws: { name: string; slug: string; companyName?: string; companyDescription?: string; industry?: string; targetAudience?: string }
 ): Promise<string> {
-  const { data, error } = await supabase
-    .from('workspaces')
-    .insert({
-      user_id: userId,
-      name: ws.name,
-      slug: ws.slug,
-      company_name: ws.companyName ?? null,
-      company_description: ws.companyDescription ?? null,
-      industry: ws.industry ?? null,
-      target_audience: ws.targetAudience ?? null,
-    })
-    .select('id')
-    .single();
+  // Use SECURITY DEFINER function to atomically create workspace + owner member
+  // This bypasses RLS chicken-and-egg problem for new users
+  const { data, error } = await supabase.rpc('create_workspace_with_owner', {
+    p_user_id: userId,
+    p_name: ws.name,
+    p_slug: ws.slug,
+    p_company_name: ws.companyName ?? null,
+    p_company_description: ws.companyDescription ?? null,
+    p_industry: ws.industry ?? null,
+    p_target_audience: ws.targetAudience ?? null,
+  });
 
   if (error) throw new Error(`Failed to create workspace: ${error.message}`);
 
-  // Insert creator as owner in workspace_members
-  await supabase.from('workspace_members').insert({
-    workspace_id: data.id,
-    user_id: userId,
-    role: 'owner',
-  });
-
-  return data.id;
+  return data as string;
 }
 
 export async function updateWorkspace(
