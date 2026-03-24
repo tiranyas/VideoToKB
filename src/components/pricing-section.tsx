@@ -49,8 +49,8 @@ const plans: Plan[] = [
   {
     name: 'Starter',
     description: 'For creators and solo teams',
-    monthlyPrice: 25,
-    annualPrice: 19,
+    monthlyPrice: 29,
+    annualPrice: 25,
     articles: '30 articles / month',
     highlighted: true,
     badge: 'Most Popular',
@@ -62,24 +62,6 @@ const plans: Plan[] = [
       { text: 'Branding & style import', included: true },
       { text: 'API & MCP access', included: true },
       { text: 'Custom article types', included: true },
-    ],
-    cta: 'Start Free Trial',
-  },
-  {
-    name: 'Pro',
-    description: 'For power users and agencies',
-    monthlyPrice: 59,
-    annualPrice: 49,
-    articles: '100 articles / month',
-    features: [
-      { text: 'All input sources', included: true },
-      { text: '10 workspaces', included: true },
-      { text: 'Export: Markdown, HTML, Word', included: true },
-      { text: 'All platform profiles', included: true },
-      { text: 'Branding & style import', included: true },
-      { text: 'API & MCP access', included: true },
-      { text: 'Custom article types', included: true },
-      { text: 'Priority support', included: true },
     ],
     cta: 'Start Free Trial',
   },
@@ -99,6 +81,24 @@ const plans: Plan[] = [
       { text: 'Team activity log', included: true },
       { text: 'Role-based access (Admin / Editor / Viewer)', included: true },
       { text: 'Priority support', included: true },
+    ],
+    cta: 'Contact Us',
+  },
+  {
+    name: 'Enterprise',
+    description: 'For organizations with custom needs',
+    monthlyPrice: 'Custom',
+    annualPrice: 'Custom',
+    articles: 'Unlimited articles',
+    features: [
+      { text: 'Everything in Team, plus:', included: true },
+      { text: 'Unlimited seats', included: true },
+      { text: 'Custom integrations', included: true },
+      { text: 'Dedicated account manager', included: true },
+      { text: 'SLA & uptime guarantee', included: true },
+      { text: 'DPA & compliance support', included: true },
+      { text: 'SSO / SAML', included: true },
+      { text: 'On-call support', included: true },
     ],
     cta: 'Contact Us',
   },
@@ -143,7 +143,7 @@ export function PricingSection() {
             </span>
             {annual && (
               <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                Save up to 24%
+                Save up to 17%
               </span>
             )}
           </div>
@@ -175,16 +175,18 @@ export function PricingSection() {
                     <h3 className="font-semibold text-gray-900 text-lg">{plan.name}</h3>
                     <div className="mt-3 flex items-baseline gap-1">
                       <span className="text-4xl font-bold text-gray-900">
-                        ${price}
+                        {typeof price === 'number' ? `$${price}` : price}
                       </span>
-                      <span className="text-sm text-gray-400">{label}</span>
+                      {typeof price === 'number' && price > 0 && (
+                        <span className="text-sm text-gray-400">{label}</span>
+                      )}
                     </div>
                     {isTeam && (
                       <p className="mt-1 text-xs text-gray-400">
                         Min 3 seats = ${(typeof price === 'number' ? price : 0) * 3}/mo
                       </p>
                     )}
-                    {!annual && plan.annualPrice !== plan.monthlyPrice && !isTeam && (
+                    {!annual && typeof plan.annualPrice === 'number' && plan.annualPrice !== plan.monthlyPrice && !isTeam && (
                       <p className="mt-1 text-xs text-violet-500">
                         ${plan.annualPrice}/mo billed annually
                       </p>
@@ -206,7 +208,7 @@ export function PricingSection() {
                   </ul>
 
                   <Link
-                    href={plan.name === 'Team' ? 'mailto:support@kbpipe.com?subject=KBPipe Team Plan' : '/login?signup=true'}
+                    href={plan.name === 'Team' || plan.name === 'Enterprise' ? 'mailto:support@kbpipe.io?subject=KBPipe ' + plan.name + ' Plan' : '/login?signup=true'}
                     className={`w-full text-center rounded-xl px-6 py-3 text-sm font-medium transition-all ${
                       plan.highlighted
                         ? 'bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 shadow-sm'
@@ -220,6 +222,22 @@ export function PricingSection() {
             })}
           </StaggerReveal>
         </div>
+
+        {/* Add-on */}
+        <ScrollReveal delay={300}>
+          <div className="mt-12 max-w-md mx-auto">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">Need more articles?</h3>
+                <p className="text-sm text-gray-500 mt-1">Add 10 extra articles to any paid plan</p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-gray-900">$10</span>
+                <p className="text-xs text-gray-400">per 10 articles</p>
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
 
         {/* FAQ-style note */}
         <ScrollReveal delay={400}>
