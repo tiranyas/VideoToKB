@@ -36,6 +36,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/auth/') ||
     request.nextUrl.pathname === '/privacy' ||
     request.nextUrl.pathname === '/terms' ||
+    request.nextUrl.pathname === '/security' ||
     request.nextUrl.pathname === '/docs';
 
   // If an auth code arrives at any route (e.g. from magic link), forward to callback

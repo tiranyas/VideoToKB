@@ -148,8 +148,8 @@ export default function TermsPage() {
             <p className="text-sm text-gray-600">
               Questions about these terms? Reach out to us at
             </p>
-            <a href="mailto:legal@kbpipe.com" className="text-sm text-gray-900 font-medium hover:underline">
-              legal@kbpipe.com
+            <a href="mailto:legal@kbpipe.io" className="text-sm text-gray-900 font-medium hover:underline">
+              legal@kbpipe.io
             </a>
           </div>
 

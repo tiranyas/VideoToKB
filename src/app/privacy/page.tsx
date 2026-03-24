@@ -52,7 +52,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>Account data</strong> &mdash; your email address for authentication</li>
               <li><strong>Video URLs</strong> &mdash; links you provide for transcription</li>
-              <li><strong>Transcripts</strong> &mdash; text generated from your video recordings</li>
+              <li><strong>Transcripts</strong> &mdash; temporarily processed during article generation and <strong>not stored</strong> after processing</li>
               <li><strong>Generated articles</strong> &mdash; knowledge base articles created from transcripts</li>
               <li><strong>Company information</strong> &mdash; company name and context you provide in settings</li>
             </ul>
@@ -140,8 +140,8 @@ export default function PrivacyPage() {
               If you have questions about this privacy policy or want to exercise your data rights, reach out:
             </p>
             <p>
-              <a href="mailto:privacy@kbpipe.com" className="text-gray-900 font-medium hover:underline">
-                privacy@kbpipe.com
+              <a href="mailto:privacy@kbpipe.io" className="text-gray-900 font-medium hover:underline">
+                privacy@kbpipe.io
               </a>
             </p>
           </Section>
