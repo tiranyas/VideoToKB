@@ -364,6 +364,9 @@ export default function LandingPage() {
             <Link href="/terms" className="hover:text-gray-600 transition-colors">
               Terms
             </Link>
+            <Link href="/dpa" className="hover:text-gray-600 transition-colors">
+              DPA
+            </Link>
             <a href="mailto:support@kbpipe.io" className="hover:text-gray-600 transition-colors">
               Contact
             </a>
