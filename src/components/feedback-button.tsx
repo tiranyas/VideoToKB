@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquarePlus, X, Send, Loader2 } from 'lucide-react';
+import { MessageSquarePlus, X, Send, Loader2, Terminal } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/utils/cn';
+import { useErrorCapture } from '@/hooks/use-error-capture';
 
 interface FeedbackContext {
   articleId?: string;
@@ -28,6 +29,7 @@ export function FeedbackButton({ context }: { context?: FeedbackContext }) {
   const [description, setDescription] = useState('');
   const [expectedBehavior, setExpectedBehavior] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { getErrorLogs } = useErrorCapture();
 
   async function handleSubmit() {
     if (!description.trim()) {
@@ -37,6 +39,9 @@ export function FeedbackButton({ context }: { context?: FeedbackContext }) {
 
     setSubmitting(true);
     try {
+      // Attach error logs for bug reports
+      const errorLogs = category === 'bug' ? getErrorLogs() : undefined;
+
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,6 +51,8 @@ export function FeedbackButton({ context }: { context?: FeedbackContext }) {
           description: description.trim(),
           expectedBehavior: expectedBehavior.trim() || undefined,
           severity: category === 'bug' ? 'high' : 'medium',
+          consoleErrors: errorLogs?.consoleErrors,
+          networkErrors: errorLogs?.networkErrors,
         }),
       });
 
@@ -54,7 +61,7 @@ export function FeedbackButton({ context }: { context?: FeedbackContext }) {
         throw new Error(data.error ?? 'Failed to submit');
       }
 
-      toast.success('Thanks for the feedback! We\'ll look into it.');
+      toast.success('Thanks for the feedback! Check your email for confirmation.');
       setOpen(false);
       setDescription('');
       setExpectedBehavior('');
@@ -151,6 +158,14 @@ export function FeedbackButton({ context }: { context?: FeedbackContext }) {
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all resize-none"
                 />
               </div>
+
+              {/* Bug report indicator */}
+              {category === 'bug' && (
+                <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-xs text-amber-700">
+                  <Terminal className="h-3.5 w-3.5 flex-shrink-0" />
+                  Console errors and failed network requests will be attached automatically
+                </div>
+              )}
 
               {/* Auto-captured context info */}
               {context && (context.platformName || context.articleTypeId) && (

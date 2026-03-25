@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
 import { rateLimit } from '@/lib/rate-limit';
+import { sendFeedbackNotification, sendFeedbackConfirmation } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,8 @@ export async function POST(req: Request) {
     description?: string;
     expectedBehavior?: string;
     severity?: string;
+    consoleErrors?: string[];
+    networkErrors?: string[];
   };
 
   try {
@@ -64,9 +67,13 @@ export async function POST(req: Request) {
     ? body.severity
     : 'medium';
 
+  // Sanitize error logs — max 20 entries, max 1000 chars each
+  const consoleErrors = (body.consoleErrors ?? []).slice(0, 20).map(e => String(e).slice(0, 1000));
+  const networkErrors = (body.networkErrors ?? []).slice(0, 20).map(e => String(e).slice(0, 1000));
+
   // Use service role to bypass RLS (auth already verified above)
   const admin = getAdmin();
-  const { error } = await admin.from('feedback').insert({
+  const { data: inserted, error } = await admin.from('feedback').insert({
     user_id: user.id,
     article_id: body.articleId || null,
     workspace_id: body.workspaceId || null,
@@ -78,11 +85,38 @@ export async function POST(req: Request) {
     description: body.description.trim(),
     expected_behavior: body.expectedBehavior?.trim() || null,
     severity,
-  });
+    console_errors: consoleErrors,
+    network_errors: networkErrors,
+  }).select('id').single();
 
   if (error) {
     console.error('Failed to save feedback:', error);
     return Response.json({ error: 'Failed to save feedback' }, { status: 500 });
+  }
+
+  const ticketId = inserted?.id ?? 'unknown';
+
+  // Send emails — fire-and-forget, don't block the response
+  const feedbackData = {
+    id: ticketId,
+    category: category!,
+    description: body.description.trim(),
+    expectedBehavior: body.expectedBehavior?.trim(),
+    severity: severity!,
+    platformName: body.platformName,
+    articleTitle: body.articleTitle,
+    consoleErrors,
+    networkErrors,
+  };
+
+  sendFeedbackNotification(feedbackData, user.email ?? 'unknown').catch((err) =>
+    console.error('Failed to send admin notification email:', err)
+  );
+
+  if (user.email) {
+    sendFeedbackConfirmation(user.email, category!, ticketId).catch((err) =>
+      console.error('Failed to send confirmation email:', err)
+    );
   }
 
   return Response.json({ ok: true });
