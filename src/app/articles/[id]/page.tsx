@@ -10,7 +10,6 @@ import { getArticle, deleteArticle, updateArticleTitle, updateArticleHtml, getPl
 import { readSSEStream } from '@/lib/sse';
 import { cn } from '@/utils/cn';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { FeedbackButton } from '@/components/feedback-button';
 import type { Article, PlatformProfile } from '@/types';
 
 type Tab = 'markdown' | 'html' | 'preview';
@@ -419,16 +418,6 @@ export default function ArticleDetailPage() {
         )}
       </div>
 
-      <FeedbackButton
-        context={{
-          articleId: article.id,
-          articleTitle: article.title,
-          workspaceId: activeWorkspace?.id,
-          articleTypeId: article.articleTypeId,
-          platformId: article.platformId,
-          platformName: platforms.find(p => p.id === selectedPlatformId)?.name,
-        }}
-      />
     </div>
   );
 }
