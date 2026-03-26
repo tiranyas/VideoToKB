@@ -103,13 +103,14 @@ export function HelpWidget() {
 
   return (
     <>
-      {/* Floating Help label — left side, vertically centered */}
+      {/* Floating Help tab — right side, vertically centered, rotated */}
       <button
         onClick={() => handleOpen(hasKnowledge ? 'knowledge' : 'report')}
         className={cn(
-          'fixed left-0 top-1/2 -translate-y-1/2 z-50 flex items-center gap-1.5',
-          'rounded-r-xl px-3 py-2.5 text-sm font-medium shadow-lg transition-all hover:scale-105',
+          'fixed right-0 top-1/2 z-50 flex items-center gap-1.5',
+          'rounded-t-xl px-4 py-2 text-sm font-medium shadow-lg transition-all hover:scale-105',
           'bg-violet-600 text-white hover:bg-violet-700 shadow-violet-600/25',
+          'origin-bottom-right -rotate-90 translate-x-[2px] -translate-y-1/2',
         )}
         aria-label="Help"
       >
@@ -125,11 +126,11 @@ export function HelpWidget() {
         />
       )}
 
-      {/* Panel — slides from left */}
+      {/* Panel — slides from right */}
       <div
         className={cn(
-          'fixed top-0 left-0 z-50 h-screen w-full sm:w-[400px] bg-white border-r border-gray-100 shadow-2xl transition-transform duration-300 ease-out flex flex-col',
-          open ? 'translate-x-0' : '-translate-x-full'
+          'fixed top-0 right-0 z-50 h-screen w-full sm:w-[400px] bg-white border-l border-gray-100 shadow-2xl transition-transform duration-300 ease-out flex flex-col',
+          open ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header with tabs */}
