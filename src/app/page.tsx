@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { PipelineStep, StepStatus, ArticleType, PlatformProfile } from '@/types';
 import { readSSEStream } from '@/lib/sse';
+import { toast } from 'sonner';
 import { UrlForm } from '@/components/url-form';
 import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
@@ -137,7 +138,16 @@ export default function Home() {
         if (response.status === 403) {
           const errData = await response.json().catch(() => ({}));
           if (errData.error === 'quota_exceeded') {
-            setError(errData.message ?? 'You have reached your article limit for this month.');
+            const msg = errData.message ?? 'You have reached your article limit for this month.';
+            setError(msg);
+            toast.error('Article limit reached', {
+              description: 'Upgrade your plan to generate more articles.',
+              action: {
+                label: 'Upgrade',
+                onClick: () => window.location.href = '/settings#billing',
+              },
+              duration: 8000,
+            });
             setPhase('input');
             return;
           }

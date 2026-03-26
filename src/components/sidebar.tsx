@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2, LayoutDashboard } from 'lucide-react';
+import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2, LayoutDashboard, Sparkles, Zap, Crown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/utils/cn';
+import type { UserUsage } from '@/types';
 
 interface RecentArticle {
   id: string;
@@ -21,6 +22,7 @@ export function Sidebar({ email }: { email: string }) {
   const supabase = createClient();
   const { activeWorkspace, workspaces, switchWorkspace, createWorkspace } = useWorkspace();
   const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
+  const [usage, setUsage] = useState<UserUsage | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
@@ -43,6 +45,30 @@ export function Sidebar({ email }: { email: string }) {
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, activeWorkspace?.id]);
+
+  // Load user usage
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase.rpc('get_user_usage', { p_user_id: user.id });
+      if (error) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setUsage({
+          articlesThisPeriod: row.articles_this_period,
+          articleLimit: row.article_limit,
+          bonusCredits: row.bonus_credits,
+          articlesRemaining: row.articles_remaining,
+          planId: row.plan_id,
+          planName: row.plan_name,
+          periodStart: row.period_start,
+          periodEnd: row.period_end,
+        });
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -117,12 +143,37 @@ export function Sidebar({ email }: { email: string }) {
 
   const sidebarContent = (
     <>
-      {/* Logo */}
+      {/* Logo + Plan Badge */}
       <div className="flex items-center justify-between px-4 py-5">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
-          <Image src="/logo.png" alt="KBPipe" width={32} height={32} />
-          {!collapsed && 'KBPipe'}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
+            <Image src="/logo.png" alt="KBPipe" width={32} height={32} />
+            {!collapsed && 'KBPipe'}
+          </Link>
+          {!collapsed && usage && (
+            <Link
+              href="/settings#billing"
+              className={cn(
+                'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-all hover:scale-105',
+                usage.planId === 'free'
+                  ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  : usage.planId === 'pro'
+                  ? 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                  : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+              )}
+              title="Click to upgrade"
+            >
+              {usage.planId === 'free' ? (
+                <Sparkles className="h-3 w-3" />
+              ) : usage.planId === 'pro' ? (
+                <Zap className="h-3 w-3" />
+              ) : (
+                <Crown className="h-3 w-3" />
+              )}
+              {usage.planName}
+            </Link>
+          )}
+        </div>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -285,6 +336,38 @@ export function Sidebar({ email }: { email: string }) {
 
       {/* User footer */}
       <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+        {/* Usage bar */}
+        {!collapsed && usage && (
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-medium text-gray-500">Articles this month</span>
+              <span className={cn(
+                'text-[11px] font-semibold',
+                usage.articlesRemaining === 0 ? 'text-red-500' : usage.articlesRemaining <= 2 ? 'text-amber-500' : 'text-gray-600'
+              )}>
+                {usage.articlesThisPeriod}/{usage.articleLimit + usage.bonusCredits}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all',
+                  usage.articlesRemaining === 0 ? 'bg-red-400' : usage.articlesRemaining <= 2 ? 'bg-amber-400' : 'bg-violet-400'
+                )}
+                style={{ width: `${Math.min(100, (usage.articlesThisPeriod / (usage.articleLimit + usage.bonusCredits)) * 100)}%` }}
+              />
+            </div>
+            {usage.articlesRemaining === 0 && (
+              <Link
+                href="/settings#billing"
+                className="block mt-1.5 text-[11px] text-red-500 hover:text-red-600 font-medium transition-colors"
+              >
+                Limit reached — Upgrade plan
+              </Link>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between rounded-xl px-3 py-2 hover:bg-gray-50 transition-colors">
           <span className="text-xs text-gray-400 truncate max-w-[160px]">{email}</span>
           <button
