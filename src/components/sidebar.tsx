@@ -157,15 +157,17 @@ export function Sidebar({ email }: { email: string }) {
                 'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-all hover:scale-105',
                 usage.planId === 'free'
                   ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  : usage.planId === 'pro'
+                  : usage.planId === 'starter'
                   ? 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                  : usage.planId === 'team'
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
               )}
               title="Click to upgrade"
             >
               {usage.planId === 'free' ? (
                 <Sparkles className="h-3 w-3" />
-              ) : usage.planId === 'pro' ? (
+              ) : usage.planId === 'starter' ? (
                 <Zap className="h-3 w-3" />
               ) : (
                 <Crown className="h-3 w-3" />

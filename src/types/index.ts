@@ -134,7 +134,7 @@ export interface ArticleTypeControls {
 }
 
 // Pricing & Subscriptions
-export type PlanId = 'free' | 'pro' | 'business';
+export type PlanId = 'free' | 'starter' | 'team' | 'enterprise' | 'pro' | 'business';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
 
 export interface Plan {
