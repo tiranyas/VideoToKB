@@ -1,6 +1,10 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error('RESEND_API_KEY is not set');
+  return new Resend(key);
+}
 
 const FROM = 'KBPipe Support <support@kbpipe.io>';
 
@@ -88,7 +92,7 @@ export async function sendFeedbackNotification(
     </div>
   `;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: 'support@kbpipe.io',
     subject: `[${categoryLabel}] ${feedback.description.slice(0, 80)}`,
@@ -131,7 +135,7 @@ export async function sendFeedbackConfirmation(
     </div>
   `;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: userEmail,
     subject: `We received your ${categoryLabel.toLowerCase()} report`,

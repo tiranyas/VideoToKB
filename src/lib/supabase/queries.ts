@@ -393,7 +393,12 @@ export async function getArticleTypes(
       structure_prompt: at.structurePrompt,
       is_default: true,
     }));
-    await supabase.from('article_types').upsert(rows, { onConflict: 'id' });
+    const { error: seedError } = await supabase.from('article_types').upsert(rows, { onConflict: 'id' });
+    if (seedError) {
+      // RLS blocks client-side seeding of default types — non-fatal
+      console.error('Auto-seed article types skipped (RLS):', seedError.message);
+      return types;
+    }
     const { data: refreshed } = await supabase
       .from('article_types')
       .select('*')
@@ -491,7 +496,12 @@ export async function getPlatformProfiles(
       html_template: pp.htmlTemplate,
       is_default: true,
     }));
-    await supabase.from('platform_profiles').upsert(rows, { onConflict: 'id' });
+    const { error: seedError } = await supabase.from('platform_profiles').upsert(rows, { onConflict: 'id' });
+    if (seedError) {
+      // RLS blocks client-side seeding of default profiles — non-fatal
+      console.error('Auto-seed platform profiles skipped (RLS):', seedError.message);
+      return profiles;
+    }
     // Re-fetch to include newly seeded profiles
     const { data: refreshed } = await supabase
       .from('platform_profiles')
