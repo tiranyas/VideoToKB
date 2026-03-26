@@ -380,39 +380,6 @@ export async function getArticleTypes(
     isDefault: row.is_default,
   }));
 
-  // Auto-seed missing default article types
-  const { DEFAULT_ARTICLE_TYPES } = await import('@/lib/templates/agent2-draft');
-  const existingIds = new Set(types.map((t) => t.id));
-  const missing = DEFAULT_ARTICLE_TYPES.filter((d) => !existingIds.has(d.id));
-
-  if (missing.length > 0) {
-    const rows = missing.map((at) => ({
-      id: at.id,
-      name: at.name,
-      draft_prompt: at.draftPrompt,
-      structure_prompt: at.structurePrompt,
-      is_default: true,
-    }));
-    const { error: seedError } = await supabase.from('article_types').upsert(rows, { onConflict: 'id' });
-    if (seedError) {
-      // RLS blocks client-side seeding of default types — non-fatal
-      console.error('Auto-seed article types skipped (RLS):', seedError.message);
-      return types;
-    }
-    const { data: refreshed } = await supabase
-      .from('article_types')
-      .select('*')
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: true });
-    return (refreshed ?? []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      draftPrompt: row.draft_prompt,
-      structurePrompt: row.structure_prompt,
-      isDefault: row.is_default,
-    }));
-  }
-
   return types;
 }
 
@@ -482,41 +449,6 @@ export async function getPlatformProfiles(
     isDefault: row.is_default,
     applyBranding: row.apply_branding ?? true,
   }));
-
-  // Auto-seed missing default profiles
-  const { DEFAULT_PLATFORM_PROFILES } = await import('@/lib/templates/agent4-html');
-  const existingIds = new Set(profiles.map((p) => p.id));
-  const missing = DEFAULT_PLATFORM_PROFILES.filter((d) => !existingIds.has(d.id));
-
-  if (missing.length > 0) {
-    const rows = missing.map((pp) => ({
-      id: pp.id,
-      name: pp.name,
-      html_prompt: pp.htmlPrompt,
-      html_template: pp.htmlTemplate,
-      is_default: true,
-    }));
-    const { error: seedError } = await supabase.from('platform_profiles').upsert(rows, { onConflict: 'id' });
-    if (seedError) {
-      // RLS blocks client-side seeding of default profiles — non-fatal
-      console.error('Auto-seed platform profiles skipped (RLS):', seedError.message);
-      return profiles;
-    }
-    // Re-fetch to include newly seeded profiles
-    const { data: refreshed } = await supabase
-      .from('platform_profiles')
-      .select('*')
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: true });
-    return (refreshed ?? []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      htmlPrompt: row.html_prompt,
-      htmlTemplate: row.html_template,
-      isDefault: row.is_default,
-      applyBranding: row.apply_branding ?? true,
-    }));
-  }
 
   return profiles;
 }
