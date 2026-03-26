@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Globe, BookOpen, Layers, FileText, HelpCircle, MessageSquare, Code, LayoutGrid } from 'lucide-react';
+import { Globe, BookOpen, Layers, FileText, HelpCircle, MessageSquare, Code, LayoutGrid, PlusCircle } from 'lucide-react';
 import { PlatformCard } from './platform-card';
+import { PlatformRequestDialog } from './platform-request-dialog';
 import type { LucideIcon } from 'lucide-react';
 
 interface StepPlatformProps {
@@ -32,6 +33,7 @@ const PLATFORMS: PlatformInfo[] = [
 
 export function StepPlatform({ onNext, onBack, onSkip, saving, defaultPlatformId }: StepPlatformProps) {
   const [selectedId, setSelectedId] = useState<string | null>(defaultPlatformId ?? null);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   function handleSubmit() {
     onNext({ platformId: selectedId ?? 'generic-html' });
@@ -62,6 +64,20 @@ export function StepPlatform({ onNext, onBack, onSkip, saving, defaultPlatformId
           />
         ))}
       </div>
+
+      {/* Request new platform */}
+      <div className="flex items-center justify-center mb-6">
+        <button
+          type="button"
+          onClick={() => setRequestOpen(true)}
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-violet-600 transition-colors group"
+        >
+          <PlusCircle className="w-4 h-4 group-hover:text-violet-500 transition-colors" />
+          <span>Can&apos;t find your platform? <span className="underline underline-offset-2">Request it here</span></span>
+        </button>
+      </div>
+
+      <PlatformRequestDialog open={requestOpen} onClose={() => setRequestOpen(false)} />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
