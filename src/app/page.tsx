@@ -144,7 +144,7 @@ export default function Home() {
               description: 'Upgrade your plan to generate more articles.',
               action: {
                 label: 'Upgrade',
-                onClick: () => window.location.href = '/settings#billing',
+                onClick: () => window.location.href = '/billing',
               },
               duration: 8000,
             });

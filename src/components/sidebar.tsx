@@ -152,7 +152,7 @@ export function Sidebar({ email }: { email: string }) {
           </Link>
           {!collapsed && usage && (
             <Link
-              href="/settings#billing"
+              href="/billing"
               className={cn(
                 'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-all hover:scale-105',
                 usage.planId === 'free'
@@ -359,7 +359,7 @@ export function Sidebar({ email }: { email: string }) {
             </div>
             {usage.articlesRemaining === 0 && (
               <Link
-                href="/settings#billing"
+                href="/billing"
                 className="block mt-1.5 text-[11px] text-red-500 hover:text-red-600 font-medium transition-colors"
               >
                 Limit reached — Upgrade plan
