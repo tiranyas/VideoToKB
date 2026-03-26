@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" width="200" height="140">
   <rect width="200" height="140" rx="8" fill="#1868db"/>
-  <text x="100" y="65" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Confluence</text>
-  <text x="100" y="90" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif" font-size="12">Atlassian Wiki</text>
+  <!-- Confluence logo mark -->
+  <g transform="translate(100,55) scale(0.7)">
+    <path d="M-25.5,18.7c-1.1,1.7-2.3,3.8-3.1,5.2a1.8,1.8,0,0,0,.7,2.5l14.2,8.7a1.8,1.8,0,0,0,2.5-.5c.7-1.1,1.6-2.6,2.7-4.3,5.1-8.2,10.2-7.2,19.5-2.5l14,7a1.8,1.8,0,0,0,2.5-.8l6.8-13.5a1.8,1.8,0,0,0-.8-2.4c-3.9-2-13.2-6.7-19.9-10.1C-1.4,1.1-17.5-1.2-25.5,18.7Z" fill="white"/>
+    <path d="M25.5-18.7c1.1-1.7,2.3-3.8,3.1-5.2a1.8,1.8,0,0,0-.7-2.5L13.7-35.1a1.8,1.8,0,0,0-2.5.5c-.7,1.1-1.6,2.6-2.7,4.3-5.1,8.2-10.2,7.2-19.5,2.5l-14-7a1.8,1.8,0,0,0-2.5.8l-6.8,13.5a1.8,1.8,0,0,0,.8,2.4c3.9,2,13.2,6.7,19.9,10.1C1.4-1.1,17.5,1.2,25.5-18.7Z" fill="rgba(255,255,255,0.8)"/>
+  </g>
+  <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="11">Atlassian Wiki</text>
 </svg>

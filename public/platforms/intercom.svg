@@ -1,5 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" width="200" height="140">
   <rect width="200" height="140" rx="8" fill="#286efa"/>
-  <text x="100" y="65" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Intercom</text>
-  <text x="100" y="90" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif" font-size="12">Articles</text>
+  <!-- Intercom logo - chat bubble with vertical bars -->
+  <g transform="translate(100,55)">
+    <rect x="-24" y="-28" width="48" height="48" rx="10" fill="white"/>
+    <!-- Vertical bars inside -->
+    <line x1="-14" y1="-10" x2="-14" y2="6" stroke="#286efa" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-7" y1="-16" x2="-7" y2="10" stroke="#286efa" stroke-width="3" stroke-linecap="round"/>
+    <line x1="0" y1="-18" x2="0" y2="10" stroke="#286efa" stroke-width="3" stroke-linecap="round"/>
+    <line x1="7" y1="-16" x2="7" y2="10" stroke="#286efa" stroke-width="3" stroke-linecap="round"/>
+    <line x1="14" y1="-10" x2="14" y2="6" stroke="#286efa" stroke-width="3" stroke-linecap="round"/>
+    <!-- Chat tail -->
+    <path d="M12,20 Q14,20 16,26 Q10,22 8,20" fill="white"/>
+  </g>
+  <text x="100" y="115" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="11">Articles</text>
 </svg>
