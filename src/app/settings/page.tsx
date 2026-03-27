@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Users, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2, Wand2, Mail, Shield, Crown, X } from 'lucide-react';
+import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, AlertTriangle, User, Users, Key, Copy, Check, Eye, EyeOff, Palette, ChevronDown, ChevronUp, Sparkles, Link2, Wand2, Mail, Shield, Crown, X, Plug } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
@@ -16,7 +16,7 @@ import {
   getWorkspaceMembers, getWorkspaceInvites, removeWorkspaceMember, revokeInvite,
 } from '@/lib/supabase/queries';
 
-type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'team' | 'api' | 'account';
+type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'integrations' | 'team' | 'api' | 'account';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
@@ -27,6 +27,7 @@ export default function SettingsPage() {
     { id: 'branding', label: 'Branding', icon: Palette },
     { id: 'article-types', label: 'Article Types', icon: FileText },
     { id: 'platforms', label: 'Platforms', icon: FileText },
+    { id: 'integrations', label: 'Integrations', icon: Plug },
     ...(userRole && userRole !== 'member' ? [{ id: 'team' as Tab, label: 'Team', icon: Users }] : []),
     { id: 'api', label: 'API', icon: Key },
     { id: 'account', label: 'Account', icon: User },
@@ -79,6 +80,7 @@ export default function SettingsPage() {
         {activeTab === 'branding' && <BrandingTab />}
         {activeTab === 'article-types' && <ArticleTypesTab />}
         {activeTab === 'platforms' && <PlatformProfilesTab />}
+        {activeTab === 'integrations' && <IntegrationsTab />}
         {activeTab === 'team' && <TeamTab />}
         {activeTab === 'api' && <ApiKeysTab />}
         {activeTab === 'account' && <AccountTab />}
@@ -1580,6 +1582,209 @@ function TeamTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Integrations Tab ──────────────────────────────────────
+
+function IntegrationsTab() {
+  const { activeWorkspace } = useWorkspace();
+  const [subdomain, setSubdomain] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [showKey, setShowKey] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+
+  useEffect(() => {
+    if (!activeWorkspace) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/integrations/helpjuice?action=status');
+        if (res.ok) {
+          const data = await res.json();
+          setConnected(true);
+          setSubdomain(data.subdomain || '');
+        }
+      } catch { /* not connected */ }
+      setLoadingStatus(false);
+    })();
+  }, [activeWorkspace]);
+
+  async function handleTest() {
+    if (!subdomain.trim() || !apiKey.trim()) {
+      toast.error('Please enter both subdomain and API key');
+      return;
+    }
+    setTesting(true);
+    try {
+      const res = await fetch('/api/integrations/helpjuice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdomain: subdomain.trim(), apiKey: apiKey.trim(), action: 'test' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast.success('Connection successful!');
+      } else {
+        toast.error(data.error || 'Connection failed');
+      }
+    } catch {
+      toast.error('Connection failed');
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/integrations/helpjuice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdomain: subdomain.trim(), apiKey: apiKey.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast.success('Helpjuice connected!');
+        setConnected(true);
+        setApiKey('');
+      } else {
+        toast.error(data.error || 'Failed to save');
+      }
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    try {
+      await fetch('/api/integrations/helpjuice', { method: 'DELETE' });
+      setConnected(false);
+      setSubdomain('');
+      setApiKey('');
+      toast.success('Helpjuice disconnected');
+    } catch {
+      toast.error('Failed to disconnect');
+    }
+  }
+
+  if (loadingStatus) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-300" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">Integrations</h2>
+        <p className="text-sm text-gray-500 mt-1">Connect your knowledge base platforms for one-click publishing</p>
+      </div>
+
+      {/* Helpjuice Card */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <span className="text-blue-700 font-bold text-sm">HJ</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Helpjuice</h3>
+              <p className="text-xs text-gray-400">Publish articles directly as drafts</p>
+            </div>
+          </div>
+          {connected && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              Connected
+            </span>
+          )}
+        </div>
+
+        {connected ? (
+          <div className="space-y-3">
+            <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
+              Connected to <strong>{subdomain}.helpjuice.com</strong>
+            </div>
+            <button
+              onClick={handleDisconnect}
+              className="text-sm text-red-500 hover:text-red-600 transition-colors"
+            >
+              Disconnect
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Subdomain</label>
+              <div className="flex items-center gap-0">
+                <input
+                  type="text"
+                  value={subdomain}
+                  onChange={(e) => setSubdomain(e.target.value)}
+                  placeholder="your-company"
+                  className="flex-1 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+                />
+                <span className="rounded-r-xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400">
+                  .helpjuice.com
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">API Key</label>
+              <div className="relative">
+                <input
+                  type={showKey ? 'text' : 'password'}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Your Helpjuice API key"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 pr-10 text-sm focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey(!showKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Find your API key in Helpjuice → Settings → API
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleTest}
+                disabled={testing || !subdomain.trim() || !apiKey.trim()}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test Connection'}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || !subdomain.trim() || !apiKey.trim()}
+                className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Connect'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Coming Soon */}
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-6 text-center">
+        <p className="text-sm text-gray-400">More integrations coming soon — Zendesk, Confluence, Intercom</p>
+      </div>
     </div>
   );
 }

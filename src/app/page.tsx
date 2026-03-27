@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { UrlForm } from '@/components/url-form';
 import { ProgressDisplay } from '@/components/progress-display';
 import { ArticleView } from '@/components/article-view';
+import { HelpjuicePublishDialog } from '@/components/helpjuice-publish-dialog';
 import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -45,6 +46,8 @@ export default function Home() {
   const [finalHTML, setFinalHTML] = useState('');
   const [savedArticleId, setSavedArticleId] = useState<string | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [helpjuiceConnected, setHelpjuiceConnected] = useState(false);
 
   // Settings from Supabase
   const [articleTypes, setArticleTypes] = useState<ArticleType[]>([]);
@@ -80,6 +83,11 @@ export default function Home() {
           setSelectedTypeId(types[0]?.id ?? '');
           setSelectedPlatId(profs[0]?.id ?? '');
         }
+        // Check Helpjuice connection
+        fetch('/api/integrations/helpjuice?action=status')
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => { if (d?.connected) setHelpjuiceConnected(true); })
+          .catch(() => {});
       } catch (err) {
         console.error('Failed to load settings:', err);
         setError('Failed to load settings. Please refresh the page.');
@@ -422,6 +430,17 @@ export default function Home() {
             >
               Back to Edit
             </button>
+            {helpjuiceConnected && selectedPlatformId === 'helpjuice' && savedArticleId && (
+              <button
+                onClick={() => setPublishDialogOpen(true)}
+                className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 flex items-center gap-2"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Publish to Helpjuice
+              </button>
+            )}
             <button
               onClick={handleStartOver}
               className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
@@ -429,6 +448,15 @@ export default function Home() {
               Start Over
             </button>
           </div>
+
+          {savedArticleId && (
+            <HelpjuicePublishDialog
+              open={publishDialogOpen}
+              onClose={() => setPublishDialogOpen(false)}
+              articleId={savedArticleId}
+              articleTitle={structuredArticle.split('\n')[0]?.replace(/^#+\s*/, '') || 'Untitled Article'}
+            />
+          )}
         </div>
       )}
     </div>

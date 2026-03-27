@@ -111,6 +111,38 @@ function mapWorkspaceRow(row: Record<string, unknown>): Workspace {
   };
 }
 
+// ── Workspace Integrations ───────────────────────────────
+
+export interface WorkspaceIntegrations {
+  helpjuice?: { apiKey: string; subdomain: string };
+}
+
+export async function getWorkspaceIntegrations(
+  supabase: SupabaseClient,
+  workspaceId: string
+): Promise<WorkspaceIntegrations> {
+  const { data } = await supabase
+    .from('workspaces')
+    .select('integrations')
+    .eq('id', workspaceId)
+    .maybeSingle();
+
+  return (data?.integrations as WorkspaceIntegrations) ?? {};
+}
+
+export async function updateWorkspaceIntegrations(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  integrations: WorkspaceIntegrations
+): Promise<void> {
+  const { error } = await supabase
+    .from('workspaces')
+    .update({ integrations })
+    .eq('id', workspaceId);
+
+  if (error) throw new Error(`Failed to update integrations: ${error.message}`);
+}
+
 // ── Active Workspace (user_settings) ────────────────────
 
 export async function getActiveWorkspaceId(
