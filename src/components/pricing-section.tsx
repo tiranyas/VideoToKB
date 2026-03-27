@@ -87,9 +87,9 @@ const plans: Plan[] = [
   {
     name: 'Enterprise',
     description: 'For organizations with custom needs',
-    monthlyPrice: 'Custom',
-    annualPrice: 'Custom',
-    articles: 'Unlimited articles',
+    monthlyPrice: 300,
+    annualPrice: 250,
+    articles: '500 articles / month',
     features: [
       { text: 'Everything in Team, plus:', included: true },
       { text: 'Unlimited seats', included: true },
@@ -100,7 +100,7 @@ const plans: Plan[] = [
       { text: 'SSO / SAML', included: true },
       { text: 'On-call support', included: true },
     ],
-    cta: 'Contact Us',
+    cta: 'Start Free Trial',
   },
 ];
 
@@ -208,7 +208,7 @@ export function PricingSection() {
                   </ul>
 
                   <Link
-                    href={plan.name === 'Team' || plan.name === 'Enterprise' ? 'mailto:support@kbpipe.io?subject=KBPipe ' + plan.name + ' Plan' : '/login?signup=true'}
+                    href={plan.name === 'Team' ? 'mailto:support@kbpipe.io?subject=KBPipe Team Plan' : '/login?signup=true'}
                     className={`w-full text-center rounded-xl px-6 py-3 text-sm font-medium transition-all ${
                       plan.highlighted
                         ? 'bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 shadow-sm'

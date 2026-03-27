@@ -73,7 +73,7 @@ const PLAN_ARTICLES: Record<string, string> = {
   free: '3 articles / month',
   starter: '30 articles / month',
   team: '30 articles / seat (shared pool)',
-  enterprise: 'Unlimited articles',
+  enterprise: '500 articles / month',
 };
 
 export default function BillingPage() {
