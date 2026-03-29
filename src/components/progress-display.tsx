@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Circle, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Circle, Loader2, CheckCircle2, XCircle, X, Eye } from 'lucide-react';
 import type { PipelineStep, StepStatus } from '@/types';
 import { cn } from '@/utils/cn';
 
@@ -93,7 +93,7 @@ function TimeEstimate({ step, status }: { step: PipelineStep; status: StepStatus
   );
 }
 
-function StreamingPanel({ text }: { text: string }) {
+function StreamingPanel({ text, onClose }: { text: string; onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,90 +103,126 @@ function StreamingPanel({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        'h-full overflow-y-auto rounded-2xl border border-gray-100 bg-gray-50/50 px-6 py-5 font-mono text-sm leading-relaxed text-gray-600 whitespace-pre-wrap transition-opacity duration-300',
-        text ? 'opacity-100' : 'opacity-40'
-      )}
-    >
-      {text || (
-        <span className="text-gray-300 italic">Waiting for AI to start writing...</span>
-      )}
-      {text && (
-        <span className="inline-block w-1.5 h-4 bg-violet-500 ml-0.5 animate-pulse rounded-sm align-middle" />
-      )}
+    <div className="fixed top-0 right-0 h-screen w-[480px] z-40 animate-in slide-in-from-right duration-300">
+      {/* Backdrop shadow */}
+      <div className="absolute inset-0 -left-8 w-8 bg-gradient-to-r from-transparent to-black/5 pointer-events-none" />
+
+      <div className="h-full flex flex-col bg-white border-l border-gray-200 shadow-2xl shadow-gray-300/50">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/80">
+          <div className="flex items-center gap-2.5">
+            <div className="h-2 w-2 rounded-full bg-violet-500 animate-pulse" />
+            <span className="text-sm font-medium text-gray-700">Live Preview</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            title="Close preview"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-y-auto px-6 py-5 font-mono text-[13px] leading-relaxed text-gray-700 whitespace-pre-wrap"
+        >
+          {text || (
+            <span className="text-gray-300 italic font-sans">Waiting for AI to start writing...</span>
+          )}
+          {text && (
+            <span className="inline-block w-1.5 h-4 bg-violet-500 ml-0.5 animate-pulse rounded-sm align-middle" />
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50/80">
+          <span className="text-[11px] text-gray-400">
+            {text ? `${text.length.toLocaleString()} characters` : 'Waiting...'}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function ProgressDisplay({ steps, error, streamingText }: ProgressDisplayProps) {
-  const hasStreaming = streamingText !== undefined;
+  const [panelOpen, setPanelOpen] = useState(true);
+  const hasStreamingContent = !!streamingText;
+
+  // Auto-open panel when streaming starts
+  useEffect(() => {
+    if (hasStreamingContent) {
+      setPanelOpen(true);
+    }
+  }, [hasStreamingContent]);
 
   return (
-    <div className={cn(
-      'w-full mt-8',
-      hasStreaming ? 'max-w-5xl' : 'max-w-xl'
-    )}>
-      <div className={cn(
-        hasStreaming ? 'flex gap-8' : ''
-      )}>
-        {/* Left: Steps */}
-        <div className={cn(
-          'shrink-0',
-          hasStreaming ? 'w-[280px]' : 'w-full'
-        )}>
-          <ul className="space-y-1">
-            {steps.map((s, i) => (
-              <li key={s.step}>
-                <div className="flex items-center gap-3 relative">
-                  {/* Connector line */}
-                  {i < steps.length - 1 && (
-                    <div className={cn(
-                      'absolute left-[7px] top-[28px] w-px h-[calc(100%+4px)]',
-                      s.status === 'complete' ? 'bg-gray-300' : 'bg-gray-100'
-                    )} />
-                  )}
-                  <div className="relative z-10 flex items-center gap-3 rounded-xl px-3 py-2.5 w-full">
-                    <StepIcon status={s.status} />
-                    <div className="flex-1 min-w-0">
-                      <span
-                        className={cn(
-                          'text-sm',
-                          s.status === 'pending' && 'text-gray-300',
-                          s.status === 'in_progress' && 'text-gray-900 font-medium',
-                          s.status === 'complete' && 'text-gray-500',
-                          s.status === 'error' && 'text-red-500'
-                        )}
-                      >
-                        {STEP_LABELS[s.step]}
-                      </span>
-                      {s.message && s.status === 'in_progress' && (
-                        <p className="text-xs text-gray-400 mt-0.5">{s.message}</p>
+    <>
+      <div className="w-full max-w-xl mt-8">
+        <ul className="space-y-1">
+          {steps.map((s, i) => (
+            <li key={s.step}>
+              <div className="flex items-center gap-3 relative">
+                {/* Connector line */}
+                {i < steps.length - 1 && (
+                  <div className={cn(
+                    'absolute left-[7px] top-[28px] w-px h-[calc(100%+4px)]',
+                    s.status === 'complete' ? 'bg-gray-300' : 'bg-gray-100'
+                  )} />
+                )}
+                <div className="relative z-10 flex items-center gap-3 rounded-xl px-3 py-2.5 w-full">
+                  <StepIcon status={s.status} />
+                  <div className="flex-1 min-w-0">
+                    <span
+                      className={cn(
+                        'text-sm',
+                        s.status === 'pending' && 'text-gray-300',
+                        s.status === 'in_progress' && 'text-gray-900 font-medium',
+                        s.status === 'complete' && 'text-gray-500',
+                        s.status === 'error' && 'text-red-500'
                       )}
-                    </div>
+                    >
+                      {STEP_LABELS[s.step]}
+                    </span>
+                    {s.message && s.status === 'in_progress' && (
+                      <p className="text-xs text-gray-400 mt-0.5">{s.message}</p>
+                    )}
                   </div>
                 </div>
-                {/* Time estimate bar */}
-                <TimeEstimate step={s.step} status={s.status} />
-              </li>
-            ))}
-          </ul>
-        </div>
+              </div>
+              {/* Time estimate bar */}
+              <TimeEstimate step={s.step} status={s.status} />
+            </li>
+          ))}
+        </ul>
 
-        {/* Right: Streaming text panel */}
-        {hasStreaming && (
-          <div className="flex-1 min-h-[360px]">
-            <StreamingPanel text={streamingText ?? ''} />
+        {/* Show preview button when panel is closed but streaming is active */}
+        {hasStreamingContent && !panelOpen && (
+          <button
+            onClick={() => setPanelOpen(true)}
+            className="mt-4 flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-600 hover:bg-violet-100 transition-colors"
+          >
+            <Eye className="h-4 w-4" />
+            Show live preview
+          </button>
+        )}
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 text-sm text-red-600 mt-4">
+            {error}
           </div>
         )}
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 text-sm text-red-600 mt-4">
-          {error}
-        </div>
+      {/* Floating side panel */}
+      {hasStreamingContent && panelOpen && (
+        <StreamingPanel
+          text={streamingText ?? ''}
+          onClose={() => setPanelOpen(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
