@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Key, Copy, Check, Download, AlertTriangle, Trash2, User, CreditCard, ArrowLeft } from 'lucide-react';
+import { Loader2, Key, Copy, Check, Download, AlertTriangle, Trash2, User, CreditCard, ArrowLeft, Plus, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -76,9 +76,10 @@ function AccountPageInner() {
 
 interface ApiKeyInfo {
   id: string;
+  key_prefix: string;
   name: string;
-  prefix: string;
-  createdAt: string;
+  created_at: string;
+  last_used_at: string | null;
 }
 
 function ApiKeysSection() {
@@ -87,19 +88,18 @@ function ApiKeysSection() {
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/api-keys');
-        if (res.ok) {
-          const data = await res.json();
-          setKeys(data.keys ?? []);
-        }
-      } catch { /* ignore */ }
-      setLoading(false);
-    })();
-  }, []);
+  useEffect(() => { loadKeys(); }, []);
+
+  async function loadKeys() {
+    try {
+      const res = await fetch('/api/api-keys');
+      const data = await res.json();
+      if (data.keys) setKeys(data.keys);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }
 
   async function handleCreate() {
     setCreating(true);
@@ -109,12 +109,13 @@ function ApiKeysSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'API Key' }),
       });
-      if (!res.ok) throw new Error('Failed to create key');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       setNewKey(data.key);
-      setKeys((prev) => [{ id: data.id, name: data.name, prefix: data.prefix, createdAt: new Date().toISOString() }, ...prev]);
-    } catch {
-      toast.error('Failed to create API key');
+      await loadKeys();
+      toast.success('API key created');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create key');
     } finally {
       setCreating(false);
     }
@@ -122,74 +123,252 @@ function ApiKeysSection() {
 
   async function handleRevoke(id: string) {
     try {
-      await fetch('/api/api-keys', {
+      const res = await fetch('/api/api-keys', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
+      if (!res.ok) throw new Error('Failed to revoke');
       setKeys((prev) => prev.filter((k) => k.id !== id));
       toast.success('API key revoked');
     } catch {
-      toast.error('Failed to revoke key');
+      toast.error('Failed to revoke API key');
     }
   }
 
-  function handleCopy(text: string) {
-    navigator.clipboard.writeText(text);
+  async function handleCopyKey() {
+    if (!newKey) return;
+    await navigator.clipboard.writeText(newKey);
     setCopied(true);
     toast.success('Copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (loading) return <div className="text-sm text-gray-400">Loading API keys...</div>;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://app.kbpipe.com';
+
+  const curlExample = `curl -X POST ${baseUrl}/api/v1/generate \\
+  -H "Authorization: Bearer vtk_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"videoUrl": "https://www.loom.com/share/..."}'`;
+
+  const curlTranscriptExample = `curl -X POST ${baseUrl}/api/v1/generate \\
+  -H "Authorization: Bearer vtk_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"transcript": "Your transcript text here..."}'`;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* New key alert */}
       {newKey && (
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
-          <p className="text-sm font-medium text-green-800 mb-2">New API key created — copy it now, it won&apos;t be shown again:</p>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <h4 className="text-sm font-semibold text-amber-800">Save your API key now</h4>
+          </div>
+          <p className="text-xs text-amber-600 mb-3">
+            This is the only time you&apos;ll see this key. Copy it and store it securely.
+          </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 bg-white rounded-lg px-3 py-2 text-sm font-mono text-gray-800 border border-green-200">{newKey}</code>
-            <button onClick={() => handleCopy(newKey)} className="rounded-lg bg-green-600 px-3 py-2 text-white text-sm hover:bg-green-700">
+            <code className="flex-1 rounded-xl bg-white border border-amber-200 px-4 py-3 text-sm font-mono text-gray-900 break-all">
+              {showKey ? newKey : newKey.slice(0, 12) + '\u2022'.repeat(36)}
+            </code>
+            <button
+              onClick={() => setShowKey(!showKey)}
+              className="rounded-xl bg-white border border-amber-200 px-3 py-3 text-amber-600 hover:bg-amber-50 transition-colors"
+              title={showKey ? 'Hide' : 'Show'}
+            >
+              {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={handleCopyKey}
+              className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-3 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600 transition-all"
+            >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
+          <button
+            onClick={() => setNewKey(null)}
+            className="mt-3 text-xs text-amber-500 hover:text-amber-700 transition-colors"
+          >
+            Dismiss — I&apos;ve saved my key
+          </button>
         </div>
       )}
 
+      {/* Existing keys */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">API Keys</h3>
+          <div className="flex items-center gap-3">
+            <Key className="h-5 w-5 text-gray-400" />
+            <div>
+              <h3 className="text-lg font-semibold tracking-tight text-gray-900">API Keys</h3>
+              <p className="text-xs text-gray-400">Use API keys to generate articles programmatically</p>
+            </div>
+          </div>
           <button
             onClick={handleCreate}
-            disabled={creating}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-2 text-sm font-medium text-white hover:from-violet-700 hover:to-blue-600"
+            disabled={creating || keys.length >= 3}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
+              creating || keys.length >= 3 ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
+            )}
           >
-            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Create Key
           </button>
         </div>
 
         {keys.length === 0 ? (
-          <p className="text-sm text-gray-400">No API keys yet. Create one to use the KBPipe API.</p>
+          <div className="rounded-xl bg-gray-50 px-4 py-8 text-center">
+            <Key className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+            <p className="text-sm text-gray-400">No API keys yet</p>
+            <p className="text-xs text-gray-300 mt-1">Create a key to start using the API</p>
+          </div>
         ) : (
           <div className="space-y-2">
-            {keys.map((key) => (
-              <div key={key.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-                <div>
-                  <code className="text-sm font-mono text-gray-600">{key.prefix}...</code>
-                  <p className="text-xs text-gray-400 mt-0.5">Created {new Date(key.createdAt).toLocaleDateString()}</p>
+            {keys.map((k) => (
+              <div key={k.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <code className="text-sm font-mono text-gray-600">{k.key_prefix}{'\u2022'.repeat(12)}</code>
+                  <span className="text-xs text-gray-400">{k.name}</span>
                 </div>
-                <button
-                  onClick={() => handleRevoke(key.id)}
-                  className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                >
-                  Revoke
-                </button>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-gray-300">
+                    {k.last_used_at
+                      ? `Last used ${new Date(k.last_used_at).toLocaleDateString()}`
+                      : 'Never used'}
+                  </span>
+                  <button
+                    onClick={() => handleRevoke(k.id)}
+                    className="text-gray-300 hover:text-red-400 transition-colors"
+                    title="Revoke key"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* API Usage Guide */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-1">Quick Start</h3>
+        <p className="text-xs text-gray-400 mb-5">
+          One endpoint to generate articles. Works with Zapier, Make, or any HTTP client.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">POST</span>
+              <code className="text-sm font-mono text-gray-700">/api/v1/generate</code>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">From a video URL:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+              {curlExample}
+            </pre>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">From a transcript:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+              {curlTranscriptExample}
+            </pre>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 px-4 py-3">
+            <p className="text-xs font-medium text-gray-700 mb-2">Response:</p>
+            <pre className="text-xs text-gray-500 font-mono whitespace-pre-wrap">{`{
+  "id": "uuid",
+  "title": "Article Title",
+  "markdown": "# Full article in markdown...",
+  "html": "<div>Platform HTML (if applicable)</div>",
+  "platform": "HelpJuice",
+  "articleType": "Screen Overview"
+}`}</pre>
+          </div>
+
+          <div className="rounded-xl bg-blue-50/50 border border-blue-100 px-4 py-3">
+            <p className="text-xs text-blue-700">
+              <strong>Optional parameters:</strong>{' '}
+              <code className="text-blue-600">&quot;articleType&quot;</code> and{' '}
+              <code className="text-blue-600">&quot;platform&quot;</code> override your default settings.
+              Pass the ID of any article type or platform profile.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 px-4 py-3">
+            <p className="text-xs font-medium text-gray-700 mb-1">Rate limit:</p>
+            <p className="text-xs text-gray-500">5 requests per minute per API key</p>
+          </div>
+        </div>
+      </div>
+
+      {/* MCP / Claude Integration */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+            <span className="text-white text-sm font-bold">&#x26A1;</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900">Claude Integration (MCP)</h3>
+            <p className="text-xs text-gray-400">Generate articles by talking to Claude directly</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 mt-4">
+          <p className="text-xs text-gray-500">
+            Add KBPipe as an MCP tool in Claude Desktop or Claude Code. Then just say
+            <em className="text-gray-700"> &ldquo;generate a KB article from this Loom video&rdquo;</em> and Claude will call KBPipe for you.
+          </p>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">1. Install the MCP server:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto">
+{`cd mcp-server && npm install && npm run build`}
+            </pre>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">2. Add to Claude Desktop config <code className="text-gray-600 text-xs">(claude_desktop_config.json)</code>:</p>
+            <pre className="rounded-xl bg-gray-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+{`{
+  "mcpServers": {
+    "kbpipe": {
+      "command": "node",
+      "args": ["path/to/mcp-server/dist/index.js"],
+      "env": {
+        "KBPIPE_API_KEY": "vtk_your_key_here",
+        "KBPIPE_URL": "${baseUrl}"
+      }
+    }
+  }
+}`}
+            </pre>
+          </div>
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">3. Now talk to Claude:</p>
+            <div className="rounded-xl bg-gray-50 px-4 py-3 space-y-2">
+              <p className="text-xs text-gray-500 italic">&ldquo;Generate a KB article from this Loom video: https://www.loom.com/share/...&rdquo;</p>
+              <p className="text-xs text-gray-500 italic">&ldquo;Turn this transcript into a knowledge base article for our HelpJuice&rdquo;</p>
+              <p className="text-xs text-gray-500 italic">&ldquo;Create a Notion article from the following meeting notes...&rdquo;</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
