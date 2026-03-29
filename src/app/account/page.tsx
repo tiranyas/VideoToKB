@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Loader2, Key, Copy, Check, Eye, EyeOff, Download, AlertTriangle, Trash2, User, CreditCard, ArrowLeft } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, Key, Copy, Check, Download, AlertTriangle, Trash2, User, CreditCard, ArrowLeft } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -13,7 +13,9 @@ import { deleteWorkspace } from '@/lib/supabase/queries';
 type Tab = 'api' | 'billing' | 'account';
 
 export default function AccountPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('api');
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as Tab) || 'api';
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
   const tabs: { id: Tab; label: string; icon: typeof Key }[] = [
     { id: 'api', label: 'API Keys', icon: Key },

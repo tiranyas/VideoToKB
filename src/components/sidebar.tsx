@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2, LayoutDashboard, Sparkles, Zap, Crown, Shield } from 'lucide-react';
+import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, ChevronUp, Plus, Building2, LayoutDashboard, Sparkles, Zap, Crown, Shield, Key, CreditCard, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/utils/cn';
@@ -26,9 +26,11 @@ export function Sidebar({ email }: { email: string }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [creatingWs, setCreatingWs] = useState(false);
   const [newWsName, setNewWsName] = useState('');
   const wsDropdownRef = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const newWsInputRef = useRef<HTMLInputElement>(null);
 
   // Load articles scoped to active workspace
@@ -70,12 +72,15 @@ export function Sidebar({ email }: { email: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (wsDropdownRef.current && !wsDropdownRef.current.contains(e.target as Node)) {
         setWsDropdownOpen(false);
         setCreatingWs(false);
+      }
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClick);
@@ -374,22 +379,52 @@ export function Sidebar({ email }: { email: string }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between rounded-xl px-3 py-2">
-          <Link
-            href="/account"
-            onClick={() => setMobileOpen(false)}
-            className="text-xs text-gray-400 truncate max-w-[160px] hover:text-violet-500 transition-colors"
-            title="Account settings"
-          >
-            {email}
-          </Link>
+        <div className="relative" ref={accountMenuRef}>
           <button
-            onClick={handleSignOut}
-            className="text-gray-300 hover:text-gray-600 transition-colors"
-            title="Sign out"
+            onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+            className="flex items-center justify-between w-full rounded-xl px-3 py-2 hover:bg-gray-50 transition-colors"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <span className="text-xs text-gray-400 truncate max-w-[160px]">{email}</span>
+            <ChevronUp className={cn('h-3 w-3 text-gray-300 transition-transform', accountMenuOpen && 'rotate-180')} />
           </button>
+
+          {accountMenuOpen && (
+            <div className="absolute bottom-full left-0 right-0 mb-1 rounded-xl bg-white border border-gray-200 shadow-lg py-1 z-50">
+              <Link
+                href="/account?tab=api"
+                onClick={() => { setAccountMenuOpen(false); setMobileOpen(false); }}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <Key className="h-3.5 w-3.5 text-gray-400" />
+                API Keys
+              </Link>
+              <Link
+                href="/billing"
+                onClick={() => { setAccountMenuOpen(false); setMobileOpen(false); }}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <CreditCard className="h-3.5 w-3.5 text-gray-400" />
+                Billing
+              </Link>
+              <Link
+                href="/account?tab=account"
+                onClick={() => { setAccountMenuOpen(false); setMobileOpen(false); }}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <User className="h-3.5 w-3.5 text-gray-400" />
+                Account
+              </Link>
+              <div className="border-t border-gray-100 mt-1 pt-1">
+                <button
+                  onClick={() => { setAccountMenuOpen(false); handleSignOut(); }}
+                  className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3 px-3">
           <Link href="/privacy" className="text-[11px] text-gray-300 hover:text-gray-500 transition-colors">
