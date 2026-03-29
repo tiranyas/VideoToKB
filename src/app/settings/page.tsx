@@ -10,16 +10,16 @@ import type { ArticleType, PlatformProfile, WorkspaceBranding, ArticleTypeContro
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import {
-  updateWorkspace,
+  updateWorkspace, deleteWorkspace,
   getArticleTypes, addArticleType, updateArticleType, deleteArticleType,
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
   getWorkspaceMembers, getWorkspaceInvites, removeWorkspaceMember, revokeInvite,
 } from '@/lib/supabase/queries';
 
-type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'integrations' | 'team' | 'api' | 'account';
+type Tab = 'brand' | 'agents' | 'integrations' | 'team' | 'api' | 'account';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('context');
+  const [activeTab, setActiveTab] = useState<Tab>('brand');
   const { activeWorkspace, refreshWorkspaces, userRole } = useWorkspace();
   const [editingName, setEditingName] = useState(false);
   const [wsName, setWsName] = useState('');
@@ -41,15 +41,16 @@ export default function SettingsPage() {
     }
   }
 
-  const tabs: { id: Tab; label: string; icon: typeof Globe }[] = [
-    { id: 'context', label: 'Company Context', icon: Globe },
-    { id: 'branding', label: 'Branding', icon: Palette },
-    { id: 'article-types', label: 'Article Types', icon: FileText },
-    { id: 'platforms', label: 'Platforms', icon: FileText },
-    { id: 'integrations', label: 'Integrations', icon: Plug },
-    ...(userRole && userRole !== 'member' ? [{ id: 'team' as Tab, label: 'Team', icon: Users }] : []),
-    { id: 'api', label: 'API', icon: Key },
-    { id: 'account', label: 'Account', icon: User },
+  const workspaceTabs: { id: Tab; label: string }[] = [
+    { id: 'brand', label: 'Brand & Context' },
+    { id: 'agents', label: 'AI Agents' },
+    { id: 'integrations', label: 'Integrations' },
+    ...(userRole && userRole !== 'member' ? [{ id: 'team' as Tab, label: 'Team' }] : []),
+  ];
+
+  const userTabs: { id: Tab; label: string }[] = [
+    { id: 'api', label: 'API Keys' },
+    { id: 'account', label: 'Account' },
   ];
 
   return (
@@ -82,7 +83,7 @@ export default function SettingsPage() {
                 </button>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Configure your article generation pipeline</p>
+            <p className="text-xs text-gray-400 mt-1">Configure your workspace and account settings</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -101,32 +102,93 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-gray-100 rounded-full p-1 flex mb-8">
-          {tabs.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={cn(
-                'flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-all',
-                activeTab === id
-                  ? 'bg-violet-600 text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              )}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Tab Navigation */}
+        <div className="mb-8 space-y-3">
+          {/* Workspace tabs */}
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">Workspace</p>
+            <div className="bg-gray-100 rounded-full p-1 flex">
+              {workspaceTabs.map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={cn(
+                    'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all',
+                    activeTab === id
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* User tabs */}
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">Your Account</p>
+            <div className="bg-gray-100 rounded-full p-1 flex" style={{ maxWidth: 300 }}>
+              {userTabs.map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={cn(
+                    'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all',
+                    activeTab === id
+                      ? 'bg-gray-800 text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {activeTab === 'context' && <CompanyContextTab />}
-        {activeTab === 'branding' && <BrandingTab />}
-        {activeTab === 'article-types' && <ArticleTypesTab />}
-        {activeTab === 'platforms' && <PlatformProfilesTab />}
+        {activeTab === 'brand' && <BrandContextTab />}
+        {activeTab === 'agents' && <AgentsTab />}
         {activeTab === 'integrations' && <IntegrationsTab />}
         {activeTab === 'team' && <TeamTab />}
         {activeTab === 'api' && <ApiKeysTab />}
         {activeTab === 'account' && <AccountTab />}
+      </div>
+    </div>
+  );
+}
+
+// ── Brand & Context Tab (merged) ─────────────────────────
+
+function BrandContextTab() {
+  return (
+    <div className="space-y-10">
+      <CompanyContextTab />
+      <div className="border-t border-gray-100" />
+      <BrandingTab />
+    </div>
+  );
+}
+
+// ── AI Agents Tab (merged) ───────────────────────────────
+
+function AgentsTab() {
+  return (
+    <div className="space-y-10">
+      <div>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Draft & Structure Agents</h2>
+          <p className="text-sm text-gray-400 mt-0.5">Configure how AI agents draft and structure your articles. Each type defines the prompts for Agent 2 (draft) and Agent 3 (structure).</p>
+        </div>
+        <ArticleTypesTab />
+      </div>
+      <div className="border-t border-gray-100" />
+      <div>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">HTML Formatter Agent</h2>
+          <p className="text-sm text-gray-400 mt-0.5">Configure how Agent 4 converts articles into platform-specific HTML. Each profile defines the output format and template.</p>
+        </div>
+        <PlatformProfilesTab />
       </div>
     </div>
   );
@@ -1843,11 +1905,35 @@ function IntegrationsTab() {
 
 function AccountTab() {
   const [confirmText, setConfirmText] = useState('');
+  const [wsConfirmText, setWsConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingWs, setIsDeletingWs] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
+  const { activeWorkspace, workspaces, refreshWorkspaces } = useWorkspace();
 
   const isDeleteConfirmed = confirmText === 'DELETE';
+  const isWsDeleteConfirmed = wsConfirmText === activeWorkspace?.name;
+
+  async function handleDeleteWorkspace() {
+    if (!isWsDeleteConfirmed || !activeWorkspace) return;
+    setIsDeletingWs(true);
+    try {
+      await deleteWorkspace(supabase, activeWorkspace.id);
+      await refreshWorkspaces();
+      toast.success('Workspace deleted');
+      // If they had other workspaces, stay. Otherwise redirect.
+      if (workspaces.length <= 1) {
+        router.push('/onboarding');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete workspace');
+    } finally {
+      setIsDeletingWs(false);
+      setWsConfirmText('');
+    }
+  }
 
   async function handleExport() {
     setIsExporting(true);
@@ -1921,6 +2007,56 @@ function AccountTab() {
           )}
         </button>
       </div>
+
+      {/* Delete Workspace */}
+      {activeWorkspace && (
+        <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <h3 className="text-lg font-semibold tracking-tight text-amber-600">Delete Workspace</h3>
+          </div>
+          <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 mb-5">
+            <p className="text-sm text-amber-700">
+              This will permanently delete the workspace <strong>&quot;{activeWorkspace.name}&quot;</strong> and all its data:
+            </p>
+            <ul className="text-sm text-amber-600 mt-2 list-disc list-inside space-y-1">
+              <li>All articles in this workspace</li>
+              <li>Company context and branding</li>
+              <li>Custom article types and platform profiles</li>
+              <li>Integrations and team members</li>
+            </ul>
+            <p className="text-sm text-amber-700 mt-2">Your user account and other workspaces will not be affected.</p>
+          </div>
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+              Type <span className="font-mono text-amber-600">{activeWorkspace.name}</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={wsConfirmText}
+              onChange={(e) => setWsConfirmText(e.target.value)}
+              placeholder={activeWorkspace.name}
+              className="w-full max-w-xs rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm font-mono focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100 transition-all"
+            />
+          </div>
+          <button
+            onClick={handleDeleteWorkspace}
+            disabled={!isWsDeleteConfirmed || isDeletingWs}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all',
+              !isWsDeleteConfirmed || isDeletingWs
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-amber-500 hover:bg-amber-600'
+            )}
+          >
+            {isDeletingWs ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Deleting workspace...</>
+            ) : (
+              <><Trash2 className="h-4 w-4" /> Delete Workspace</>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Delete Account */}
       <div className="rounded-2xl border border-red-100 bg-white shadow-sm p-6">
