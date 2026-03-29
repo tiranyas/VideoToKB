@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,6 +13,14 @@ import { deleteWorkspace } from '@/lib/supabase/queries';
 type Tab = 'api' | 'billing' | 'account';
 
 export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Loading...</div>}>
+      <AccountPageInner />
+    </Suspense>
+  );
+}
+
+function AccountPageInner() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as Tab) || 'api';
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
