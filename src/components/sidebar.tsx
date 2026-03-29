@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2, LayoutDashboard, Sparkles, Zap, Crown } from 'lucide-react';
+import { PenSquare, FileText, Settings, LogOut, Menu, X, ChevronRight, ChevronDown, Plus, Building2, LayoutDashboard, Sparkles, Zap, Crown, Shield } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { cn } from '@/utils/cn';
@@ -107,11 +107,15 @@ export function Sidebar({ email }: { email: string }) {
     }
   }
 
+  const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
+  const isAdmin = ADMIN_EMAILS.includes(email);
+
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, active: pathname === '/dashboard' },
     { href: '/', label: 'Generate', icon: PenSquare, active: pathname === '/' },
     { href: '/articles', label: 'Articles', icon: FileText, active: pathname === '/articles' },
     { href: '/settings', label: 'Settings', icon: Settings, active: pathname === '/settings' },
+    ...(isAdmin ? [{ href: '/admin', label: 'Admin', icon: Shield, active: pathname === '/admin' }] : []),
   ];
 
   // Group articles by time period
