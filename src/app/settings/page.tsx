@@ -1653,8 +1653,10 @@ function IntegrationsTab() {
         const res = await fetch('/api/integrations/helpjuice?action=status');
         if (res.ok) {
           const data = await res.json();
-          setConnected(true);
-          setSubdomain(data.subdomain || '');
+          if (data.connected) {
+            setConnected(true);
+            setSubdomain(data.subdomain || '');
+          }
         }
       } catch { /* not connected */ }
       setLoadingStatus(false);
