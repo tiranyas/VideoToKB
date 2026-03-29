@@ -112,22 +112,22 @@ function StreamingPanel({ text, activeStep, onClose }: { text: string; activeSte
 
   return (
     <div className="fixed top-0 right-0 h-screen w-[480px] z-40 animate-in slide-in-from-right duration-300">
-      <div className="h-full flex flex-col bg-gray-950/40 backdrop-blur-2xl border-l border-white/10 shadow-2xl shadow-black/30">
+      <div className="h-full flex flex-col bg-white/5 backdrop-blur-2xl border-l border-violet-500/10 shadow-2xl shadow-violet-500/5">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-violet-500/10">
           <div className="flex items-center gap-2.5">
             <div className="h-2 w-2 rounded-full bg-violet-500 animate-pulse" />
-            <span className="text-sm font-medium text-white/90">Live Preview</span>
+            <span className="text-sm font-medium text-gray-700">Live Preview</span>
             {agentLabel && (
               <>
-                <span className="text-white/30">—</span>
-                <span className="text-xs font-medium text-violet-300 bg-violet-500/20 border border-violet-400/20 rounded-full px-2.5 py-0.5">{agentLabel}</span>
+                <span className="text-gray-300">—</span>
+                <span className="text-xs font-medium text-violet-600 bg-violet-500/10 border border-violet-500/15 rounded-full px-2.5 py-0.5">{agentLabel}</span>
               </>
             )}
           </div>
           <button
             onClick={onClose}
-            className="h-7 w-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+            className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-500/10 transition-colors"
             title="Close preview"
           >
             <X className="h-4 w-4" />
@@ -137,19 +137,19 @@ function StreamingPanel({ text, activeStep, onClose }: { text: string; activeSte
         {/* Content */}
         <div
           ref={containerRef}
-          className="flex-1 overflow-y-auto px-6 py-5 font-mono text-[13px] leading-relaxed text-white/80 whitespace-pre-wrap"
+          className="flex-1 overflow-y-auto px-6 py-5 font-mono text-[13px] leading-relaxed text-gray-600 whitespace-pre-wrap"
         >
           {text || (
-            <span className="text-white/25 italic font-sans">Waiting for AI to start writing...</span>
+            <span className="text-gray-300 italic font-sans">Waiting for AI to start writing...</span>
           )}
           {text && (
-            <span className="inline-block w-1.5 h-4 bg-violet-400 ml-0.5 animate-pulse rounded-sm align-middle" />
+            <span className="inline-block w-1.5 h-4 bg-violet-500 ml-0.5 animate-pulse rounded-sm align-middle" />
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-2.5 border-t border-white/10">
-          <span className="text-[11px] text-white/30">
+        <div className="px-5 py-2.5 border-t border-violet-500/10">
+          <span className="text-[11px] text-gray-400">
             {text ? `${text.length.toLocaleString()} characters` : 'Waiting...'}
           </span>
         </div>
