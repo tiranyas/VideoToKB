@@ -20,7 +20,26 @@ type Tab = 'context' | 'branding' | 'article-types' | 'platforms' | 'integration
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('context');
-  const { userRole } = useWorkspace();
+  const { activeWorkspace, refreshWorkspaces, userRole } = useWorkspace();
+  const [editingName, setEditingName] = useState(false);
+  const [wsName, setWsName] = useState('');
+  const supabaseSettings = createClient();
+
+  async function handleSaveWorkspaceName() {
+    const trimmed = wsName.trim();
+    if (!trimmed || !activeWorkspace || trimmed === activeWorkspace.name) {
+      setEditingName(false);
+      return;
+    }
+    try {
+      await updateWorkspace(supabaseSettings, activeWorkspace.id, { name: trimmed });
+      await refreshWorkspaces();
+      setEditingName(false);
+      toast.success('Workspace name updated');
+    } catch {
+      toast.error('Failed to update workspace name');
+    }
+  }
 
   const tabs: { id: Tab; label: string; icon: typeof Globe }[] = [
     { id: 'context', label: 'Company Context', icon: Globe },
@@ -38,7 +57,31 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Settings</h1>
+              <span className="text-gray-300">—</span>
+              {editingName ? (
+                <form onSubmit={(e) => { e.preventDefault(); handleSaveWorkspaceName(); }} className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    value={wsName}
+                    onChange={(e) => setWsName(e.target.value)}
+                    onBlur={handleSaveWorkspaceName}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setEditingName(false); }}
+                    className="text-2xl font-semibold tracking-tight text-violet-600 bg-transparent border-b-2 border-violet-300 outline-none w-64"
+                  />
+                </form>
+              ) : (
+                <button
+                  onClick={() => { setWsName(activeWorkspace?.name ?? ''); setEditingName(true); }}
+                  className="text-2xl font-semibold tracking-tight text-gray-500 hover:text-violet-600 transition-colors flex items-center gap-1.5 group"
+                  title="Click to rename workspace"
+                >
+                  {activeWorkspace?.name ?? 'Workspace'}
+                  <Pencil className="h-3.5 w-3.5 text-gray-300 group-hover:text-violet-400 transition-colors" />
+                </button>
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-1">Configure your article generation pipeline</p>
           </div>
           <div className="flex items-center gap-3">
