@@ -480,13 +480,15 @@ function ArticleTypesTab() {
   const [showNew, setShowNew] = useState(false);
 
   const supabase = createClient();
+  const { activeWorkspace } = useWorkspace();
 
   useEffect(() => {
     (async () => {
-      const data = await getArticleTypes(supabase);
+      const data = await getArticleTypes(supabase, activeWorkspace?.id);
       setTypes(data);
     })();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id]);
 
   async function handleSave(type: ArticleType) {
     await updateArticleType(supabase, type.id, {
@@ -500,8 +502,9 @@ function ArticleTypesTab() {
   }
 
   async function handleAdd(type: ArticleType) {
-    await addArticleType(supabase, type);
-    const data = await getArticleTypes(supabase);
+    if (!activeWorkspace) return;
+    await addArticleType(supabase, type, activeWorkspace.id);
+    const data = await getArticleTypes(supabase, activeWorkspace.id);
     setTypes(data);
     setShowNew(false);
     toast.success('Article type added');
@@ -509,7 +512,7 @@ function ArticleTypesTab() {
 
   async function handleRemove(id: string) {
     await deleteArticleType(supabase, id);
-    const data = await getArticleTypes(supabase);
+    const data = await getArticleTypes(supabase, activeWorkspace?.id);
     setTypes(data);
     toast.success('Article type removed');
   }
@@ -769,13 +772,15 @@ function PlatformProfilesTab() {
   const [showNew, setShowNew] = useState(false);
 
   const supabase = createClient();
+  const { activeWorkspace } = useWorkspace();
 
   useEffect(() => {
     (async () => {
-      const data = await getPlatformProfiles(supabase);
+      const data = await getPlatformProfiles(supabase, activeWorkspace?.id);
       setProfiles(data);
     })();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id]);
 
   async function handleSave(profile: PlatformProfile) {
     await updatePlatformProfile(supabase, profile.id, {
@@ -789,8 +794,8 @@ function PlatformProfilesTab() {
   }
 
   async function handleAdd(profile: PlatformProfile) {
-    await addPlatformProfile(supabase, profile);
-    const data = await getPlatformProfiles(supabase);
+    await addPlatformProfile(supabase, profile, activeWorkspace?.id);
+    const data = await getPlatformProfiles(supabase, activeWorkspace?.id);
     setProfiles(data);
     setShowNew(false);
     toast.success('Platform profile added');
@@ -798,7 +803,7 @@ function PlatformProfilesTab() {
 
   async function handleRemove(id: string) {
     await deletePlatformProfile(supabase, id);
-    const data = await getPlatformProfiles(supabase);
+    const data = await getPlatformProfiles(supabase, activeWorkspace?.id);
     setProfiles(data);
     toast.success('Platform profile removed');
   }

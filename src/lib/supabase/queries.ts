@@ -391,40 +391,49 @@ export async function addBonusCredits(
   if (error) throw new Error(`Failed to add bonus credits: ${error.message}`);
 }
 
-// ── Article Types (shared/global) ───────────────────────
+// ── Article Types (workspace-scoped) ────────────────────
 
 export async function getArticleTypes(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  workspaceId?: string
 ): Promise<ArticleType[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('article_types')
     .select('*')
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true });
 
+  // Filter: defaults (workspace_id IS NULL) + workspace-specific
+  if (workspaceId) {
+    query = query.or(`workspace_id.is.null,workspace_id.eq.${workspaceId}`);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw new Error(`Failed to load article types: ${error.message}`);
 
-  const types = (data ?? []).map((row) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     name: row.name,
     draftPrompt: row.draft_prompt,
     structurePrompt: row.structure_prompt,
     isDefault: row.is_default,
+    workspaceId: row.workspace_id ?? undefined,
   }));
-
-  return types;
 }
 
 export async function addArticleType(
   supabase: SupabaseClient,
-  at: ArticleType
+  at: ArticleType,
+  workspaceId: string
 ): Promise<void> {
   const { error } = await supabase.from('article_types').insert({
     id: at.id,
     name: at.name,
     draft_prompt: at.draftPrompt,
     structure_prompt: at.structurePrompt,
-    is_default: at.isDefault ?? false,
+    is_default: false,
+    workspace_id: workspaceId,
   });
 
   if (error) throw new Error(`Failed to add article type: ${error.message}`);
@@ -460,34 +469,42 @@ export async function deleteArticleType(
   if (error) throw new Error(`Failed to delete article type: ${error.message}`);
 }
 
-// ── Platform Profiles (shared/global) ───────────────────
+// ── Platform Profiles (workspace-scoped) ────────────────
 
 export async function getPlatformProfiles(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  workspaceId?: string
 ): Promise<PlatformProfile[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('platform_profiles')
     .select('*')
     .order('is_default', { ascending: false })
     .order('created_at', { ascending: true });
 
+  // Filter: defaults (workspace_id IS NULL) + workspace-specific
+  if (workspaceId) {
+    query = query.or(`workspace_id.is.null,workspace_id.eq.${workspaceId}`);
+  }
+
+  const { data, error } = await query;
+
   if (error) throw new Error(`Failed to load platform profiles: ${error.message}`);
 
-  const profiles = (data ?? []).map((row) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     name: row.name,
     htmlPrompt: row.html_prompt,
     htmlTemplate: row.html_template,
     isDefault: row.is_default,
     applyBranding: row.apply_branding ?? true,
+    workspaceId: row.workspace_id ?? undefined,
   }));
-
-  return profiles;
 }
 
 export async function addPlatformProfile(
   supabase: SupabaseClient,
-  pp: PlatformProfile
+  pp: PlatformProfile,
+  workspaceId?: string
 ): Promise<void> {
   const { error } = await supabase.from('platform_profiles').insert({
     id: pp.id,
@@ -496,6 +513,7 @@ export async function addPlatformProfile(
     html_template: pp.htmlTemplate,
     is_default: pp.isDefault ?? false,
     apply_branding: pp.applyBranding ?? true,
+    workspace_id: workspaceId ?? null,
   });
 
   if (error) throw new Error(`Failed to add platform profile: ${error.message}`);

@@ -58,6 +58,7 @@ export interface ArticleType {
   draftPrompt: string;
   structurePrompt: string;
   isDefault?: boolean;
+  workspaceId?: string;
 }
 
 // Platform Profile — defines prompt + HTML template for agent 4 (HTML generation)
@@ -68,6 +69,7 @@ export interface PlatformProfile {
   htmlTemplate: string;
   isDefault?: boolean;
   applyBranding?: boolean; // true = workspace brand colors override template colors; false = keep template colors as-is
+  workspaceId?: string;
 }
 
 // Onboarding state — tracks wizard step completion per workspace

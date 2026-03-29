@@ -69,8 +69,8 @@ export default function Home() {
         setUserId(user.id);
 
         const [types, profs] = await Promise.all([
-          getArticleTypes(supabase),
-          getPlatformProfiles(supabase),
+          getArticleTypes(supabase, activeWorkspace?.id),
+          getPlatformProfiles(supabase, activeWorkspace?.id),
         ]);
 
         setArticleTypes(types);

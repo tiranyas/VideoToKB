@@ -46,7 +46,7 @@ export default function ArticleDetailPage() {
       setUserId(user.id);
       const [data, profs] = await Promise.all([
         getArticle(supabase, id),
-        getPlatformProfiles(supabase),
+        getPlatformProfiles(supabase, activeWorkspace?.id),
       ]);
       setArticle(data);
       setPlatforms(profs);

@@ -20,7 +20,7 @@ interface ScrapeTemplateResult {
   detectedPlatform?: string;
 }
 
-export function StepTemplate({ onNext, onBack, onSkip, saving, selectedPlatformId }: StepTemplateProps) {
+export function StepTemplate({ onNext, onBack, onSkip, saving, workspaceId, selectedPlatformId }: StepTemplateProps) {
   const supabase = createClient();
 
   const [url, setUrl] = useState('');
@@ -102,7 +102,7 @@ export function StepTemplate({ onNext, onBack, onSkip, saving, selectedPlatformI
           htmlTemplate: templateData.htmlTemplate,
           isDefault: false,
           applyBranding: false,
-        });
+        }, workspaceId);
       } catch (err) {
         console.error('Failed to save custom template:', err);
       }
