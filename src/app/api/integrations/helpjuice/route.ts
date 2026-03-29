@@ -18,16 +18,20 @@ export async function GET(req: Request) {
 
   const integrations = await getWorkspaceIntegrations(supabase, workspaceId);
   const hj = integrations.helpjuice;
-  if (!hj) return Response.json({ error: 'Helpjuice not connected' }, { status: 404 });
 
   const url = new URL(req.url);
   const action = url.searchParams.get('action');
 
-  try {
-    if (action === 'status') {
-      return Response.json({ connected: true, subdomain: hj.subdomain });
-    }
+  // Status check — always return 200 with connected flag
+  if (action === 'status') {
+    if (!hj) return Response.json({ connected: false });
+    return Response.json({ connected: true, subdomain: hj.subdomain });
+  }
 
+  // Other actions require Helpjuice to be connected
+  if (!hj) return Response.json({ error: 'Helpjuice not connected' }, { status: 404 });
+
+  try {
     // Default: fetch categories
     const categories = await fetchCategories(hj.apiKey, hj.subdomain);
     return Response.json({ categories });
