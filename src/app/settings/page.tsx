@@ -16,7 +16,7 @@ import {
   getWorkspaceMembers, getWorkspaceInvites, removeWorkspaceMember, revokeInvite,
 } from '@/lib/supabase/queries';
 
-type Tab = 'brand' | 'agents' | 'integrations' | 'team' | 'api' | 'account';
+type Tab = 'brand' | 'agents' | 'integrations' | 'team';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('brand');
@@ -41,16 +41,11 @@ export default function SettingsPage() {
     }
   }
 
-  const workspaceTabs: { id: Tab; label: string }[] = [
+  const tabs: { id: Tab; label: string }[] = [
     { id: 'brand', label: 'Brand & Context' },
     { id: 'agents', label: 'AI Agents' },
     { id: 'integrations', label: 'Integrations' },
     ...(userRole && userRole !== 'member' ? [{ id: 'team' as Tab, label: 'Team' }] : []),
-  ];
-
-  const userTabs: { id: Tab; label: string }[] = [
-    { id: 'api', label: 'API Keys' },
-    { id: 'account', label: 'Account' },
   ];
 
   return (
@@ -103,56 +98,27 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-8 space-y-3">
-          {/* Workspace tabs */}
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">Workspace</p>
-            <div className="bg-gray-100 rounded-full p-1 flex">
-              {workspaceTabs.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
-                  className={cn(
-                    'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all',
-                    activeTab === id
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* User tabs */}
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">Your Account</p>
-            <div className="bg-gray-100 rounded-full p-1 flex" style={{ maxWidth: 300 }}>
-              {userTabs.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
-                  className={cn(
-                    'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all',
-                    activeTab === id
-                      ? 'bg-gray-800 text-white shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="bg-gray-100 rounded-full p-1 flex mb-8">
+          {tabs.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={cn(
+                'flex-1 rounded-full px-4 py-2.5 text-sm font-medium transition-all',
+                activeTab === id
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              )}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {activeTab === 'brand' && <BrandContextTab />}
         {activeTab === 'agents' && <AgentsTab />}
         {activeTab === 'integrations' && <IntegrationsTab />}
         {activeTab === 'team' && <TeamTab />}
-        {activeTab === 'api' && <ApiKeysTab />}
-        {activeTab === 'account' && <AccountTab />}
       </div>
     </div>
   );

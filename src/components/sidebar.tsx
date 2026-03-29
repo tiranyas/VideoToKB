@@ -114,7 +114,7 @@ export function Sidebar({ email }: { email: string }) {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, active: pathname === '/dashboard' },
     { href: '/', label: 'Generate', icon: PenSquare, active: pathname === '/' },
     { href: '/articles', label: 'Articles', icon: FileText, active: pathname === '/articles' },
-    { href: '/settings', label: 'Settings', icon: Settings, active: pathname === '/settings' },
+    { href: '/settings', label: 'Workspace Settings', icon: Settings, active: pathname === '/settings' },
     ...(isAdmin ? [{ href: '/admin', label: 'Admin', icon: Shield, active: pathname === '/admin' }] : []),
   ];
 
@@ -374,8 +374,15 @@ export function Sidebar({ email }: { email: string }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between rounded-xl px-3 py-2 hover:bg-gray-50 transition-colors">
-          <span className="text-xs text-gray-400 truncate max-w-[160px]">{email}</span>
+        <div className="flex items-center justify-between rounded-xl px-3 py-2">
+          <Link
+            href="/account"
+            onClick={() => setMobileOpen(false)}
+            className="text-xs text-gray-400 truncate max-w-[160px] hover:text-violet-500 transition-colors"
+            title="Account settings"
+          >
+            {email}
+          </Link>
           <button
             onClick={handleSignOut}
             className="text-gray-300 hover:text-gray-600 transition-colors"
