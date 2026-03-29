@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
 
+function getAdminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
 export async function GET() {
+  // Auth check with SSR client
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -11,8 +20,11 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  // Get all subscriptions with user info
-  const { data: subscriptions, error: subError } = await supabase
+  // Use service role client to bypass RLS
+  const admin = getAdminClient();
+
+  // Get all subscriptions with plan info
+  const { data: subscriptions, error: subError } = await admin
     .from('subscriptions')
     .select('*, plans(name, article_limit)')
     .order('created_at', { ascending: false });
@@ -22,7 +34,7 @@ export async function GET() {
   }
 
   // Get article counts per user
-  const { data: articleCounts, error: acError } = await supabase
+  const { data: articleCounts, error: acError } = await admin
     .rpc('get_all_user_stats');
 
   if (acError) {

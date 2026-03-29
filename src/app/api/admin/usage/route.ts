@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
+
+function getAdminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(req: Request) {
   const supabase = await createClient();
@@ -11,11 +19,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
+  const admin = getAdminClient();
   const { searchParams } = new URL(req.url);
   const days = Math.min(parseInt(searchParams.get('days') ?? '30') || 30, 365);
 
   // Get usage breakdown by model + agent
-  const { data: byAgent, error: agentError } = await supabase
+  const { data: byAgent, error: agentError } = await admin
     .rpc('get_api_usage_stats', { p_days: days });
 
   if (agentError) {
@@ -23,7 +32,7 @@ export async function GET(req: Request) {
   }
 
   // Get daily usage
-  const { data: daily, error: dailyError } = await supabase
+  const { data: daily, error: dailyError } = await admin
     .rpc('get_api_usage_daily', { p_days: days });
 
   if (dailyError) {
