@@ -1,12 +1,13 @@
-import type { ProgressEvent } from '@/types';
+import type { SSEEvent } from '@/types';
 
 /**
  * Parse an SSE stream from a fetch Response and call onEvent for each parsed event.
+ * Handles both ProgressEvent and TokenEvent types.
  * Silently skips malformed JSON but propagates errors thrown by onEvent.
  */
 export async function readSSEStream(
   response: Response,
-  onEvent: (event: ProgressEvent) => void
+  onEvent: (event: SSEEvent) => void
 ): Promise<void> {
   const reader = response.body?.getReader();
   if (!reader) throw new Error('No response stream available');
@@ -27,7 +28,7 @@ export async function readSSEStream(
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           try {
-            const event: ProgressEvent = JSON.parse(line.slice(6));
+            const event: SSEEvent = JSON.parse(line.slice(6));
             onEvent(event);
           } catch (e) {
             // If the error came from onEvent (not JSON.parse), re-throw it

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import type { PipelineStep, StepStatus, ArticleType, PlatformProfile } from '@/types';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { PipelineStep, StepStatus, ArticleType, PlatformProfile, SSEEvent } from '@/types';
 import { readSSEStream } from '@/lib/sse';
 import { toast } from 'sonner';
 import { UrlForm } from '@/components/url-form';
@@ -48,6 +48,8 @@ export default function Home() {
   const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [helpjuiceConnected, setHelpjuiceConnected] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const abortRef = useRef<AbortController | null>(null);
 
   // Settings from Supabase
   const [articleTypes, setArticleTypes] = useState<ArticleType[]>([]);
@@ -121,6 +123,11 @@ export default function Home() {
     setStructuredArticle('');
     setFinalHTML('');
     setSavedArticleId(null);
+    setStreamingText('');
+
+    // Create abort controller for cancel support
+    const abortController = new AbortController();
+    abortRef.current = abortController;
 
     // Get company context from active workspace
     let companyContext: string | undefined;
@@ -140,6 +147,7 @@ export default function Home() {
           structurePrompt: articleType.structurePrompt,
           companyContext,
         }),
+        signal: abortController.signal,
       });
 
       if (!response.ok) {
@@ -163,18 +171,30 @@ export default function Home() {
         throw new Error(`Server error: ${response.status}`);
       }
 
-      await readSSEStream(response, (event) => {
+      await readSSEStream(response, (event: SSEEvent) => {
+        // Handle streaming token events
+        if ('type' in event && event.type === 'token') {
+          setStreamingText((prev) => prev + event.text);
+          return;
+        }
+
+        // Clear streaming text when step changes
+        if ('status' in event && event.status === 'in_progress') {
+          setStreamingText('');
+        }
+
         if (event.step === 'error') {
-          if (event.message === 'youtube_blocked') {
+          if ('message' in event && event.message === 'youtube_blocked') {
             setYoutubeUrl(input.videoUrl ?? null);
             setPhase('youtube-help');
             return;
           }
-          setError(event.message ?? 'An unknown error occurred');
+          setError('message' in event ? event.message ?? 'An unknown error occurred' : 'An unknown error occurred');
           setStepsA((prev) =>
             prev.map((s) => (s.status === 'in_progress' ? { ...s, status: 'error' } : s))
           );
-        } else if (event.step === 'review' && event.article) {
+        } else if (event.step === 'review' && 'article' in event && event.article) {
+          setStreamingText('');
           setStructuredArticle(event.article);
           setPhase('review');
           // Auto-save article to DB
@@ -198,13 +218,19 @@ export default function Home() {
         } else {
           setStepsA((prev) =>
             prev.map((s) =>
-              s.step === event.step ? { ...s, status: event.status, message: event.message } : s
+              s.step === event.step ? { ...s, status: 'status' in event ? event.status : s.status, message: 'message' in event ? event.message : s.message } : s
             )
           );
         }
       });
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        // User cancelled — silently reset
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
+    } finally {
+      abortRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, userId, activeWorkspace]);
@@ -227,6 +253,10 @@ export default function Home() {
     setPhase('processing-b');
     setError(null);
     setStepsB(PHASE_B_STEPS.map((s) => ({ ...s })));
+    setStreamingText('');
+
+    const abortController = new AbortController();
+    abortRef.current = abortController;
 
     try {
       const response = await fetch('/api/process', {
@@ -240,17 +270,29 @@ export default function Home() {
           branding: activeWorkspace?.branding,
           applyBranding: platform.applyBranding,
         }),
+        signal: abortController.signal,
       });
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
-      await readSSEStream(response, (event) => {
+      await readSSEStream(response, (event: SSEEvent) => {
+        // Handle streaming token events
+        if ('type' in event && event.type === 'token') {
+          setStreamingText((prev) => prev + event.text);
+          return;
+        }
+
+        if ('status' in event && event.status === 'in_progress') {
+          setStreamingText('');
+        }
+
         if (event.step === 'error') {
-          setError(event.message ?? 'An unknown error occurred');
+          setError('message' in event ? event.message ?? 'An unknown error occurred' : 'An unknown error occurred');
           setStepsB((prev) =>
             prev.map((s) => (s.status === 'in_progress' ? { ...s, status: 'error' } : s))
           );
-        } else if (event.step === 'done' && event.html) {
+        } else if (event.step === 'done' && 'html' in event && event.html) {
+          setStreamingText('');
           setFinalHTML(event.html);
           setPhase('complete');
           // Update saved article with HTML
@@ -260,18 +302,31 @@ export default function Home() {
         } else {
           setStepsB((prev) =>
             prev.map((s) =>
-              s.step === event.step ? { ...s, status: event.status, message: event.message } : s
+              s.step === event.step ? { ...s, status: 'status' in event ? event.status : s.status, message: 'message' in event ? event.message : s.message } : s
             )
           );
         }
       });
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
+    } finally {
+      abortRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platforms, selectedPlatformId, structuredArticle, savedArticleId]);
 
   // ── Reset ────────────────────────────────────────────
+
+  function handleCancel() {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setPhase('input');
+    setStepsA(PHASE_A_STEPS.map((s) => ({ ...s })));
+    setStepsB(PHASE_B_STEPS.map((s) => ({ ...s })));
+    setError(null);
+    setStreamingText('');
+  }
 
   function handleStartOver() {
     setPhase('input');
@@ -280,6 +335,7 @@ export default function Home() {
     setError(null);
     setStructuredArticle('');
     setFinalHTML('');
+    setStreamingText('');
   }
 
   function handleBackToEdit() {
@@ -388,7 +444,13 @@ export default function Home() {
 
       {phase === 'processing-a' && (
         <div className="flex w-full flex-col items-center">
-          <ProgressDisplay steps={stepsA} error={error ?? undefined} />
+          <ProgressDisplay steps={stepsA} error={error ?? undefined} streamingText={streamingText} />
+          <button
+            onClick={handleCancel}
+            className="mt-4 rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+          >
+            Cancel
+          </button>
         </div>
       )}
 
@@ -412,7 +474,13 @@ export default function Home() {
 
       {phase === 'processing-b' && (
         <div className="flex w-full flex-col items-center mt-8">
-          <ProgressDisplay steps={stepsB} error={error ?? undefined} />
+          <ProgressDisplay steps={stepsB} error={error ?? undefined} streamingText={streamingText} />
+          <button
+            onClick={handleCancel}
+            className="mt-4 rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+          >
+            Cancel
+          </button>
         </div>
       )}
 

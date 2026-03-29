@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ProgressEvent } from '@/types';
+import type { SSEEvent, ProgressEvent } from '@/types';
 import { runPhaseA } from '@/lib/pipeline';
 import type { PhaseAInput } from '@/lib/pipeline';
+
+function isProgressEvent(e: SSEEvent): e is ProgressEvent {
+  return !('type' in e && e.type === 'token');
+}
 
 // Mock service modules
 vi.mock('@/lib/loom-resolver', () => ({
@@ -75,7 +79,7 @@ function makeInput(overrides?: Partial<PhaseAInput>): PhaseAInput {
 describe('runPhaseA', () => {
   it('emits progress events in order: resolve -> transcribe -> draft -> structure -> review', async () => {
     setupSuccessfulPipeline();
-    const events: ProgressEvent[] = [];
+    const events: SSEEvent[] = [];
 
     await runPhaseA(makeInput(), (event) => events.push(event));
 
@@ -99,12 +103,13 @@ describe('runPhaseA', () => {
 
   it('emits in_progress then complete status for each step', async () => {
     setupSuccessfulPipeline();
-    const events: ProgressEvent[] = [];
+    const events: SSEEvent[] = [];
 
     await runPhaseA(makeInput(), (event) => events.push(event));
 
+    const progressEvents = events.filter(isProgressEvent);
     for (const step of ['resolve', 'transcribe', 'draft', 'structure'] as const) {
-      const stepEvents = events.filter((e) => e.step === step);
+      const stepEvents = progressEvents.filter((e) => e.step === step);
       expect(stepEvents.length).toBeGreaterThanOrEqual(2);
       expect(stepEvents[0].status).toBe('in_progress');
       expect(stepEvents[stepEvents.length - 1].status).toBe('complete');
@@ -113,11 +118,12 @@ describe('runPhaseA', () => {
 
   it('emits error with "Loom" in message when resolve fails', async () => {
     mockResolveLoomUrl.mockRejectedValue(new Error('Invalid Loom URL'));
-    const events: ProgressEvent[] = [];
+    const events: SSEEvent[] = [];
 
     await runPhaseA(makeInput(), (event) => events.push(event));
 
-    const errorEvent = events.find((e) => e.step === 'error' || e.status === 'error');
+    const progressEvents = events.filter(isProgressEvent);
+    const errorEvent = progressEvents.find((e) => e.step === 'error' || e.status === 'error');
     expect(errorEvent).toBeDefined();
     expect(errorEvent!.message).toMatch(/resolve|loom|video url/i);
   });
@@ -128,11 +134,12 @@ describe('runPhaseA', () => {
       title: 'Test Video',
     });
     mockTranscribeVideo.mockRejectedValue(new Error('Transcription failed'));
-    const events: ProgressEvent[] = [];
+    const events: SSEEvent[] = [];
 
     await runPhaseA(makeInput(), (event) => events.push(event));
 
-    const errorEvent = events.find((e) => e.step === 'error' || e.status === 'error');
+    const progressEvents = events.filter(isProgressEvent);
+    const errorEvent = progressEvents.find((e) => e.step === 'error' || e.status === 'error');
     expect(errorEvent).toBeDefined();
     expect(errorEvent!.message).toMatch(/transcription/i);
   });
@@ -149,22 +156,24 @@ describe('runPhaseA', () => {
     });
     mockPreprocessTranscript.mockReturnValue('Cleaned transcript text');
     mockGenerateDraft.mockRejectedValue(new Error('Generation failed'));
-    const events: ProgressEvent[] = [];
+    const events: SSEEvent[] = [];
 
     await runPhaseA(makeInput(), (event) => events.push(event));
 
-    const errorEvent = events.find((e) => e.step === 'error' || e.status === 'error');
+    const progressEvents = events.filter(isProgressEvent);
+    const errorEvent = progressEvents.find((e) => e.step === 'error' || e.status === 'error');
     expect(errorEvent).toBeDefined();
     expect(errorEvent!.message).toMatch(/generation/i);
   });
 
   it('review event includes the structured article text', async () => {
     setupSuccessfulPipeline();
-    const events: ProgressEvent[] = [];
+    const events: SSEEvent[] = [];
 
     await runPhaseA(makeInput(), (event) => events.push(event));
 
-    const reviewEvent = events.find((e) => e.step === 'review');
+    const progressEvents = events.filter(isProgressEvent);
+    const reviewEvent = progressEvents.find((e) => e.step === 'review');
     expect(reviewEvent).toBeDefined();
     expect(reviewEvent!.article).toBe('# Generated Article\n\nContent here.');
   });

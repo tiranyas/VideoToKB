@@ -4,7 +4,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { checkQuota } from '@/lib/supabase/queries';
 import { runPhaseA, runPhaseB } from '@/lib/pipeline';
 import { flushUsageLogs } from '@/lib/usage-logger';
-import type { ProgressEvent } from '@/types';
+import type { SSEEvent } from '@/types';
 
 export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
@@ -223,10 +223,12 @@ export async function POST(req: Request) {
       structurePrompt: articleType.structure_prompt,
       companyContext,
     },
-    (event: ProgressEvent) => {
+    (event: SSEEvent) => {
+      // Skip streaming token events in synchronous v1 endpoint
+      if ('type' in event && event.type === 'token') return;
       if (event.step === 'error') {
         phaseAError = event.message ?? 'Article generation failed';
-      } else if (event.step === 'review' && event.article) {
+      } else if (event.step === 'review' && 'article' in event && event.article) {
         structuredArticle = event.article;
       }
     }
@@ -256,10 +258,11 @@ export async function POST(req: Request) {
         branding: workspace.branding ?? undefined,
         applyBranding: platform.apply_branding ?? true,
       },
-      (event: ProgressEvent) => {
+      (event: SSEEvent) => {
+        if ('type' in event && event.type === 'token') return;
         if (event.step === 'error') {
           phaseBError = event.message ?? 'HTML generation failed';
-        } else if (event.step === 'done' && event.html) {
+        } else if (event.step === 'done' && 'html' in event && event.html) {
           finalOutput = event.html;
         }
       }

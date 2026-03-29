@@ -170,10 +170,11 @@ export default function ArticleDetailPage() {
 
       let resultHtml = '';
       await readSSEStream(response, (event) => {
-        if (event.step === 'done' && event.html) {
+        if ('type' in event && event.type === 'token') return;
+        if (event.step === 'done' && 'html' in event && event.html) {
           resultHtml = event.html;
         } else if (event.step === 'error') {
-          throw new Error(event.message ?? 'Generation failed');
+          throw new Error('message' in event ? event.message ?? 'Generation failed' : 'Generation failed');
         }
       });
 

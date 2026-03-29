@@ -55,19 +55,6 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
     setLoadingStep(0);
     setError(null);
 
-    // Animated loading steps
-    const steps = [
-      'Capturing website screenshot...',
-      'Analyzing visual brand identity...',
-      'Extracting company information...',
-      'Identifying brand colors...',
-    ];
-    let stepIdx = 0;
-    const stepInterval = setInterval(() => {
-      stepIdx = Math.min(stepIdx + 1, steps.length - 1);
-      setLoadingStep(stepIdx);
-    }, 4000);
-
     try {
       // Auto-prepend https:// if user didn't type a protocol
       let cleanUrl = url.trim();
@@ -75,11 +62,18 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
         cleanUrl = `https://${cleanUrl}`;
       }
 
+      // Step 1: Fetching website
+      setLoadingStep(0); // "Fetching website..."
+
       const res = await fetch('/api/scrape-context', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: cleanUrl }),
       });
+
+      // Step 2: Analyzing results
+      setLoadingStep(1); // "Analyzing brand identity..."
+
       if (!res.ok) throw new Error('Failed to analyze website');
       const data: ScrapeResult = await res.json();
 
@@ -144,7 +138,6 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
       setError('Could not analyze that URL. You can enter your brand info manually below.');
       setScraped(true); // Show manual form
     } finally {
-      clearInterval(stepInterval);
       setLoading(false);
     }
   }, [url, workspaceName]);
@@ -225,7 +218,7 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
         </div>
       )}
 
-      {/* Animated loading state */}
+      {/* Loading state with real progress */}
       {loading && (
         <div className="mb-6 py-8 flex flex-col items-center gap-4">
           <div className="relative w-16 h-16">
@@ -235,13 +228,13 @@ export function StepBrand({ onNext, onBack, onSkip, saving, defaultBrand, worksp
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-gray-900">
-              {['Capturing website screenshot...', 'Analyzing visual brand identity...', 'Extracting company information...', 'Identifying brand colors...'][loadingStep]}
+              {loadingStep === 0 ? 'Fetching website...' : 'Analyzing brand identity...'}
             </p>
             <p className="text-xs text-gray-400 mt-1">This takes 10-20 seconds</p>
           </div>
           {/* Progress dots */}
           <div className="flex gap-1.5">
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1].map((i) => (
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors duration-500 ${

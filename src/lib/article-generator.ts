@@ -31,7 +31,8 @@ async function callClaude(
   systemPrompt: string,
   userMessage: string,
   maxTokens = 4000,
-  agentName = 'unknown'
+  agentName = 'unknown',
+  onToken?: (chunk: string) => void
 ): Promise<string> {
   const anthropic = getClient();
 
@@ -41,6 +42,38 @@ async function callClaude(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const start = Date.now();
+
+      // Use streaming when onToken callback is provided
+      if (onToken) {
+        const stream = anthropic.messages.stream({
+          model: MODEL,
+          max_tokens: maxTokens,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
+        });
+
+        let accumulated = '';
+
+        stream.on('text', (text) => {
+          accumulated += text;
+          onToken(text);
+        });
+
+        const finalMessage = await stream.finalMessage();
+        const durationMs = Date.now() - start;
+
+        _pendingLogs.push({
+          model: MODEL,
+          agent: agentName,
+          inputTokens: finalMessage.usage.input_tokens,
+          outputTokens: finalMessage.usage.output_tokens,
+          durationMs,
+        });
+
+        return accumulated;
+      }
+
+      // Non-streaming path (for v1 API and fallback)
       const message = await anthropic.messages.create({
         model: MODEL,
         max_tokens: maxTokens,
@@ -107,13 +140,15 @@ export async function generateArticle(
  */
 export async function generateDraft(
   transcript: string,
-  draftSystemPrompt: string
+  draftSystemPrompt: string,
+  onToken?: (chunk: string) => void
 ): Promise<string> {
   return callClaude(
     draftSystemPrompt,
     `Create a comprehensive draft article from the following transcript:\n\n${transcript}`,
-    4000,
-    'draft'
+    2500,
+    'draft',
+    onToken
   );
 }
 
@@ -123,13 +158,15 @@ export async function generateDraft(
  */
 export async function generateStructured(
   draft: string,
-  structureSystemPrompt: string
+  structureSystemPrompt: string,
+  onToken?: (chunk: string) => void
 ): Promise<string> {
   return callClaude(
     structureSystemPrompt,
     `Transform the following draft article into a professionally structured article according to the template:\n\n${draft}`,
-    4000,
-    'structure'
+    2000,
+    'structure',
+    onToken
   );
 }
 
@@ -139,12 +176,14 @@ export async function generateStructured(
  */
 export async function generateHTML(
   structuredArticle: string,
-  htmlSystemPrompt: string
+  htmlSystemPrompt: string,
+  onToken?: (chunk: string) => void
 ): Promise<string> {
   return callClaude(
     htmlSystemPrompt,
     `Convert the following structured article into HTML code that matches the reference template exactly:\n\n${structuredArticle}`,
-    8000,
-    'html'
+    5000,
+    'html',
+    onToken
   );
 }

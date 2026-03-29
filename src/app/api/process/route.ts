@@ -3,7 +3,7 @@ import { flushUsageLogs } from '@/lib/usage-logger';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkQuota } from '@/lib/supabase/queries';
-import type { ProgressEvent } from '@/types';
+import type { SSEEvent } from '@/types';
 
 export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
@@ -157,7 +157,7 @@ export async function POST(req: Request) {
   const stream = new ReadableStream({
     start(controller) {
       (async () => {
-        const send = (event: ProgressEvent) => {
+        const send = (event: SSEEvent) => {
           try {
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify(event)}\n\n`)

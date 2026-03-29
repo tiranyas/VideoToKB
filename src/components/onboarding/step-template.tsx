@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { FileCode, Loader2, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { addPlatformProfile } from '@/lib/supabase/queries';
@@ -25,6 +25,7 @@ export function StepTemplate({ onNext, onBack, onSkip, saving, selectedPlatformI
 
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<'scraping' | 'extracting'>('scraping');
   const [error, setError] = useState<string | null>(null);
   const [scraped, setScraped] = useState<ScrapeTemplateResult | null>(null);
   const [showFallback, setShowFallback] = useState(false);
@@ -35,6 +36,7 @@ export function StepTemplate({ onNext, onBack, onSkip, saving, selectedPlatformI
   const analyze = useCallback(async () => {
     if (!url.trim()) return;
     setLoading(true);
+    setLoadingPhase('scraping');
     setError(null);
     setPlatformMismatch(null);
 
@@ -58,6 +60,7 @@ export function StepTemplate({ onNext, onBack, onSkip, saving, selectedPlatformI
       let data: ScrapeTemplateResult;
       try {
         data = await attemptScrape();
+        setLoadingPhase('extracting');
       } catch {
         // Retry once automatically
         if (retryCount === 0) {
@@ -153,7 +156,7 @@ export function StepTemplate({ onNext, onBack, onSkip, saving, selectedPlatformI
               {loading ? (
                 <span className="flex items-center gap-1.5">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing...
+                  {loadingPhase === 'scraping' ? 'Scraping article...' : 'Extracting template...'}
                 </span>
               ) : 'Analyze'}
             </button>

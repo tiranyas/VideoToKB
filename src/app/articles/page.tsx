@@ -53,8 +53,33 @@ export default function ArticlesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-gray-400">Loading articles...</p>
+      <div className="min-h-screen">
+        <div className="max-w-4xl mx-auto px-6 py-10">
+          <div className="flex items-center justify-between mb-8">
+            <div className="h-7 w-32 bg-gray-200 rounded-lg animate-pulse" />
+            <div className="h-10 w-32 bg-gray-200 rounded-xl animate-pulse" />
+          </div>
+          <div className="h-10 w-full bg-gray-100 rounded-full mb-6 animate-pulse" />
+          <div className="space-y-2">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-2xl bg-white shadow-sm p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="h-4 w-4 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${60 + i * 5}%` }} />
+                    </div>
+                    <div className="flex items-center gap-3 ml-[26px]">
+                      <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-100 rounded animate-pulse ml-4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

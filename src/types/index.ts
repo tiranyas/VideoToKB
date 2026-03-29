@@ -10,6 +10,16 @@ export interface ProgressEvent {
   html?: string;
 }
 
+// Streaming token event — sent during Claude response streaming
+export interface TokenEvent {
+  type: 'token';
+  step: PipelineStep;
+  text: string;
+}
+
+// Union of all SSE event types
+export type SSEEvent = ProgressEvent | TokenEvent;
+
 // Video resolution
 export interface VideoInfo {
   videoUrl: string;

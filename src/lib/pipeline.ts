@@ -1,10 +1,60 @@
-import type { ProgressEvent, VideoInfo } from '@/types';
+import type { SSEEvent, PipelineStep, VideoInfo } from '@/types';
 import { resolveLoomUrl } from '@/lib/loom-resolver';
 import { resolveGoogleDriveUrl } from '@/lib/gdrive-resolver';
 import { isYouTubeUrl, getYouTubeTranscript, YouTubeExtractionError } from '@/lib/youtube-resolver';
 import { transcribeVideo, preprocessTranscript } from '@/lib/transcription';
 import { generateDraft, generateStructured, generateHTML } from '@/lib/article-generator';
 import { buildHtmlPrompt } from '@/lib/templates/agent4-html';
+
+/**
+ * Creates a throttled token emitter that batches token chunks
+ * and sends them via SSE at most every INTERVAL_MS milliseconds.
+ */
+function createTokenEmitter(
+  step: PipelineStep,
+  onProgress: (event: SSEEvent) => void,
+  intervalMs = 100
+) {
+  let buffer = '';
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let tokenCount = 0;
+  let subStepSent = false;
+
+  const SUB_STEP_MESSAGES: Record<string, [string, string]> = {
+    draft: ['Analyzing transcript...', 'Writing article content...'],
+    structure: ['Organizing sections...', 'Formatting headings and lists...'],
+    html: ['Building HTML structure...', 'Applying platform styles...'],
+  };
+
+  function flush() {
+    if (buffer) {
+      onProgress({ type: 'token', step, text: buffer });
+      buffer = '';
+    }
+    timer = null;
+  }
+
+  return {
+    push(text: string) {
+      buffer += text;
+      tokenCount += text.split(/\s+/).length;
+
+      // Emit sub-step message after ~50 tokens
+      if (!subStepSent && tokenCount > 50 && SUB_STEP_MESSAGES[step]) {
+        subStepSent = true;
+        onProgress({ step, status: 'in_progress', message: SUB_STEP_MESSAGES[step][1] });
+      }
+
+      if (!timer) {
+        timer = setTimeout(flush, intervalMs);
+      }
+    },
+    flush() {
+      if (timer) clearTimeout(timer);
+      flush();
+    },
+  };
+}
 
 function detectProvider(url: string): 'loom' | 'gdrive' | 'youtube' {
   if (url.includes('drive.google.com')) return 'gdrive';
@@ -34,7 +84,7 @@ export interface PhaseAInput {
 
 export async function runPhaseA(
   input: PhaseAInput,
-  onProgress: (event: ProgressEvent) => void
+  onProgress: (event: SSEEvent) => void
 ): Promise<void> {
   const { videoUrl, transcript, draftPrompt, structurePrompt, companyContext } = input;
 
@@ -100,7 +150,7 @@ export async function runPhaseA(
 
   // Step 3: Agent 2 — Generate draft
   try {
-    onProgress({ step: 'draft', status: 'in_progress', message: 'Creating draft article...' });
+    onProgress({ step: 'draft', status: 'in_progress', message: 'Analyzing transcript...' });
 
     // Inject company context into draft prompt
     let fullDraftPrompt = draftPrompt;
@@ -109,11 +159,13 @@ export async function runPhaseA(
     }
     fullDraftPrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- DETECT the language of the transcript below.\n- Write the ENTIRE output in that SAME language — every heading, sentence, and bullet point.\n- If the transcript is in English, write in English. If in Hebrew, write in Hebrew. If in Spanish, write in Spanish. Etc.\n- The Company Context may be in a DIFFERENT language — that's fine, still write the output in the transcript's language.\n- Never refuse to process a transcript because of its language.`;
 
-    const draft = await generateDraft(cleanedTranscript, fullDraftPrompt);
+    const draftEmitter = createTokenEmitter('draft', onProgress);
+    const draft = await generateDraft(cleanedTranscript, fullDraftPrompt, (chunk) => draftEmitter.push(chunk));
+    draftEmitter.flush();
     onProgress({ step: 'draft', status: 'complete', message: 'Draft created' });
 
     // Step 4: Agent 3 — Structure article
-    onProgress({ step: 'structure', status: 'in_progress', message: 'Structuring article...' });
+    onProgress({ step: 'structure', status: 'in_progress', message: 'Organizing sections...' });
 
     let fullStructurePrompt = structurePrompt;
     if (companyContext) {
@@ -121,7 +173,9 @@ export async function runPhaseA(
     }
     fullStructurePrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- The output MUST be in the SAME language as the input draft.\n- Do NOT switch languages. If the draft is in English, output in English. If in Hebrew, output in Hebrew.\n- The Company Context may be in a different language — ignore that, match the draft's language.`;
 
-    const structuredArticle = await generateStructured(draft, fullStructurePrompt);
+    const structEmitter = createTokenEmitter('structure', onProgress);
+    const structuredArticle = await generateStructured(draft, fullStructurePrompt, (chunk) => structEmitter.push(chunk));
+    structEmitter.flush();
     onProgress({ step: 'structure', status: 'complete', message: 'Article structured' });
 
     // Phase A complete — return the structured article for human review
@@ -152,12 +206,12 @@ export interface PhaseBInput {
 
 export async function runPhaseB(
   input: PhaseBInput,
-  onProgress: (event: ProgressEvent) => void
+  onProgress: (event: SSEEvent) => void
 ): Promise<void> {
   const { article, htmlPrompt, htmlTemplate, branding } = input;
 
   try {
-    onProgress({ step: 'html', status: 'in_progress', message: 'Generating platform HTML...' });
+    onProgress({ step: 'html', status: 'in_progress', message: 'Building HTML structure...' });
 
     // Determine effective branding: skip when applyBranding is explicitly false
     // (e.g. scraped custom templates should keep their own styling)
@@ -178,7 +232,9 @@ export async function runPhaseB(
       fullPrompt += `\nReplace any hardcoded colors in the template with the brand colors above.`;
     }
 
-    const html = await generateHTML(article, fullPrompt);
+    const htmlEmitter = createTokenEmitter('html', onProgress);
+    const html = await generateHTML(article, fullPrompt, (chunk) => htmlEmitter.push(chunk));
+    htmlEmitter.flush();
 
     onProgress({ step: 'html', status: 'complete', message: 'HTML generated' });
     onProgress({ step: 'done', status: 'complete', html });
@@ -198,7 +254,7 @@ export interface PipelineInput {
 
 export async function runPipeline(
   input: PipelineInput,
-  onProgress: (event: ProgressEvent) => void
+  onProgress: (event: SSEEvent) => void
 ): Promise<void> {
   // Legacy: redirect to Phase A with default prompts
   const { buildDraftPrompt, buildStructurePrompt, DEFAULT_ARTICLE_TYPES } = await import('@/lib/templates/agent2-draft');
