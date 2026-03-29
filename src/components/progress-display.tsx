@@ -93,7 +93,13 @@ function TimeEstimate({ step, status }: { step: PipelineStep; status: StepStatus
   );
 }
 
-function StreamingPanel({ text, onClose }: { text: string; onClose: () => void }) {
+const AGENT_LABELS: Partial<Record<PipelineStep, string>> = {
+  draft: 'Draft — Agent 2',
+  structure: 'Structure — Agent 3',
+  html: 'HTML — Agent 4',
+};
+
+function StreamingPanel({ text, activeStep, onClose }: { text: string; activeStep?: PipelineStep; onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,21 +108,26 @@ function StreamingPanel({ text, onClose }: { text: string; onClose: () => void }
     }
   }, [text]);
 
+  const agentLabel = activeStep ? AGENT_LABELS[activeStep] : undefined;
+
   return (
     <div className="fixed top-0 right-0 h-screen w-[480px] z-40 animate-in slide-in-from-right duration-300">
-      {/* Backdrop shadow */}
-      <div className="absolute inset-0 -left-8 w-8 bg-gradient-to-r from-transparent to-black/5 pointer-events-none" />
-
-      <div className="h-full flex flex-col bg-white border-l border-gray-200 shadow-2xl shadow-gray-300/50">
+      <div className="h-full flex flex-col bg-white/80 backdrop-blur-xl border-l border-gray-200/60 shadow-2xl shadow-black/10">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/80">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200/40">
           <div className="flex items-center gap-2.5">
             <div className="h-2 w-2 rounded-full bg-violet-500 animate-pulse" />
             <span className="text-sm font-medium text-gray-700">Live Preview</span>
+            {agentLabel && (
+              <>
+                <span className="text-gray-300">—</span>
+                <span className="text-xs font-medium text-violet-600 bg-violet-50 rounded-full px-2.5 py-0.5">{agentLabel}</span>
+              </>
+            )}
           </div>
           <button
             onClick={onClose}
-            className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 transition-colors"
             title="Close preview"
           >
             <X className="h-4 w-4" />
@@ -137,7 +148,7 @@ function StreamingPanel({ text, onClose }: { text: string; onClose: () => void }
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50/80">
+        <div className="px-5 py-2.5 border-t border-gray-200/40">
           <span className="text-[11px] text-gray-400">
             {text ? `${text.length.toLocaleString()} characters` : 'Waiting...'}
           </span>
@@ -150,6 +161,7 @@ function StreamingPanel({ text, onClose }: { text: string; onClose: () => void }
 export function ProgressDisplay({ steps, error, streamingText }: ProgressDisplayProps) {
   const [panelOpen, setPanelOpen] = useState(true);
   const hasStreamingContent = !!streamingText;
+  const activeStep = steps.find((s) => s.status === 'in_progress')?.step;
 
   // Auto-open panel when streaming starts
   useEffect(() => {
@@ -220,6 +232,7 @@ export function ProgressDisplay({ steps, error, streamingText }: ProgressDisplay
       {hasStreamingContent && panelOpen && (
         <StreamingPanel
           text={streamingText ?? ''}
+          activeStep={activeStep}
           onClose={() => setPanelOpen(false)}
         />
       )}
