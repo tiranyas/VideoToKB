@@ -49,8 +49,8 @@ const plans: Plan[] = [
   {
     name: 'Starter',
     description: 'For creators and solo teams',
-    monthlyPrice: 29,
-    annualPrice: 25,
+    monthlyPrice: 29.99,
+    annualPrice: 24.99,
     articles: '30 articles / month',
     highlighted: true,
     badge: 'Most Popular',
@@ -68,8 +68,8 @@ const plans: Plan[] = [
   {
     name: 'Team',
     description: 'Centralized billing, shared workspace',
-    monthlyPrice: 35,
-    annualPrice: 29,
+    monthlyPrice: 34.99,
+    annualPrice: 28.99,
     priceLabel: '/seat/mo',
     articles: '30 articles / seat (shared pool)',
     features: [
@@ -87,9 +87,9 @@ const plans: Plan[] = [
   {
     name: 'Enterprise',
     description: 'For organizations with custom needs',
-    monthlyPrice: 300,
-    annualPrice: 250,
-    articles: '500 articles / month',
+    monthlyPrice: 299.99,
+    annualPrice: 249.99,
+    articles: '300 articles / month',
     features: [
       { text: 'Everything in Team, plus:', included: true },
       { text: 'Unlimited seats', included: true },
@@ -98,7 +98,7 @@ const plans: Plan[] = [
       { text: 'SLA & uptime guarantee', included: true },
       { text: 'DPA & compliance support', included: true },
       { text: 'SSO / SAML', included: true },
-      { text: 'On-call support', included: true },
+      { text: 'Priority email support', included: true },
     ],
     cta: 'Start Free Trial',
   },
@@ -208,7 +208,7 @@ export function PricingSection() {
                   </ul>
 
                   <Link
-                    href={plan.name === 'Team' ? 'mailto:support@kbpipe.io?subject=KBPipe Team Plan' : '/login?signup=true'}
+                    href="/login?signup=true"
                     className={`w-full text-center rounded-xl px-6 py-3 text-sm font-medium transition-all ${
                       plan.highlighted
                         ? 'bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 shadow-sm'
@@ -232,7 +232,7 @@ export function PricingSection() {
                 <p className="text-sm text-gray-500 mt-1">Add 10 extra articles to any paid plan</p>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-bold text-gray-900">$10</span>
+                <span className="text-2xl font-bold text-gray-900">$9.99</span>
                 <p className="text-xs text-gray-400">per 10 articles</p>
               </div>
             </div>
@@ -242,7 +242,7 @@ export function PricingSection() {
         {/* FAQ-style note */}
         <ScrollReveal delay={400}>
           <p className="text-center text-sm text-gray-400 mt-10">
-            All plans include a 7-day free trial. No credit card required to start.
+            Start free — upgrade anytime. All prices exclude applicable taxes.
           </p>
         </ScrollReveal>
       </div>

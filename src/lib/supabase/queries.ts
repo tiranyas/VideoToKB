@@ -258,8 +258,11 @@ export async function getUserSubscription(
     bonusCredits: data.bonus_credits,
     currentPeriodStart: data.current_period_start,
     currentPeriodEnd: data.current_period_end,
-    stripeSubscriptionId: data.stripe_subscription_id ?? undefined,
-    stripeCustomerId: data.stripe_customer_id ?? undefined,
+    lsSubscriptionId: data.ls_subscription_id ?? undefined,
+    lsCustomerId: data.ls_customer_id ?? undefined,
+    lsVariantId: data.ls_variant_id ?? undefined,
+    billingInterval: data.billing_interval ?? undefined,
+    customerPortalUrl: data.customer_portal_url ?? undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };

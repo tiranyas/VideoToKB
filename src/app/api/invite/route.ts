@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { createWorkspaceInvite, getUserWorkspaceRole } from '@/lib/supabase/queries';
+import { createWorkspaceInvite, getUserWorkspaceRole, getUserSubscription } from '@/lib/supabase/queries';
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -23,6 +23,15 @@ export async function POST(req: Request) {
   const callerRole = await getUserWorkspaceRole(supabase, workspaceId, user.id);
   if (!callerRole || callerRole === 'member') {
     return new Response(JSON.stringify({ error: 'Only admins and owners can invite members' }), { status: 403 });
+  }
+
+  // Plan gating: only Team and Enterprise can invite
+  const sub = await getUserSubscription(supabase, user.id);
+  if (!sub || !['team', 'enterprise'].includes(sub.planId)) {
+    return new Response(
+      JSON.stringify({ error: 'Team invites require a Team or Enterprise plan. Please upgrade.' }),
+      { status: 403 }
+    );
   }
 
   try {

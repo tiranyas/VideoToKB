@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Sparkles, Zap, Users, Building2, Check, ArrowLeft } from 'lucide-react';
+import { Sparkles, Zap, Users, Building2, Check, ArrowLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { cn } from '@/utils/cn';
-import type { UserUsage } from '@/types';
+import type { UserUsage, Subscription } from '@/types';
 
 interface PlanInfo {
   id: string;
@@ -65,7 +66,7 @@ const PLAN_FEATURES: Record<string, { text: string; included: boolean }[]> = {
     { text: 'SLA & uptime guarantee', included: true },
     { text: 'DPA & compliance support', included: true },
     { text: 'SSO / SAML', included: true },
-    { text: 'On-call support', included: true },
+    { text: 'Priority email support', included: true },
   ],
 };
 
@@ -73,20 +74,42 @@ const PLAN_ARTICLES: Record<string, string> = {
   free: '3 articles / month',
   starter: '30 articles / month',
   team: '30 articles / seat (shared pool)',
-  enterprise: '500 articles / month',
+  enterprise: '300 articles / month',
+};
+
+// Monthly prices in cents for display (annual prices derived)
+const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
+  free: { monthly: 0, annual: 0 },
+  starter: { monthly: 2999, annual: 2499 },
+  team: { monthly: 3499, annual: 2899 },
+  enterprise: { monthly: 29999, annual: 24999 },
+};
+
+const STATUS_BADGES: Record<string, { label: string; className: string }> = {
+  active: { label: 'Active', className: 'bg-green-50 text-green-700' },
+  trialing: { label: 'Trial', className: 'bg-blue-50 text-blue-700' },
+  canceled: { label: 'Canceled', className: 'bg-amber-50 text-amber-700' },
+  past_due: { label: 'Past Due', className: 'bg-red-50 text-red-700' },
+  paused: { label: 'Paused', className: 'bg-gray-50 text-gray-700' },
+  expired: { label: 'Expired', className: 'bg-gray-50 text-gray-500' },
+  unpaid: { label: 'Unpaid', className: 'bg-red-50 text-red-700' },
 };
 
 export default function BillingPage() {
   const supabase = createClient();
   const [usage, setUsage] = useState<UserUsage | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [annual, setAnnual] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Load usage
       const { data: usageData } = await supabase.rpc('get_user_usage', { p_user_id: user.id });
       const row = Array.isArray(usageData) ? usageData[0] : usageData;
       if (row) {
@@ -102,6 +125,35 @@ export default function BillingPage() {
         });
       }
 
+      // Load subscription details (for LS fields)
+      const { data: subData } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (subData) {
+        setSubscription({
+          id: subData.id,
+          userId: subData.user_id,
+          planId: subData.plan_id,
+          status: subData.status,
+          bonusCredits: subData.bonus_credits,
+          currentPeriodStart: subData.current_period_start,
+          currentPeriodEnd: subData.current_period_end,
+          lsSubscriptionId: subData.ls_subscription_id ?? undefined,
+          lsCustomerId: subData.ls_customer_id ?? undefined,
+          lsVariantId: subData.ls_variant_id ?? undefined,
+          billingInterval: subData.billing_interval ?? undefined,
+          customerPortalUrl: subData.customer_portal_url ?? undefined,
+          createdAt: subData.created_at,
+          updatedAt: subData.updated_at,
+        });
+        // Set toggle to match current billing interval
+        if (subData.billing_interval === 'yearly') setAnnual(true);
+      }
+
+      // Load plans
       const { data: plansData } = await supabase
         .from('plans')
         .select('*')
@@ -123,6 +175,34 @@ export default function BillingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleCheckout = useCallback(async (planId: string, isArticlePack = false) => {
+    setCheckoutLoading(isArticlePack ? 'article-pack' : planId);
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId,
+          interval: annual ? 'yearly' : 'monthly',
+          isArticlePack,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Open Lemon Squeezy checkout overlay
+      if (window.LemonSqueezy) {
+        window.LemonSqueezy.Url.Open(data.checkoutUrl);
+      } else {
+        window.open(data.checkoutUrl, '_blank');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }, [annual]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -133,6 +213,7 @@ export default function BillingPage() {
 
   const totalLimit = usage ? usage.articleLimit + usage.bonusCredits : 0;
   const usagePercent = usage ? Math.min(100, (usage.articlesThisPeriod / Math.max(1, totalLimit)) * 100) : 0;
+  const hasActiveSub = subscription?.lsSubscriptionId && subscription.status !== 'expired';
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -142,9 +223,46 @@ export default function BillingPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Billing & Plan</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">Billing & Plan</h1>
+          {subscription && subscription.status !== 'active' && subscription.planId !== 'free' && (
+            <span className={cn(
+              'text-xs font-medium px-2 py-0.5 rounded-full',
+              STATUS_BADGES[subscription.status]?.className ?? 'bg-gray-50 text-gray-500'
+            )}>
+              {STATUS_BADGES[subscription.status]?.label ?? subscription.status}
+            </span>
+          )}
+        </div>
         <p className="text-gray-500 mt-1">Manage your subscription and usage</p>
       </div>
+
+      {/* Manage Subscription (for active LS subscribers) */}
+      {hasActiveSub && subscription?.customerPortalUrl && (
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-5 mb-6 flex items-center justify-between">
+          <div>
+            <p className="font-medium text-gray-900">
+              {usage?.planName} Plan
+              {subscription.billingInterval === 'yearly' ? ' (Annual)' : ' (Monthly)'}
+            </p>
+            <p className="text-sm text-gray-500">
+              {subscription.status === 'canceled'
+                ? `Access until ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                : `Renews ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+              }
+            </p>
+          </div>
+          <a
+            href={subscription.customerPortalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Manage Subscription
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      )}
 
       {/* Current Usage */}
       {usage && (
@@ -183,8 +301,26 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Plans */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Plans</h2>
+      {/* Billing Toggle */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Plans</h2>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm font-medium ${!annual ? 'text-gray-900' : 'text-gray-400'}`}>Monthly</span>
+          <button
+            onClick={() => setAnnual(!annual)}
+            className={`relative w-14 h-7 rounded-full transition-colors ${annual ? 'bg-violet-600' : 'bg-gray-300'}`}
+            aria-label="Toggle annual billing"
+          >
+            <span className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-7' : 'translate-x-0'}`} />
+          </button>
+          <span className={`text-sm font-medium ${annual ? 'text-gray-900' : 'text-gray-400'}`}>Annual</span>
+          {annual && (
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Save up to 17%</span>
+          )}
+        </div>
+      </div>
+
+      {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {plans.map((plan) => {
           const Icon = PLAN_ICONS[plan.id] ?? Sparkles;
@@ -193,8 +329,10 @@ export default function BillingPage() {
           const features = PLAN_FEATURES[plan.id] ?? [];
           const articlesLabel = PLAN_ARTICLES[plan.id] ?? `${plan.articleLimit} articles / month`;
           const isHighlighted = plan.id === 'starter';
-          const isEnterprise = plan.id === 'enterprise';
           const isTeam = plan.id === 'team';
+          const prices = PLAN_PRICES[plan.id];
+          const displayPrice = prices ? (annual ? prices.annual : prices.monthly) : plan.priceCents;
+          const isFree = plan.priceCents === 0;
 
           return (
             <div
@@ -228,16 +366,22 @@ export default function BillingPage() {
 
               <div className="mb-1">
                 <span className="text-3xl font-bold text-gray-900">
-                  {isEnterprise ? 'Custom' : `$${(plan.priceCents / 100).toFixed(0)}`}
+                  {isFree ? '$0' : `$${(displayPrice / 100).toFixed(2)}`}
                 </span>
-                {!isEnterprise && plan.priceCents > 0 && (
+                {!isFree && (
                   <span className="text-gray-400 text-sm">{isTeam ? '/seat/mo' : '/mo'}</span>
                 )}
               </div>
 
               {isTeam && (
                 <p className="text-xs text-gray-400 mb-2">
-                  Min 3 seats = ${((plan.priceCents / 100) * 3).toFixed(0)}/mo
+                  Min 3 seats = ${((displayPrice / 100) * 3).toFixed(2)}/mo
+                </p>
+              )}
+
+              {!annual && !isFree && prices && prices.annual < prices.monthly && (
+                <p className="text-xs text-violet-500 mb-2">
+                  ${(prices.annual / 100).toFixed(2)}/mo billed annually
                 </p>
               )}
 
@@ -253,7 +397,7 @@ export default function BillingPage() {
                     {f.included ? (
                       <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                     ) : (
-                      <span className="h-4 w-4 flex items-center justify-center mt-0.5 shrink-0 text-gray-300">✕</span>
+                      <span className="h-4 w-4 flex items-center justify-center mt-0.5 shrink-0 text-gray-300">&#10005;</span>
                     )}
                     <span className={f.included ? 'text-gray-600' : 'text-gray-400'}>{f.text}</span>
                   </li>
@@ -267,47 +411,62 @@ export default function BillingPage() {
                 >
                   Current Plan
                 </button>
+              ) : isFree ? (
+                <button
+                  disabled
+                  className="w-full rounded-xl py-2.5 text-sm font-medium border border-gray-200 text-gray-400 cursor-not-allowed"
+                >
+                  Free
+                </button>
               ) : (
-                <a
-                  href={`mailto:support@kbpipe.io?subject=Upgrade to ${plan.name} plan`}
+                <button
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={checkoutLoading === plan.id}
                   className={cn(
-                    'block w-full rounded-xl py-2.5 text-sm font-medium text-center transition-all',
+                    'w-full rounded-xl py-2.5 text-sm font-medium text-center transition-all',
+                    checkoutLoading === plan.id && 'opacity-60 cursor-wait',
                     isHighlighted
                       ? 'bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 shadow-sm'
-                      : isEnterprise || isTeam
-                      ? 'bg-gray-900 text-white hover:bg-gray-800'
-                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
                   )}
                 >
-                  {isEnterprise || isTeam ? 'Contact Us' : plan.priceCents === 0 ? 'Current' : 'Upgrade'}
-                </a>
+                  {checkoutLoading === plan.id ? 'Loading...' : 'Upgrade'}
+                </button>
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Add-on */}
+      {/* Article Pack Add-on */}
       <div className="mt-8 max-w-md mx-auto">
         <div className="rounded-2xl border border-gray-100 bg-white p-6 flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-gray-900">Need more articles?</h3>
             <p className="text-sm text-gray-500 mt-1">Add 10 extra articles to any paid plan</p>
           </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-gray-900">$10</span>
-            <p className="text-xs text-gray-400">per 10 articles</p>
-          </div>
+          <button
+            onClick={() => handleCheckout('', true)}
+            disabled={checkoutLoading === 'article-pack' || usage?.planId === 'free'}
+            className={cn(
+              'rounded-xl px-5 py-2.5 text-sm font-medium transition-all',
+              usage?.planId === 'free'
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-violet-600 text-white hover:bg-violet-700',
+              checkoutLoading === 'article-pack' && 'opacity-60 cursor-wait'
+            )}
+          >
+            {checkoutLoading === 'article-pack' ? 'Loading...' : '$9.99'}
+          </button>
         </div>
       </div>
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-400 mt-8">
-        All plans include a 7-day free trial. No credit card required.{' '}
+        Questions about billing?{' '}
         <a href="mailto:support@kbpipe.io" className="text-violet-500 hover:text-violet-600 transition-colors">
           Contact us
-        </a>{' '}
-        for custom needs.
+        </a>
       </p>
     </div>
   );

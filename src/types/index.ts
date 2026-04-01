@@ -146,8 +146,8 @@ export interface ArticleTypeControls {
 }
 
 // Pricing & Subscriptions
-export type PlanId = 'free' | 'starter' | 'team' | 'enterprise' | 'pro' | 'business';
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+export type PlanId = 'free' | 'starter' | 'team' | 'enterprise';
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'paused' | 'expired' | 'unpaid';
 
 export interface Plan {
   id: PlanId;
@@ -167,8 +167,11 @@ export interface Subscription {
   bonusCredits: number;
   currentPeriodStart: string;
   currentPeriodEnd: string;
-  stripeSubscriptionId?: string;
-  stripeCustomerId?: string;
+  lsSubscriptionId?: string;
+  lsCustomerId?: string;
+  lsVariantId?: number;
+  billingInterval?: 'monthly' | 'yearly';
+  customerPortalUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
