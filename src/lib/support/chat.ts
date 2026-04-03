@@ -87,37 +87,33 @@ export async function generateSupportResponse(
     },
   ];
 
-  const stream = anthropic.messages.stream({
-    model: 'claude-3-5-haiku-20241022',
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
     max_tokens: 500,
     system: SYSTEM_PROMPT,
     messages,
   });
 
-  // Convert Anthropic stream to ReadableStream for SSE
+  const text = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map(block => block.text)
+    .join('');
+
+  const sources = docs.length > 0
+    ? docs.map(d => ({ title: d.docTitle, category: d.category }))
+    : [];
+
   const encoder = new TextEncoder();
   return new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const event of stream) {
-          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', content: event.delta.text })}\n\n`));
-          }
-        }
-
-        // Send sources at the end
-        if (docs.length > 0) {
-          const sources = docs.map(d => ({ title: d.docTitle, category: d.category }));
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'sources', sources })}\n\n`));
-        }
-
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      } catch (err) {
-        console.error('[Support] Stream error:', err);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'An error occurred' })}\n\n`));
-        controller.close();
+    start(controller) {
+      if (text) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', content: text })}\n\n`));
       }
+      if (sources.length > 0) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'sources', sources })}\n\n`));
+      }
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
     },
   });
 }
