@@ -652,8 +652,9 @@ export default function AdminPage() {
                       className="rounded-lg border border-gray-200 px-2 py-1 text-sm bg-white"
                     >
                       <option value="free">Free</option>
-                      <option value="pro">Pro</option>
-                      <option value="business">Business</option>
+                      <option value="starter">Starter</option>
+                      <option value="team">Team</option>
+                      <option value="enterprise">Enterprise</option>
                     </select>
                   </td>
                   <td className="px-4 py-3">
