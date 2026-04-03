@@ -10,6 +10,7 @@ export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
+const authLimiter = rateLimit({ tokens: 20, interval: 60_000 });
 
 let _admin: SupabaseClient | null = null;
 function getAdmin(): SupabaseClient {
@@ -72,6 +73,16 @@ export async function POST(req: Request) {
     );
   }
 
+  // Rate limit auth attempts by IP to prevent API key brute force
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const authRl = await authLimiter.check(`auth:${ip}`);
+  if (!authRl.ok) {
+    return Response.json(
+      { error: 'Too many authentication attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
+
   const userId = await validateApiKey(apiKey);
   if (!userId) {
     return Response.json({ error: 'Invalid or revoked API key' }, { status: 401 });
@@ -103,9 +114,13 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
-  } catch {
-    // Don't block on quota check errors
-    console.error('Quota check failed, allowing request');
+  } catch (err) {
+    // Fail closed — block request to prevent unbilled usage during DB outage
+    console.error('Quota check failed, blocking request:', err);
+    return Response.json(
+      { error: 'Unable to verify quota. Please try again shortly.' },
+      { status: 503 }
+    );
   }
 
   // ── Parse body ──────────────────────────────────────

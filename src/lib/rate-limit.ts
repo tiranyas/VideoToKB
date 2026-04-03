@@ -60,9 +60,9 @@ export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions)
     const hitCount = count ?? 0;
 
     if (countError) {
-      // On DB error, fail open (allow request) but log
+      // On DB error, fail closed — block request to prevent abuse during outage
       console.error('Rate limit count error:', countError);
-      return { ok: true, remaining: tokens - 1, retryAfterMs: 0 };
+      return { ok: false, remaining: 0, retryAfterMs: 10_000 };
     }
 
     if (hitCount >= tokens) {

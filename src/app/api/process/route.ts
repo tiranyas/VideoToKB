@@ -89,9 +89,13 @@ export async function POST(req: Request) {
           { status: 403, headers: { 'Content-Type': 'application/json' } }
         );
       }
-    } catch {
-      // Don't block on quota check errors — let the request through
-      console.error('Quota check failed, allowing request');
+    } catch (err) {
+      // Fail closed — block request to prevent unbilled usage during DB outage
+      console.error('Quota check failed, blocking request:', err);
+      return new Response(
+        JSON.stringify({ error: 'Unable to verify quota. Please try again shortly.' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
     }
   }
 

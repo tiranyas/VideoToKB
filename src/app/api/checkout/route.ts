@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { lemonSqueezySetup, createCheckout } from '@lemonsqueezy/lemonsqueezy.js';
 import { getStoreId, PLAN_VARIANTS, ARTICLE_PACK_VARIANT_ID } from '@/lib/lemonsqueezy/config';
+import { rateLimit } from '@/lib/rate-limit';
+
+const limiter = rateLimit({ tokens: 5, interval: 60_000 });
 
 export async function POST(req: Request) {
   // Auth check
@@ -8,6 +11,11 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rl = await limiter.check(user.id);
+  if (!rl.ok) {
+    return Response.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   // Parse body

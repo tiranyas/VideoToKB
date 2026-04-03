@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { createApiKeyForUser, listApiKeys, revokeApiKey } from '@/lib/api-keys';
+import { rateLimit } from '@/lib/rate-limit';
+
+const limiter = rateLimit({ tokens: 10, interval: 60_000 });
 
 /** GET /api/api-keys — List user's API keys */
 export async function GET() {
@@ -7,6 +10,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rl = await limiter.check(user.id);
+  if (!rl.ok) {
+    return Response.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   try {
@@ -23,6 +31,11 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rl = await limiter.check(user.id);
+  if (!rl.ok) {
+    return Response.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   // Limit to 3 keys per user
@@ -53,6 +66,11 @@ export async function DELETE(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rl = await limiter.check(user.id);
+  if (!rl.ok) {
+    return Response.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   try {

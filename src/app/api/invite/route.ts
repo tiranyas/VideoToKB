@@ -1,11 +1,19 @@
 import { createClient } from '@/lib/supabase/server';
 import { createWorkspaceInvite, getUserWorkspaceRole, getUserSubscription } from '@/lib/supabase/queries';
+import { rateLimit } from '@/lib/rate-limit';
+
+const limiter = rateLimit({ tokens: 10, interval: 60_000 });
 
 export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  }
+
+  const rl = await limiter.check(user.id);
+  if (!rl.ok) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
   }
 
   const { workspaceId, email, role } = await req.json();
