@@ -45,23 +45,25 @@ export default function LandingPage() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              AI-Powered Knowledge Base Generator
+              Video &rarr; KB Article Pipeline
             </div>
           </ScrollReveal>
 
           <ScrollReveal duration={900} delay={100}>
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">
-              Turn any content into{' '}
+              From a short video to a{' '}
               <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
-                publish-ready KB articles
+                publish-ready KB article
               </span>
+              {' '}— in minutes
             </h1>
           </ScrollReveal>
 
           <ScrollReveal delay={250} duration={800}>
             <p className="mt-6 text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-              Paste a video URL, a user story, a transcript, or any text —
-              KBPipe turns it into a structured, professional knowledge base article in minutes.
+              Paste a Loom, YouTube, or Google Drive URL — or any text like user stories,
+              specs, and meeting notes. KBPipe generates a fully structured article —
+              in your template, your format, styled for your KB platform.
             </p>
           </ScrollReveal>
 
@@ -83,6 +85,101 @@ export default function LandingPage() {
 
             <p className="mt-5 text-sm text-gray-400">No credit card required</p>
           </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Before / After visual */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <ScrollReveal>
+            <div className="grid md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
+              {/* Before */}
+              <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">product-walkthrough.mp4</div>
+                    <div className="text-xs text-gray-400">5:32 min &middot; Loom recording</div>
+                  </div>
+                </div>
+                <div className="h-28 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-3xl mb-1 opacity-40">&#9654;</div>
+                    <div className="text-xs text-gray-400">Raw video — not searchable, not reusable</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-violet-600 to-blue-500 flex items-center justify-center shadow-lg shadow-violet-500/25 rotate-90 md:rotate-0">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
+                <span className="text-xs font-medium text-violet-600">KBPipe</span>
+              </div>
+
+              {/* After */}
+              <div className="bg-white rounded-2xl border border-violet-200 p-6 space-y-3 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="text-xs font-medium text-green-600">Ready to publish</span>
+                </div>
+                <h4 className="text-sm font-bold text-gray-900">How to Set Up Your Dashboard</h4>
+                <div className="space-y-2">
+                  <div className="h-2 bg-gray-100 rounded-full w-full" />
+                  <div className="h-2 bg-gray-100 rounded-full w-11/12" />
+                  <div className="h-2 bg-gray-100 rounded-full w-4/5" />
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="text-xs font-semibold text-gray-500 mb-1.5">Step 1: Navigate to Settings</div>
+                  <div className="space-y-1.5">
+                    <div className="h-1.5 bg-gray-100 rounded-full w-full" />
+                    <div className="h-1.5 bg-gray-100 rounded-full w-3/4" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="text-[10px] font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">HelpJuice</span>
+                  <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">How-to Guide</span>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Customization differentiator */}
+      <section className="py-12 px-6 bg-gray-50/70 border-y border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <ScrollReveal>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-8">
+              Not a generic AI doc generator. A fully customizable pipeline.
+            </h3>
+          </ScrollReveal>
+          <div className="grid sm:grid-cols-3 gap-5">
+            <StaggerReveal staggerMs={80} distance={20}>
+              <div className="text-center p-4">
+                <div className="text-2xl mb-2">&#9998;</div>
+                <div className="text-sm font-semibold text-gray-900 mb-1">Your templates</div>
+                <p className="text-xs text-gray-500">Define custom article types with your own AI prompts — how-to guides, troubleshooting, release notes, or anything you need.</p>
+              </div>
+              <div className="text-center p-4">
+                <div className="text-2xl mb-2">&#127912;</div>
+                <div className="text-sm font-semibold text-gray-900 mb-1">Your platform format</div>
+                <p className="text-xs text-gray-500">Output HTML styled exactly for HelpJuice, Zendesk, Intercom, or your custom KB — not a one-size-fits-all doc.</p>
+              </div>
+              <div className="text-center p-4">
+                <div className="text-2xl mb-2">&#127981;</div>
+                <div className="text-sm font-semibold text-gray-900 mb-1">Your brand voice</div>
+                <p className="text-xs text-gray-500">Set company context, terminology, and tone once — every article sounds like your team wrote it.</p>
+              </div>
+            </StaggerReveal>
+          </div>
         </div>
       </section>
 
@@ -330,7 +427,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-violet-100 text-lg mb-8 max-w-md mx-auto">
                 Your content already exists in videos, meetings, and docs.
-                Let AI structure it into publish-ready articles.
+                Let KBPipe structure it into publish-ready articles — in your format, your style.
               </p>
               <Link
                 href="/login?signup=true"
