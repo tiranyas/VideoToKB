@@ -6,7 +6,7 @@ import { Loader2, Plus, Trash2, Pencil, Globe, FileText, ArrowRight, Download, A
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
-import type { ArticleType, PlatformProfile, WorkspaceBranding, ArticleTypeControls, WorkspaceMember, WorkspaceInvite, WorkspaceRole } from '@/types';
+import type { ArticleType, PlatformProfile, WorkspaceBranding, ArticleTypeControls, WorkspaceMember, WorkspaceInvite, WorkspaceRole, PlanId } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkspace } from '@/contexts/workspace-context';
 import {
@@ -14,6 +14,7 @@ import {
   getArticleTypes, addArticleType, updateArticleType, deleteArticleType,
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
   getWorkspaceMembers, getWorkspaceInvites, removeWorkspaceMember, revokeInvite,
+  getUserSubscription,
 } from '@/lib/supabase/queries';
 
 type Tab = 'brand' | 'agents' | 'integrations' | 'team';
@@ -1415,16 +1416,22 @@ function TeamTab() {
   const [isInviting, setIsInviting] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [isLoadingTeam, setIsLoadingTeam] = useState(true);
+  const [planId, setPlanId] = useState<PlanId | null>(null);
+
+  const canInvite = planId === 'team' || planId === 'enterprise';
 
   const loadTeamData = useCallback(async () => {
     if (!activeWorkspace) return;
     try {
-      const [m, i] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser();
+      const [m, i, sub] = await Promise.all([
         getWorkspaceMembers(supabase, activeWorkspace.id),
         getWorkspaceInvites(supabase, activeWorkspace.id),
+        user ? getUserSubscription(supabase, user.id) : null,
       ]);
       setMembers(m);
       setInvites(i.filter(inv => inv.status === 'pending'));
+      if (sub) setPlanId(sub.planId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load team data');
     } finally {
@@ -1568,43 +1575,57 @@ function TeamTab() {
           </div>
         </div>
 
-        <form onSubmit={handleInvite} className="flex items-end gap-3">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Email address</label>
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="team@company.com"
-              required
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
-            />
-          </div>
-          <div className="w-32">
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Role</label>
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as WorkspaceRole)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+        {canInvite ? (
+          <form onSubmit={handleInvite} className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Email address</label>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="team@company.com"
+                required
+                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+              />
+            </div>
+            <div className="w-32">
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Role</label>
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as WorkspaceRole)}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
+              >
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={isInviting || !inviteEmail.trim()}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
+                isInviting || !inviteEmail.trim()
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
+              )}
             >
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
-            </select>
+              {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Send Invite
+            </button>
+          </form>
+        ) : (
+          <div className="rounded-xl bg-gray-50 border border-gray-100 px-5 py-4 text-center">
+            <p className="text-sm text-gray-500 mb-2">
+              Team invitations are available on the <span className="font-semibold text-gray-700">Team</span> and <span className="font-semibold text-gray-700">Enterprise</span> plans.
+            </p>
+            <Link
+              href="/billing"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700 transition-colors"
+            >
+              Upgrade your plan <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <button
-            type="submit"
-            disabled={isInviting || !inviteEmail.trim()}
-            className={cn(
-              'inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white transition-all',
-              isInviting || !inviteEmail.trim()
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600'
-            )}
-          >
-            {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Send Invite
-          </button>
-        </form>
+        )}
       </div>
 
       {/* Pending Invites */}

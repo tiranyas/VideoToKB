@@ -735,10 +735,7 @@ export async function getWorkspaceMembers(
   workspaceId: string
 ): Promise<WorkspaceMember[]> {
   const { data, error } = await supabase
-    .from('workspace_members')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: true });
+    .rpc('get_workspace_members_with_email', { p_workspace_id: workspaceId });
 
   if (error) throw new Error(`Failed to load members: ${error.message}`);
   return (data ?? []).map(mapMemberRow);
