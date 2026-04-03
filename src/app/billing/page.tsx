@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Sparkles, Zap, Users, Building2, Check, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Sparkles, Zap, Users, Building2, Check, ArrowLeft, ExternalLink, CreditCard, FileText, X } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/utils/cn';
@@ -14,6 +14,20 @@ interface PlanInfo {
   priceCents: number;
   articleLimit: number;
   description: string;
+}
+
+interface Invoice {
+  id: string;
+  status: string;
+  total: number;
+  subtotal: number;
+  tax: number;
+  currency: string;
+  billingReason: string;
+  cardBrand: string | null;
+  cardLastFour: string | null;
+  invoiceUrl: string | null;
+  createdAt: string;
 }
 
 const PLAN_ICONS: Record<string, typeof Sparkles> = {
@@ -100,79 +114,91 @@ export default function BillingPage() {
   const [usage, setUsage] = useState<UserUsage | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<PlanInfo[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [annual, setAnnual] = useState(false);
+  const [changePlanTarget, setChangePlanTarget] = useState<{ planId: string; name: string } | null>(null);
+
+  const loadData = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Load usage
+    const { data: usageData } = await supabase.rpc('get_user_usage', { p_user_id: user.id });
+    const row = Array.isArray(usageData) ? usageData[0] : usageData;
+    if (row) {
+      setUsage({
+        articlesThisPeriod: row.articles_this_period,
+        articleLimit: row.article_limit,
+        bonusCredits: row.bonus_credits,
+        articlesRemaining: row.articles_remaining,
+        planId: row.plan_id,
+        planName: row.plan_name,
+        periodStart: row.period_start,
+        periodEnd: row.period_end,
+      });
+    }
+
+    // Load subscription details
+    const { data: subData } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (subData) {
+      setSubscription({
+        id: subData.id,
+        userId: subData.user_id,
+        planId: subData.plan_id,
+        status: subData.status,
+        bonusCredits: subData.bonus_credits,
+        currentPeriodStart: subData.current_period_start,
+        currentPeriodEnd: subData.current_period_end,
+        lsSubscriptionId: subData.ls_subscription_id ?? undefined,
+        lsCustomerId: subData.ls_customer_id ?? undefined,
+        lsVariantId: subData.ls_variant_id ?? undefined,
+        billingInterval: subData.billing_interval ?? undefined,
+        customerPortalUrl: subData.customer_portal_url ?? undefined,
+        createdAt: subData.created_at,
+        updatedAt: subData.updated_at,
+      });
+      if (subData.billing_interval === 'yearly') setAnnual(true);
+    }
+
+    // Load plans
+    const { data: plansData } = await supabase
+      .from('plans')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (plansData) {
+      setPlans(plansData.map((p) => ({
+        id: p.id,
+        name: p.name,
+        priceCents: p.price_cents,
+        articleLimit: p.article_limit,
+        description: p.description,
+      })));
+    }
+
+    setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    loadData();
+  }, [loadData]);
 
-      // Load usage
-      const { data: usageData } = await supabase.rpc('get_user_usage', { p_user_id: user.id });
-      const row = Array.isArray(usageData) ? usageData[0] : usageData;
-      if (row) {
-        setUsage({
-          articlesThisPeriod: row.articles_this_period,
-          articleLimit: row.article_limit,
-          bonusCredits: row.bonus_credits,
-          articlesRemaining: row.articles_remaining,
-          planId: row.plan_id,
-          planName: row.plan_name,
-          periodStart: row.period_start,
-          periodEnd: row.period_end,
-        });
-      }
-
-      // Load subscription details (for LS fields)
-      const { data: subData } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (subData) {
-        setSubscription({
-          id: subData.id,
-          userId: subData.user_id,
-          planId: subData.plan_id,
-          status: subData.status,
-          bonusCredits: subData.bonus_credits,
-          currentPeriodStart: subData.current_period_start,
-          currentPeriodEnd: subData.current_period_end,
-          lsSubscriptionId: subData.ls_subscription_id ?? undefined,
-          lsCustomerId: subData.ls_customer_id ?? undefined,
-          lsVariantId: subData.ls_variant_id ?? undefined,
-          billingInterval: subData.billing_interval ?? undefined,
-          customerPortalUrl: subData.customer_portal_url ?? undefined,
-          createdAt: subData.created_at,
-          updatedAt: subData.updated_at,
-        });
-        // Set toggle to match current billing interval
-        if (subData.billing_interval === 'yearly') setAnnual(true);
-      }
-
-      // Load plans
-      const { data: plansData } = await supabase
-        .from('plans')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (plansData) {
-        setPlans(plansData.map((p) => ({
-          id: p.id,
-          name: p.name,
-          priceCents: p.price_cents,
-          articleLimit: p.article_limit,
-          description: p.description,
-        })));
-      }
-
-      setLoading(false);
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Load invoices separately (non-blocking)
+  useEffect(() => {
+    fetch('/api/billing/invoices')
+      .then((r) => r.json())
+      .then((d) => { if (d.invoices) setInvoices(d.invoices); })
+      .catch(() => {});
   }, []);
 
   const handleCheckout = useCallback(async (planId: string, isArticlePack = false) => {
@@ -190,7 +216,6 @@ export default function BillingPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // Open Lemon Squeezy checkout overlay
       if (window.LemonSqueezy) {
         window.LemonSqueezy.Url.Open(data.checkoutUrl);
       } else {
@@ -203,6 +228,72 @@ export default function BillingPage() {
     }
   }, [annual]);
 
+  const handleCancel = useCallback(async () => {
+    if (!confirm('Are you sure you want to cancel your subscription? You\'ll keep access until the end of your billing period.')) return;
+    setActionLoading('cancel');
+    try {
+      const res = await fetch('/api/billing/cancel', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success('Subscription canceled. You\'ll keep access until the end of your billing period.');
+      // Reload data after a brief delay (webhook needs time to update DB)
+      setTimeout(() => loadData(), 2000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel subscription');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [loadData]);
+
+  const handleResume = useCallback(async () => {
+    setActionLoading('resume');
+    try {
+      const res = await fetch('/api/billing/resume', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success('Subscription resumed!');
+      setTimeout(() => loadData(), 2000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to resume subscription');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [loadData]);
+
+  const handleChangePlan = useCallback(async (planId: string) => {
+    setActionLoading('change-plan');
+    try {
+      const res = await fetch('/api/billing/change-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId, interval: annual ? 'yearly' : 'monthly' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success('Plan changed! Your billing will be adjusted automatically.');
+      setChangePlanTarget(null);
+      setTimeout(() => loadData(), 2000);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to change plan');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [annual, loadData]);
+
+  const handleUpdatePaymentMethod = useCallback(async () => {
+    setActionLoading('payment');
+    try {
+      const res = await fetch('/api/billing/payment-method');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      window.open(data.url, '_blank');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to get payment update link');
+    } finally {
+      setActionLoading(null);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -214,6 +305,8 @@ export default function BillingPage() {
   const totalLimit = usage ? usage.articleLimit + usage.bonusCredits : 0;
   const usagePercent = usage ? Math.min(100, (usage.articlesThisPeriod / Math.max(1, totalLimit)) * 100) : 0;
   const hasActiveSub = subscription?.lsSubscriptionId && subscription.status !== 'expired';
+  const isCanceled = subscription?.status === 'canceled';
+  const canResume = isCanceled && subscription?.currentPeriodEnd && new Date(subscription.currentPeriodEnd) > new Date();
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -234,33 +327,56 @@ export default function BillingPage() {
             </span>
           )}
         </div>
-        <p className="text-gray-500 mt-1">Manage your subscription and usage</p>
+        <p className="text-gray-500 mt-1">Manage your subscription, billing, and usage</p>
       </div>
 
-      {/* Manage Subscription (for active LS subscribers) */}
-      {hasActiveSub && subscription?.customerPortalUrl && (
-        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-5 mb-6 flex items-center justify-between">
-          <div>
-            <p className="font-medium text-gray-900">
-              {usage?.planName} Plan
-              {subscription.billingInterval === 'yearly' ? ' (Annual)' : ' (Monthly)'}
-            </p>
-            <p className="text-sm text-gray-500">
-              {subscription.status === 'canceled'
-                ? `Access until ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-                : `Renews ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-              }
-            </p>
+      {/* Subscription Management Bar */}
+      {hasActiveSub && (
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-5 mb-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <p className="font-medium text-gray-900">
+                {usage?.planName} Plan
+                {subscription?.billingInterval === 'yearly' ? ' (Annual)' : ' (Monthly)'}
+              </p>
+              <p className="text-sm text-gray-500">
+                {isCanceled
+                  ? `Access until ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                  : `Renews ${new Date(subscription!.currentPeriodEnd).toLocaleDateString()}`
+                }
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Update Payment Method */}
+              <button
+                onClick={handleUpdatePaymentMethod}
+                disabled={actionLoading === 'payment'}
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                {actionLoading === 'payment' ? 'Loading...' : 'Update Payment'}
+              </button>
+
+              {/* Cancel / Resume */}
+              {canResume ? (
+                <button
+                  onClick={handleResume}
+                  disabled={actionLoading === 'resume'}
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
+                >
+                  {actionLoading === 'resume' ? 'Resuming...' : 'Resume Subscription'}
+                </button>
+              ) : !isCanceled ? (
+                <button
+                  onClick={handleCancel}
+                  disabled={actionLoading === 'cancel'}
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  {actionLoading === 'cancel' ? 'Canceling...' : 'Cancel Subscription'}
+                </button>
+              ) : null}
+            </div>
           </div>
-          <a
-            href={subscription.customerPortalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            Manage Subscription
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
         </div>
       )}
 
@@ -333,6 +449,7 @@ export default function BillingPage() {
           const prices = PLAN_PRICES[plan.id];
           const displayPrice = prices ? (annual ? prices.annual : prices.monthly) : plan.priceCents;
           const isFree = plan.priceCents === 0;
+          const canChangeTo = hasActiveSub && !isCurrent && !isFree && subscription?.status === 'active';
 
           return (
             <div
@@ -411,6 +528,18 @@ export default function BillingPage() {
                 >
                   Current Plan
                 </button>
+              ) : canChangeTo ? (
+                <button
+                  onClick={() => setChangePlanTarget({ planId: plan.id, name: plan.name })}
+                  className={cn(
+                    'w-full rounded-xl py-2.5 text-sm font-medium text-center transition-all',
+                    isHighlighted
+                      ? 'bg-gradient-to-r from-violet-600 to-blue-500 text-white hover:from-violet-700 hover:to-blue-600 shadow-sm'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                  )}
+                >
+                  Switch to {plan.name}
+                </button>
               ) : isFree ? (
                 <button
                   disabled
@@ -461,6 +590,65 @@ export default function BillingPage() {
         </div>
       </div>
 
+      {/* Invoices */}
+      {invoices.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Invoices</h2>
+          <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-left">
+                  <th className="px-5 py-3 font-medium text-gray-500">Date</th>
+                  <th className="px-5 py-3 font-medium text-gray-500">Amount</th>
+                  <th className="px-5 py-3 font-medium text-gray-500">Status</th>
+                  <th className="px-5 py-3 font-medium text-gray-500">Payment</th>
+                  <th className="px-5 py-3 font-medium text-gray-500 text-right">Invoice</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="border-b border-gray-50 last:border-0">
+                    <td className="px-5 py-3 text-gray-900">
+                      {new Date(inv.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="px-5 py-3 text-gray-900 font-medium">
+                      ${(inv.total / 100).toFixed(2)} {inv.currency.toUpperCase()}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={cn(
+                        'text-xs font-medium px-2 py-0.5 rounded-full',
+                        inv.status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                      )}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-gray-500">
+                      {inv.cardBrand && inv.cardLastFour
+                        ? `${inv.cardBrand} ****${inv.cardLastFour}`
+                        : '—'
+                      }
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      {inv.invoiceUrl ? (
+                        <a
+                          href={inv.invoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-700 transition-colors"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          PDF
+                        </a>
+                      ) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <p className="text-center text-xs text-gray-400 mt-8">
         Questions about billing?{' '}
@@ -468,6 +656,41 @@ export default function BillingPage() {
           Contact us
         </a>
       </p>
+
+      {/* Change Plan Confirmation Dialog */}
+      {changePlanTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Change Plan</h3>
+              <button onClick={() => setChangePlanTarget(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              Switch from <strong>{usage?.planName}</strong> to <strong>{changePlanTarget.name}</strong> ({annual ? 'annual' : 'monthly'})?
+            </p>
+            <p className="text-xs text-gray-400 mb-6">
+              Your billing will be prorated automatically. The price difference is calculated based on time remaining in your current period.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setChangePlanTarget(null)}
+                className="flex-1 rounded-xl py-2.5 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleChangePlan(changePlanTarget.planId)}
+                disabled={actionLoading === 'change-plan'}
+                className="flex-1 rounded-xl py-2.5 text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50"
+              >
+                {actionLoading === 'change-plan' ? 'Switching...' : 'Confirm Switch'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

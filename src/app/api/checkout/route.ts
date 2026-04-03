@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { lemonSqueezySetup, createCheckout } from '@lemonsqueezy/lemonsqueezy.js';
+import { createCheckout } from '@lemonsqueezy/lemonsqueezy.js';
+import { initLemonSqueezy } from '@/lib/lemonsqueezy/client';
 import { getStoreId, PLAN_VARIANTS, ARTICLE_PACK_VARIANT_ID } from '@/lib/lemonsqueezy/config';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -44,8 +45,7 @@ export async function POST(req: Request) {
     variantId = resolved;
   }
 
-  // Initialize LS SDK
-  lemonSqueezySetup({ apiKey: process.env.LEMONSQUEEZY_API_KEY! });
+  initLemonSqueezy();
 
   // Create checkout session
   try {
