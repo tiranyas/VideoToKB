@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { SUPPORT_DOCS } from '@/lib/support/docs';
 
 /**
@@ -14,10 +14,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabase = getAdminClient();
 
   const results: { slug: string; status: string }[] = [];
 

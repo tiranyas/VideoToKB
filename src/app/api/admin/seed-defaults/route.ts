@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 
 export async function POST() {
@@ -10,10 +10,7 @@ export async function POST() {
   }
 
   // Use service role to bypass RLS
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const admin = getAdminClient();
 
   const { DEFAULT_PLATFORM_PROFILES } = await import('@/lib/templates/agent4-html');
   const { DEFAULT_ARTICLE_TYPES } = await import('@/lib/templates/agent2-draft');

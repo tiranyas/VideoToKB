@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { ONBOARDED_COOKIE } from '@/lib/constants';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -72,7 +73,7 @@ export async function middleware(request: NextRequest) {
       !request.nextUrl.pathname.startsWith('/api/') &&
       !request.nextUrl.pathname.startsWith('/auth/') &&
       !isPublicRoute) {
-    const onboarded = request.cookies.get('kbpipe-onboarded')?.value;
+    const onboarded = request.cookies.get(ONBOARDED_COOKIE)?.value;
     if (onboarded !== 'true') {
       const url = request.nextUrl.clone();
       url.pathname = '/onboarding';

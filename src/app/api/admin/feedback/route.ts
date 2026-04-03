@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createAdmin } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 
 const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
-
-function getAdmin() {
-  return createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function GET() {
   const supabase = await createClient();
@@ -20,7 +13,7 @@ export async function GET() {
   }
 
   // Use service role to access auth.users for email lookup
-  const admin = getAdmin();
+  const admin = getAdminClient();
 
   const { data: feedbackRows, error } = await admin
     .from('feedback')
@@ -69,7 +62,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'id is required' }, { status: 400 });
   }
 
-  const admin = getAdmin();
+  const admin = getAdminClient();
   const updates: Record<string, unknown> = {};
   if (status) updates.status = status;
   if (adminNotes !== undefined) updates.admin_notes = adminNotes;

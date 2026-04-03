@@ -50,6 +50,8 @@ export default function Home() {
   const [helpjuiceConnected, setHelpjuiceConnected] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const abortRef = useRef<AbortController | null>(null);
+  const isSavingArticle = useRef(false);
+  const isProcessing = useRef(false);
 
   // Settings from Supabase
   const [articleTypes, setArticleTypes] = useState<ArticleType[]>([]);
@@ -89,7 +91,7 @@ export default function Home() {
         fetch('/api/integrations/helpjuice?action=status')
           .then((r) => r.ok ? r.json() : null)
           .then((d) => { if (d?.connected) setHelpjuiceConnected(true); })
-          .catch(() => {});
+          .catch(console.error);
       } catch (err) {
         console.error('Failed to load settings:', err);
         setError('Failed to load settings. Please refresh the page.');
@@ -102,10 +104,14 @@ export default function Home() {
   // ── Phase A: Generate structured article ─────────────
 
   const handleSubmit = useCallback(async (input: { videoUrl?: string; transcript?: string; sourceType?: string }) => {
+    if (isProcessing.current) return;
+    isProcessing.current = true;
+
     const articleType = articleTypes.find((t) => t.id === selectedTypeId);
 
     if (!articleType) {
       setError('Please select an article type in Settings');
+      isProcessing.current = false;
       return;
     }
 
@@ -114,7 +120,7 @@ export default function Home() {
       upsertWorkspacePreferences(supabase, activeWorkspace.id, {
         selectedArticleTypeId: selectedTypeId,
         selectedPlatformId: selectedPlatformId,
-      }).catch(() => {});
+      }).catch(console.error);
     }
 
     setPhase('processing-a');
@@ -165,6 +171,7 @@ export default function Home() {
               duration: 8000,
             });
             setPhase('input');
+            isProcessing.current = false;
             return;
           }
         }
@@ -197,8 +204,9 @@ export default function Home() {
           setStreamingText('');
           setStructuredArticle(event.article);
           setPhase('review');
-          // Auto-save article to DB
-          if (userId && activeWorkspace) {
+          // Auto-save article to DB (guarded against concurrent saves)
+          if (userId && activeWorkspace && !isSavingArticle.current) {
+            isSavingArticle.current = true;
             const title = event.article.match(/^#+\s+(.+)/m)?.[1]
               ?? event.article.split('\n').map(l => l.trim()).find(l => l.length > 0)?.slice(0, 120)
               ?? 'Untitled Article';
@@ -213,7 +221,7 @@ export default function Home() {
               articleTypeId: selectedTypeId,
               platformId: selectedPlatformId,
               markdown: event.article,
-            }).then((id) => setSavedArticleId(id)).catch(() => {});
+            }).then((id) => setSavedArticleId(id)).catch(console.error).finally(() => { isSavingArticle.current = false; });
           }
         } else {
           setStepsA((prev) =>
@@ -231,6 +239,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
     } finally {
       abortRef.current = null;
+      isProcessing.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, userId, activeWorkspace]);
@@ -238,15 +247,20 @@ export default function Home() {
   // ── Phase B: Generate HTML ───────────────────────────
 
   const handleGenerateHTML = useCallback(async () => {
+    if (isProcessing.current) return;
+    isProcessing.current = true;
+
     const platform = platforms.find((p) => p.id === selectedPlatformId);
     if (!platform) {
       setError('No platform profile selected');
+      isProcessing.current = false;
       return;
     }
 
     if (platform.id === 'markdown-only' || (!platform.htmlTemplate && !platform.htmlPrompt)) {
       setFinalHTML(structuredArticle);
       setPhase('complete');
+      isProcessing.current = false;
       return;
     }
 
@@ -297,7 +311,7 @@ export default function Home() {
           setPhase('complete');
           // Update saved article with HTML
           if (savedArticleId && userId) {
-            updateArticleHtml(supabase, savedArticleId, event.html).catch(() => {});
+            updateArticleHtml(supabase, savedArticleId, event.html).catch(console.error);
           }
         } else {
           setStepsB((prev) =>
@@ -312,6 +326,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
     } finally {
       abortRef.current = null;
+      isProcessing.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platforms, selectedPlatformId, structuredArticle, savedArticleId]);
@@ -321,6 +336,7 @@ export default function Home() {
   function handleCancel() {
     abortRef.current?.abort();
     abortRef.current = null;
+    isProcessing.current = false;
     setPhase('input');
     setStepsA(PHASE_A_STEPS.map((s) => ({ ...s })));
     setStepsB(PHASE_B_STEPS.map((s) => ({ ...s })));
@@ -329,6 +345,7 @@ export default function Home() {
   }
 
   function handleStartOver() {
+    isProcessing.current = false;
     setPhase('input');
     setStepsA(PHASE_A_STEPS.map((s) => ({ ...s })));
     setStepsB(PHASE_B_STEPS.map((s) => ({ ...s })));

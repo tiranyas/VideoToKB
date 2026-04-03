@@ -109,7 +109,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setActiveId(id);
     localStorage.setItem(LS_KEY, id);
     if (userId) {
-      setActiveWorkspaceId(supabase, userId, id).catch(() => {});
+      setActiveWorkspaceId(supabase, userId, id).catch(console.error);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

@@ -1,18 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createAdmin } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { sendFeedbackNotification, sendFeedbackConfirmation } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
-
-function getAdmin() {
-  return createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 const CATEGORIES = ['bug', 'quality', 'styling', 'feature', 'other'] as const;
 const SEVERITIES = ['low', 'medium', 'high', 'critical'] as const;
@@ -72,7 +65,7 @@ export async function POST(req: Request) {
   const networkErrors = (body.networkErrors ?? []).slice(0, 20).map(e => String(e).slice(0, 1000));
 
   // Use service role to bypass RLS (auth already verified above)
-  const admin = getAdmin();
+  const admin = getAdminClient();
   const { data: inserted, error } = await admin.from('feedback').insert({
     user_id: user.id,
     article_id: body.articleId || null,

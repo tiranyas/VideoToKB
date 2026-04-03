@@ -3,7 +3,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 
 const anthropic = new Anthropic();
 
@@ -35,15 +35,9 @@ STRICT RULES:
 /**
  * Search support docs using full-text search.
  */
-function getAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-}
 
 export async function searchSupportDocs(query: string, limit = 5): Promise<DocMatch[]> {
-  const supabase = getAdmin();
+  const supabase = getAdminClient();
 
   const { data, error } = await supabase.rpc('search_support_docs', {
     p_query: query,

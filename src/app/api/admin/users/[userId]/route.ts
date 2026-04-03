@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
+import { type SupabaseClient } from '@supabase/supabase-js';
 import type { PlanId } from '@/types';
 
 const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
-
-function getAdminClient() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 async function updateSubscriptionPlanAdmin(admin: SupabaseClient, userId: string, planId: PlanId) {
   const { error } = await admin

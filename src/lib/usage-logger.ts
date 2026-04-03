@@ -1,16 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { collectUsageLogs } from './article-generator';
 
-let _admin: ReturnType<typeof createClient> | null = null;
-
 function getAdmin() {
-  if (!_admin) {
-    _admin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return _admin;
+  return getAdminClient();
 }
 
 /**

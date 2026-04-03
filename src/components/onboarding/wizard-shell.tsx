@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { updateWorkspace, upsertWorkspacePreferences } from '@/lib/supabase/queries';
 import { Check } from 'lucide-react';
 import type { OnboardingState, WorkspaceBranding } from '@/types';
+import { ONBOARDED_COOKIE } from '@/lib/constants';
 import { StepWorkspace } from './step-workspace';
 import { StepBrand } from './step-brand';
 import { StepPlatform } from './step-platform';
@@ -29,7 +30,7 @@ interface StepData {
 }
 
 function setOnboardedCookie() {
-  document.cookie = 'kbpipe-onboarded=true; path=/; max-age=31536000';
+  document.cookie = `${ONBOARDED_COOKIE}=true; path=/; max-age=31536000`;
 }
 
 export function WizardShell() {

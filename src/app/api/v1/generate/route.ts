@@ -1,4 +1,4 @@
-import { createClient as createAdminClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { validateApiKey } from '@/lib/api-keys';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkQuota } from '@/lib/supabase/queries';
@@ -11,17 +11,6 @@ export const dynamic = 'force-dynamic';
 
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
 const authLimiter = rateLimit({ tokens: 20, interval: 60_000 });
-
-let _admin: SupabaseClient | null = null;
-function getAdmin(): SupabaseClient {
-  if (!_admin) {
-    _admin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return _admin;
-}
 
 interface GenerateRequest {
   videoUrl?: string;
@@ -102,7 +91,7 @@ export async function POST(req: Request) {
 
   // ── Quota check ────────────────────────────────────
   try {
-    const admin = getAdmin();
+    const admin = getAdminClient();
     const quota = await checkQuota(admin, userId);
     if (!quota.allowed) {
       return Response.json(
@@ -143,7 +132,7 @@ export async function POST(req: Request) {
 
   if (!workspaceId) {
     // Try active workspace from user_settings
-    const { data: settings } = await getAdmin()
+    const { data: settings } = await getAdminClient()
       .from('user_settings')
       .select('active_workspace_id')
       .eq('user_id', userId)
@@ -153,7 +142,7 @@ export async function POST(req: Request) {
 
   if (!workspaceId) {
     // Fall back to first workspace
-    const { data: wsList } = await getAdmin()
+    const { data: wsList } = await getAdminClient()
       .from('workspaces')
       .select('id')
       .eq('user_id', userId)
@@ -170,7 +159,7 @@ export async function POST(req: Request) {
   }
 
   // Load workspace (for company context)
-  const { data: workspace } = await getAdmin()
+  const { data: workspace } = await getAdminClient()
     .from('workspaces')
     .select('*')
     .eq('id', workspaceId)
@@ -182,7 +171,7 @@ export async function POST(req: Request) {
   }
 
   // ── Load workspace preferences ────────────────────
-  const { data: prefs } = await getAdmin()
+  const { data: prefs } = await getAdminClient()
     .from('workspace_preferences')
     .select('selected_article_type_id, selected_platform_id')
     .eq('workspace_id', workspaceId)
@@ -199,7 +188,7 @@ export async function POST(req: Request) {
   }
 
   // Load article type
-  const { data: articleType } = await getAdmin()
+  const { data: articleType } = await getAdminClient()
     .from('article_types')
     .select('*')
     .eq('id', articleTypeId)
@@ -212,7 +201,7 @@ export async function POST(req: Request) {
   // Load platform profile
   let platform: { id: string; name: string; html_prompt: string; html_template: string; apply_branding?: boolean } | null = null;
   if (platformId) {
-    const { data } = await getAdmin()
+    const { data } = await getAdminClient()
       .from('platform_profiles')
       .select('*')
       .eq('id', platformId)
@@ -250,7 +239,11 @@ export async function POST(req: Request) {
   );
 
   if (phaseAError) {
-    return Response.json({ error: phaseAError }, { status: 500 });
+    console.error('Phase A pipeline error:', phaseAError);
+    return Response.json(
+      { error: 'Article generation failed. Please try again.' },
+      { status: 500 }
+    );
   }
 
   if (!structuredArticle) {
@@ -300,7 +293,7 @@ export async function POST(req: Request) {
     : (body.videoUrl?.includes('youtube.com') || body.videoUrl?.includes('youtu.be')) ? 'youtube'
     : 'loom';
 
-  const { data: saved, error: saveError } = await getAdmin()
+  const { data: saved, error: saveError } = await getAdminClient()
     .from('articles')
     .insert({
       user_id: userId,

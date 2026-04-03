@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateUrl } from '@/lib/url-validation';
 
@@ -162,11 +163,7 @@ Rules for the colors array:
     // Log usage (best-effort)
     if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
       try {
-        const { createClient: createAdmin } = await import('@supabase/supabase-js');
-        const admin = createAdmin(
-          process.env.NEXT_PUBLIC_SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY
-        );
+        const admin = getAdminClient();
         await admin.from('api_usage_logs').insert({
           user_id: user.id,
           model: 'claude-sonnet-4-20250514',

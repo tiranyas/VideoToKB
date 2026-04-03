@@ -198,7 +198,7 @@ export default function BillingPage() {
     fetch('/api/billing/invoices')
       .then((r) => r.json())
       .then((d) => { if (d.invoices) setInvoices(d.invoices); })
-      .catch(() => {});
+      .catch(console.error);
   }, []);
 
   const handleCheckout = useCallback(async (planId: string, isArticlePack = false) => {

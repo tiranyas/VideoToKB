@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createAdmin } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import Anthropic from '@anthropic-ai/sdk';
 import { DEFAULT_PLATFORM_PROFILES } from '@/lib/templates/agent4-html';
 
@@ -57,10 +57,7 @@ async function testClaudeAPI(): Promise<TestResult> {
 async function testSupabase(): Promise<TestResult> {
   const start = Date.now();
   try {
-    const admin = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const admin = getAdminClient();
     const { count, error } = await admin
       .from('articles')
       .select('*', { count: 'exact', head: true });
@@ -302,10 +299,7 @@ export async function POST(req: Request) {
 
   // Save test run to DB
   try {
-    const admin = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const admin = getAdminClient();
     await admin.from('qa_test_runs').insert({
       run_type: runType,
       total_tests: totalTests,
@@ -337,10 +331,7 @@ export async function GET() {
   }
 
   try {
-    const admin = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const admin = getAdminClient();
     const { data, error } = await admin
       .from('qa_test_runs')
       .select('*')

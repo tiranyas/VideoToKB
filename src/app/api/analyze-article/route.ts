@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateUrl } from '@/lib/url-validation';
@@ -134,10 +134,7 @@ Return ONLY the JSON object, no markdown fences or explanations.`,
 
     // Log usage
     try {
-      const admin = createSupabaseAdmin(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+      const admin = getAdminClient();
       await admin.from('api_usage_logs').insert({
         user_id: user.id,
         model: 'claude-sonnet-4-20250514',

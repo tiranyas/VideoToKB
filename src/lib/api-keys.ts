@@ -1,15 +1,8 @@
-import { createClient as createAdminClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import crypto from 'crypto';
 
-let _admin: SupabaseClient | null = null;
-function getAdmin(): SupabaseClient {
-  if (!_admin) {
-    _admin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return _admin;
+function getAdmin() {
+  return getAdminClient();
 }
 
 /** Generate a random API key with `vtk_` prefix */

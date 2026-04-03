@@ -13,7 +13,8 @@
  *   if (!limited.ok) return Response.json({ error: 'Too many requests' }, { status: 429 });
  */
 
-import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
+import { type SupabaseClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 
 export interface RateLimitOptions {
   /** Maximum number of requests allowed within the interval. */
@@ -30,20 +31,8 @@ export interface RateLimitResult {
   retryAfterMs: number;
 }
 
-let _sharedAdmin: SupabaseClient | null = null;
-
-function getSharedAdmin(): SupabaseClient {
-  if (!_sharedAdmin) {
-    _sharedAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return _sharedAdmin;
-}
-
 export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions) {
-  const getClient = () => supabaseAdmin ?? getSharedAdmin();
+  const getClient = () => supabaseAdmin ?? getAdminClient();
 
   async function check(identifier: string): Promise<RateLimitResult> {
     const client = getClient();

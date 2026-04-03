@@ -1,4 +1,5 @@
-import { createClient as createAdminClient, type SupabaseClient } from '@supabase/supabase-js';
+import { type SupabaseClient } from '@supabase/supabase-js';
+import { getAdminClient } from '@/lib/supabase/admin';
 import { verifyWebhookSignature } from '@/lib/lemonsqueezy/verify-webhook';
 import { mapLsStatus } from '@/lib/lemonsqueezy/status-map';
 import {
@@ -7,19 +8,6 @@ import {
   ARTICLE_PACK_CREDITS,
 } from '@/lib/lemonsqueezy/config';
 import type { PlanId } from '@/types';
-
-// ── Admin client (service-role, bypasses RLS) ───────────────────
-
-let _admin: SupabaseClient | null = null;
-function getAdmin(): SupabaseClient {
-  if (!_admin) {
-    _admin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return _admin;
-}
 
 // ── Webhook route ───────────────────────────────────────────────
 
@@ -53,7 +41,7 @@ export async function POST(req: Request) {
   console.log(`[LS Webhook] Event: ${eventName}, user_id: ${userId ?? 'none'}`);
 
   // 3. Route by event
-  const admin = getAdmin();
+  const admin = getAdminClient();
 
   try {
     switch (eventName) {
