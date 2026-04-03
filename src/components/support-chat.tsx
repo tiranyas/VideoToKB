@@ -205,7 +205,7 @@ export function SupportChat() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none lg:pl-[260px]">
       <div className="w-full max-w-2xl px-4 pb-4 pointer-events-auto">
 
         {/* Chat panel — slides up when open */}

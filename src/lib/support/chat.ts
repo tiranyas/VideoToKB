@@ -88,7 +88,7 @@ export async function generateSupportResponse(
   ];
 
   const stream = anthropic.messages.stream({
-    model: 'claude-haiku-4-20250414',
+    model: 'claude-3-5-haiku-20241022',
     max_tokens: 500,
     system: SYSTEM_PROMPT,
     messages,
