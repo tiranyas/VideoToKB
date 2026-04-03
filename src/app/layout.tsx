@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
+import { isAdminEmail } from "@/lib/admin";
 import { CookieConsent } from "@/components/cookie-consent";
 import { HelpWidget } from "@/components/help-widget";
 import { SupportChat } from "@/components/support-chat";
@@ -72,11 +73,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let userEmail: string | null = null;
+  let userIsAdmin = false;
 
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     userEmail = user?.email ?? null;
+    userIsAdmin = isAdminEmail(userEmail);
   } catch {
     // Not authenticated or cookies not available
   }
@@ -89,7 +92,7 @@ export default async function RootLayout({
         {userEmail ? (
           <WorkspaceProvider>
             <div className="flex min-h-screen bg-grid">
-              <Sidebar email={userEmail} />
+              <Sidebar email={userEmail} isAdmin={userIsAdmin} />
               <main className="flex-1 min-w-0">
                 {children}
               </main>

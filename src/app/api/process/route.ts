@@ -3,6 +3,7 @@ import { flushUsageLogs } from '@/lib/usage-logger';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkQuota } from '@/lib/supabase/queries';
+import { assertEnvVars } from '@/lib/env';
 import type { SSEEvent } from '@/types';
 
 export const maxDuration = 300;
@@ -37,6 +38,14 @@ interface RequestBody {
 }
 
 export async function POST(req: Request) {
+  // Fail fast if server is missing critical env vars
+  try { assertEnvVars(); } catch {
+    return new Response(
+      JSON.stringify({ error: 'Service temporarily unavailable' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Auth check
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

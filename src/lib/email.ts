@@ -144,6 +144,55 @@ export async function sendFeedbackConfirmation(
   });
 }
 
+/**
+ * Send alert email when a subscription payment fails.
+ */
+export async function sendPaymentFailedAlert(userEmail: string, portalUrl?: string | null) {
+  const html = `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#ef4444,#f97316);padding:20px 24px;border-radius:12px 12px 0 0;">
+        <h1 style="margin:0;color:white;font-size:18px;">Payment Failed</h1>
+      </div>
+      <div style="padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
+        <p style="font-size:14px;color:#374151;margin:0 0 16px;">
+          We were unable to process your latest subscription payment for KBPipe. Your account has been marked as <strong>past due</strong>.
+        </p>
+        <p style="font-size:14px;color:#374151;margin:0 0 16px;">
+          Please update your payment method to continue using KBPipe without interruption.
+        </p>
+        ${portalUrl ? `
+        <a href="${escapeHtml(portalUrl)}" style="display:inline-block;padding:12px 24px;background:#7c3aed;color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+          Update Payment Method
+        </a>
+        ` : ''}
+        <p style="font-size:13px;color:#6b7280;margin:16px 0 0;">
+          If you need help, contact us at <a href="mailto:support@kbpipe.io" style="color:#7c3aed;">support@kbpipe.io</a>.
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await getResend().emails.send({
+      from: FROM,
+      to: userEmail,
+      subject: 'Action required: Payment failed for your KBPipe subscription',
+      html,
+      replyTo: 'support@kbpipe.io',
+    });
+
+    // Also notify admin
+    await getResend().emails.send({
+      from: FROM,
+      to: 'support@kbpipe.io',
+      subject: `[Payment Failed] ${userEmail}`,
+      html: `<p>Payment failed for <strong>${escapeHtml(userEmail)}</strong>. Subscription set to past_due.</p>`,
+    });
+  } catch (err) {
+    console.error('[Email] Failed to send payment alert:', err);
+  }
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')

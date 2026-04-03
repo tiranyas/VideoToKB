@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAdminClient } from '@/lib/supabase/admin';
-
-const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
+import { isAdminEmail } from '@/lib/admin';
 
 export async function GET(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 

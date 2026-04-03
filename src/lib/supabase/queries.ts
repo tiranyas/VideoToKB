@@ -18,6 +18,7 @@ export async function getWorkspaces(
   return (data ?? [])
     .map((row: Record<string, unknown>) => row.workspace as Record<string, unknown>)
     .filter(Boolean)
+    .filter((ws) => !ws.deleted_at) // exclude soft-deleted workspaces
     .map(mapWorkspaceRow);
 }
 
@@ -29,6 +30,7 @@ export async function getWorkspace(
     .from('workspaces')
     .select('*')
     .eq('id', workspaceId)
+    .is('deleted_at', null)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -84,9 +86,10 @@ export async function deleteWorkspace(
   supabase: SupabaseClient,
   workspaceId: string
 ): Promise<void> {
+  // Soft delete: set deleted_at timestamp (workspace can be recovered within 30 days)
   const { error } = await supabase
     .from('workspaces')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', workspaceId);
 
   if (error) throw new Error(`Failed to delete workspace: ${error.message}`);
@@ -619,6 +622,16 @@ export async function saveArticle(
     .single();
 
   if (error) throw new Error(`Failed to save article: ${error.message}`);
+
+  // Fire-and-forget audit log
+  import('@/lib/audit-log').then(({ logAudit }) =>
+    logAudit(workspaceId, userId, 'article_created', {
+      articleId: data.id,
+      title: article.title,
+      sourceType: article.sourceType,
+    })
+  ).catch(() => {});
+
   return data.id;
 }
 

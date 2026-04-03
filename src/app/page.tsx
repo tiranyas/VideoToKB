@@ -50,8 +50,10 @@ export default function Home() {
   const [helpjuiceConnected, setHelpjuiceConnected] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const abortRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingArticle = useRef(false);
   const isProcessing = useRef(false);
+  const lastInputRef = useRef<{ videoUrl?: string; transcript?: string; sourceType?: string } | null>(null);
 
   // Settings from Supabase
   const [articleTypes, setArticleTypes] = useState<ArticleType[]>([]);
@@ -106,6 +108,7 @@ export default function Home() {
   const handleSubmit = useCallback(async (input: { videoUrl?: string; transcript?: string; sourceType?: string }) => {
     if (isProcessing.current) return;
     isProcessing.current = true;
+    lastInputRef.current = input;
 
     const articleType = articleTypes.find((t) => t.id === selectedTypeId);
 
@@ -131,9 +134,10 @@ export default function Home() {
     setSavedArticleId(null);
     setStreamingText('');
 
-    // Create abort controller for cancel support
+    // Create abort controller for cancel support + timeout safety net (5.5 min)
     const abortController = new AbortController();
     abortRef.current = abortController;
+    timeoutRef.current = setTimeout(() => abortController.abort(), 330_000);
 
     // Get company context from active workspace
     let companyContext: string | undefined;
@@ -233,11 +237,13 @@ export default function Home() {
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        // User cancelled — silently reset
+        // User cancelled or timeout — silently reset
         return;
       }
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
+      setPhase('input');
     } finally {
+      if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
       abortRef.current = null;
       isProcessing.current = false;
     }
@@ -271,6 +277,7 @@ export default function Home() {
 
     const abortController = new AbortController();
     abortRef.current = abortController;
+    timeoutRef.current = setTimeout(() => abortController.abort(), 330_000);
 
     try {
       const response = await fetch('/api/process', {
@@ -325,6 +332,7 @@ export default function Home() {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Connection lost. Please try again.');
     } finally {
+      if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
       abortRef.current = null;
       isProcessing.current = false;
     }
@@ -462,12 +470,22 @@ export default function Home() {
       {phase === 'processing-a' && (
         <div className="flex w-full flex-col items-center">
           <ProgressDisplay steps={stepsA} error={error ?? undefined} streamingText={streamingText} />
-          <button
-            onClick={handleCancel}
-            className="mt-4 rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-          >
-            Cancel
-          </button>
+          <div className="mt-4 flex items-center gap-3">
+            {error && lastInputRef.current && (
+              <button
+                onClick={() => { if (lastInputRef.current) handleSubmit(lastInputRef.current); }}
+                className="rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-700"
+              >
+                Retry
+              </button>
+            )}
+            <button
+              onClick={handleCancel}
+              className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 

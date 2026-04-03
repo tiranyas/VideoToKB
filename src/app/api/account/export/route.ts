@@ -43,14 +43,37 @@ export async function GET() {
       throw new Error(`Failed to fetch workspaces: ${wsError.message}`);
     }
 
+    // Fetch subscription info
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('*, plans(name, article_limit)')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // Fetch workspace memberships
+    const { data: memberships } = await supabase
+      .from('workspace_members')
+      .select('workspace_id, role, created_at')
+      .eq('user_id', userId);
+
+    // Fetch API keys (hashed only — never export raw keys)
+    const { data: apiKeys } = await supabase
+      .from('api_keys')
+      .select('id, name, created_at, last_used_at')
+      .eq('user_id', userId);
+
     const exportData = {
       exportedAt: new Date().toISOString(),
       user: {
         id: user.id,
         email: user.email,
+        createdAt: user.created_at,
       },
+      subscription: subscription ?? null,
       workspaces: workspaces ?? [],
+      memberships: memberships ?? [],
       articles: articles ?? [],
+      apiKeys: apiKeys ?? [],
     };
 
     return new Response(JSON.stringify(exportData, null, 2), {

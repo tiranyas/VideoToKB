@@ -44,7 +44,8 @@ export async function POST(req: Request) {
 
   try {
     const { token } = await createWorkspaceInvite(supabase, workspaceId, email, user.id, role || 'member');
-    const inviteUrl = `${new URL(req.url).origin}/invite/accept?token=${token}`;
+    const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+    const inviteUrl = `${origin}/invite/accept?token=${token}`;
     return new Response(JSON.stringify({ token, inviteUrl }), { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to create invite';

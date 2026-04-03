@@ -1,12 +1,13 @@
 import { getAdminClient } from '@/lib/supabase/admin';
 import { createClient as createServerClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/admin';
 
 export async function POST() {
   // Verify caller is authenticated admin
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  if (!user || !isAdminEmail(user.email)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
   }
 
   // Use service role to bypass RLS

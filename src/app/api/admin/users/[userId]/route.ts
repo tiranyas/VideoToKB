@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { isAdminEmail } from '@/lib/admin';
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type { PlanId } from '@/types';
-
-const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
 
 async function updateSubscriptionPlanAdmin(admin: SupabaseClient, userId: string, planId: PlanId) {
   const { error } = await admin
@@ -40,7 +39,7 @@ export async function PATCH(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 

@@ -7,6 +7,7 @@ import {
   ARTICLE_PACK_VARIANT_ID,
   ARTICLE_PACK_CREDITS,
 } from '@/lib/lemonsqueezy/config';
+import { sendPaymentFailedAlert } from '@/lib/email';
 import type { PlanId } from '@/types';
 
 // ── Webhook route ───────────────────────────────────────────────
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
 
   if (!secret) {
     console.error('[LS Webhook] LEMONSQUEEZY_WEBHOOK_SECRET not set');
-    return Response.json({ error: 'Server misconfigured' }, { status: 500 });
+    return Response.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   if (!verifyWebhookSignature(rawBody, signature, secret)) {
@@ -213,6 +214,13 @@ async function handlePaymentFailed(
 
   if (error) throw new Error(`Failed to mark past_due: ${error.message}`);
   console.log(`[LS Webhook] Payment failed: user=${userId} set to past_due`);
+
+  // Send payment failure alert email (non-blocking)
+  const portalUrl = payload.data.attributes.urls?.customer_portal;
+  const { data: userData } = await admin.auth.admin.getUserById(userId);
+  if (userData?.user?.email) {
+    sendPaymentFailedAlert(userData.user.email, portalUrl).catch(console.error);
+  }
 }
 
 async function handleOrderCreated(

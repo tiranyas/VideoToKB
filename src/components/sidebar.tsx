@@ -16,7 +16,7 @@ interface RecentArticle {
   created_at: string;
 }
 
-export function Sidebar({ email }: { email: string }) {
+export function Sidebar({ email, isAdmin }: { email: string; isAdmin: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -34,6 +34,8 @@ export function Sidebar({ email }: { email: string }) {
   const newWsInputRef = useRef<HTMLInputElement>(null);
 
   // Load articles scoped to active workspace
+  // Refresh on workspace change + when navigating to article-related pages (not every route)
+  const shouldRefreshArticles = pathname === '/' || pathname === '/articles' || pathname.startsWith('/articles/');
   useEffect(() => {
     if (!activeWorkspace) return;
     (async () => {
@@ -46,9 +48,10 @@ export function Sidebar({ email }: { email: string }) {
       if (data) setRecentArticles(data);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, activeWorkspace?.id]);
+  }, [activeWorkspace?.id, shouldRefreshArticles]);
 
-  // Load user usage
+  // Load user usage (refresh on workspace change or when visiting billing/generate pages)
+  const shouldRefreshUsage = pathname === '/' || pathname === '/billing' || pathname === '/dashboard';
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,7 +73,7 @@ export function Sidebar({ email }: { email: string }) {
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [shouldRefreshUsage]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -111,9 +114,6 @@ export function Sidebar({ email }: { email: string }) {
       // slug conflict or other error — ignore silently
     }
   }
-
-  const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
-  const isAdmin = ADMIN_EMAILS.includes(email);
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, active: pathname === '/dashboard' },

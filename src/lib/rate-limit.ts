@@ -29,6 +29,8 @@ export interface RateLimitResult {
   ok: boolean;
   remaining: number;
   retryAfterMs: number;
+  /** Why the request was blocked (only set when ok=false). */
+  reason?: 'rate_limit' | 'db_error';
 }
 
 export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions) {
@@ -51,7 +53,7 @@ export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions)
     if (countError) {
       // On DB error, fail closed — block request to prevent abuse during outage
       console.error('Rate limit count error:', countError);
-      return { ok: false, remaining: 0, retryAfterMs: 10_000 };
+      return { ok: false, remaining: 0, retryAfterMs: 10_000, reason: 'db_error' };
     }
 
     if (hitCount >= tokens) {
@@ -60,6 +62,7 @@ export function rateLimit({ tokens, interval, supabaseAdmin }: RateLimitOptions)
         ok: false,
         remaining: 0,
         retryAfterMs: interval, // conservative: full window
+        reason: 'rate_limit',
       };
     }
 

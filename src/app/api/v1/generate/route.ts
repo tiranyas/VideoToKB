@@ -337,5 +337,10 @@ export async function POST(req: Request) {
     response.html = finalOutput;
   }
 
-  return Response.json(response);
+  return Response.json(response, {
+    headers: {
+      'X-RateLimit-Limit': '5',
+      'X-RateLimit-Remaining': String(rl.remaining),
+    },
+  });
 }

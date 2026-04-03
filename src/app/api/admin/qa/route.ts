@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { isAdminEmail } from '@/lib/admin';
 import Anthropic from '@anthropic-ai/sdk';
 import { DEFAULT_PLATFORM_PROFILES } from '@/lib/templates/agent4-html';
 
 export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
-
-const ADMIN_EMAILS = ['tiran@kbpipe.com', 'tiranyas@gmail.com'];
 
 // Sample test transcript for QA
 const TEST_TRANSCRIPT = `Today we're going to show you how to set up two-factor authentication on your account.
@@ -251,7 +250,7 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
@@ -326,7 +325,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
