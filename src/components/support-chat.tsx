@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2, ArrowUpRight, RotateCcw } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, ArrowUpRight, RotateCcw, ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface Message {
@@ -47,6 +47,7 @@ export function SupportChat() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
+    if (!isOpen) setIsOpen(true);
     setInput('');
     setError(null);
     setMessages(prev => [...prev, { role: 'user', content: trimmed }]);
@@ -64,11 +65,9 @@ export function SupportChat() {
         throw new Error(data.error || 'Failed to get response');
       }
 
-      // Get conversation ID from header
       const convId = res.headers.get('X-Conversation-Id');
       if (convId) setConversationId(convId);
 
-      // Stream response
       const reader = res.body?.getReader();
       if (!reader) throw new Error('No response stream');
 
@@ -76,7 +75,6 @@ export function SupportChat() {
       let assistantContent = '';
       let sources: { title: string; category: string }[] = [];
 
-      // Add empty assistant message
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
       while (true) {
@@ -92,10 +90,7 @@ export function SupportChat() {
               assistantContent += parsed.content;
               setMessages(prev => {
                 const updated = [...prev];
-                updated[updated.length - 1] = {
-                  role: 'assistant',
-                  content: assistantContent,
-                };
+                updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
                 return updated;
               });
             } else if (parsed.type === 'sources') {
@@ -103,24 +98,19 @@ export function SupportChat() {
             } else if (parsed.type === 'error') {
               throw new Error(parsed.message);
             }
-          } catch { /* skip parse errors */ }
+          } catch { /* skip */ }
         }
       }
 
-      // Update final message with sources
       if (sources.length > 0) {
         setMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            sources,
-          };
+          updated[updated.length - 1] = { ...updated[updated.length - 1], sources };
           return updated;
         });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
-      // Remove empty assistant message if error
       setMessages(prev => {
         if (prev.length > 0 && prev[prev.length - 1].role === 'assistant' && !prev[prev.length - 1].content) {
           return prev.slice(0, -1);
@@ -152,157 +142,230 @@ export function SupportChat() {
     }
   }
 
+  function handleSuggestion(q: string) {
+    setInput(q);
+    // Auto-submit the suggestion
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    setInput('');
+    setError(null);
+    if (!isOpen) setIsOpen(true);
+    setMessages(prev => [...prev, { role: 'user', content: q }]);
+    setIsLoading(true);
+
+    fetch('/api/support/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q, conversationId }),
+    }).then(async (res) => {
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to get response');
+      }
+      const convId = res.headers.get('X-Conversation-Id');
+      if (convId) setConversationId(convId);
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response stream');
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+      let sources: { title: string; category: string }[] = [];
+      setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.type === 'text') {
+              assistantContent += parsed.content;
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
+                return updated;
+              });
+            } else if (parsed.type === 'sources') { sources = parsed.sources; }
+          } catch { /* skip */ }
+        }
+      }
+      if (sources.length > 0) {
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], sources };
+          return updated;
+        });
+      }
+    }).catch(err => {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setMessages(prev => {
+        if (prev.length > 0 && prev[prev.length - 1].role === 'assistant' && !prev[prev.length - 1].content) return prev.slice(0, -1);
+        return prev;
+      });
+    }).finally(() => setIsLoading(false));
+  }
+
   return (
-    <>
-      {/* Floating button */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-blue-500 text-white shadow-lg shadow-violet-200/50 hover:shadow-xl hover:scale-105 transition-all"
-          aria-label="Open support chat"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </button>
-      )}
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
+      <div className="w-full max-w-2xl px-4 pb-4 pointer-events-auto">
 
-      {/* Chat panel */}
-      {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col w-[380px] h-[520px] rounded-2xl bg-white shadow-2xl shadow-gray-200/60 border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-violet-600 to-blue-500 px-5 py-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                <MessageCircle className="h-4 w-4 text-white" />
+        {/* Chat panel — slides up when open */}
+        {isOpen && (
+          <div className="mb-2 flex flex-col h-[420px] rounded-2xl bg-white shadow-2xl shadow-gray-300/40 border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-violet-500" />
+                <span className="text-sm font-semibold text-gray-800">KBPipe Support</span>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-white">KBPipe Support</h3>
-                <p className="text-xs text-white/70">Ask us anything</p>
+              <div className="flex items-center gap-1">
+                {messages.length > 0 && (
+                  <button
+                    onClick={handleNewConversation}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    title="New conversation"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {messages.length > 0 && conversationId && !isEscalated && (
+                  <button
+                    onClick={handleEscalate}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                    title="Forward to team"
+                  >
+                    <ArrowUpRight className="h-3 w-3" />
+                    Forward to team
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleNewConversation}
-                className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                title="New conversation"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {messages.length === 0 && (
+                <div className="text-center py-6">
+                  <p className="text-sm text-gray-500">Ask about features, billing, integrations, or troubleshooting</p>
+                  <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                    {['How do I create an article?', 'What plans are available?', 'How to connect HelpJuice?'].map(q => (
+                      <button
+                        key={q}
+                        onClick={() => handleSuggestion(q)}
+                        className="text-xs text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-full px-3 py-1.5 transition-colors"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {messages.map((msg, i) => (
+                <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                  <div
+                    className={cn(
+                      'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
+                      msg.role === 'user'
+                        ? 'bg-violet-600 text-white rounded-br-md'
+                        : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div className="mt-1.5 pt-1.5 border-t border-gray-200/40">
+                        {msg.sources.map((s, j) => (
+                          <span key={j} className="inline-block text-[10px] bg-white/70 text-gray-400 rounded px-1.5 py-0.5 mr-1">
+                            {s.title}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-2.5">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="text-center">
+                  <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-1.5 inline-block">{error}</p>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-            {messages.length === 0 && (
-              <div className="text-center py-8">
-                <div className="h-12 w-12 rounded-full bg-violet-50 flex items-center justify-center mx-auto mb-3">
-                  <MessageCircle className="h-6 w-6 text-violet-400" />
-                </div>
-                <p className="text-sm font-medium text-gray-700">Hi! How can I help?</p>
-                <p className="text-xs text-gray-400 mt-1">Ask about features, billing, integrations, or troubleshooting</p>
-                <div className="mt-4 space-y-1.5">
-                  {['How do I create an article?', 'What plans are available?', 'How to connect HelpJuice?'].map(q => (
-                    <button
-                      key={q}
-                      onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                      className="block w-full text-left text-xs text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-lg px-3 py-2 transition-colors"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {messages.map((msg, i) => (
-              <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-                <div
+            {/* Input inside panel */}
+            <form onSubmit={handleSend} className="border-t border-gray-100 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={isEscalated ? 'Forwarded to team' : 'Ask a question...'}
+                  disabled={isLoading || isEscalated}
+                  maxLength={500}
+                  className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-3.5 py-2 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !input.trim() || isEscalated}
                   className={cn(
-                    'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-br from-violet-600 to-blue-500 text-white rounded-br-md'
-                      : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                    'flex h-9 w-9 items-center justify-center rounded-xl transition-all shrink-0',
+                    isLoading || !input.trim() || isEscalated
+                      ? 'bg-gray-100 text-gray-300'
+                      : 'bg-violet-600 text-white hover:bg-violet-700'
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-200/50">
-                      <p className="text-xs text-gray-400 mb-1">Sources:</p>
-                      {msg.sources.map((s, j) => (
-                        <span key={j} className="inline-block text-xs bg-white/80 text-gray-500 rounded px-1.5 py-0.5 mr-1 mb-1">
-                          {s.title}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
               </div>
-            ))}
-
-            {isLoading && messages[messages.length - 1]?.role === 'user' && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="text-center">
-                <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2 inline-block">{error}</p>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+            </form>
           </div>
+        )}
 
-          {/* Escalate bar */}
-          {messages.length > 0 && conversationId && !isEscalated && (
-            <div className="px-4 py-2 border-t border-gray-50">
-              <button
-                onClick={handleEscalate}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-600 transition-colors"
-              >
-                <ArrowUpRight className="h-3 w-3" />
-                Forward to KBPipe team
-              </button>
-            </div>
-          )}
-
-          {/* Input */}
-          <form onSubmit={handleSend} className="border-t border-gray-100 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={isEscalated ? 'Forwarded to team' : 'Type your question...'}
-                disabled={isLoading || isEscalated}
-                maxLength={500}
-                className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim() || isEscalated}
-                className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl transition-all',
-                  isLoading || !input.trim() || isEscalated
-                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                    : 'bg-gradient-to-br from-violet-600 to-blue-500 text-white hover:shadow-md'
-                )}
-              >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
-            </div>
+        {/* Bottom chat bar — always visible */}
+        {!isOpen && (
+          <form onSubmit={handleSend} className="flex items-center gap-2 rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-200 px-4 py-2.5">
+            <Sparkles className="h-4 w-4 text-violet-400 shrink-0" />
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask KBPipe AI anything..."
+              maxLength={500}
+              className="flex-1 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              onFocus={() => {
+                if (messages.length > 0) setIsOpen(true);
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-lg transition-all shrink-0',
+                !input.trim()
+                  ? 'text-gray-300'
+                  : 'text-violet-600 hover:bg-violet-50'
+              )}
+            >
+              <Send className="h-4 w-4" />
+            </button>
           </form>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 }

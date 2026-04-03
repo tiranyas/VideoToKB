@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { CookieConsent } from "@/components/cookie-consent";
+import { HelpWidget } from "@/components/help-widget";
 import { SupportChat } from "@/components/support-chat";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import "./globals.css";
@@ -92,6 +93,7 @@ export default async function RootLayout({
               <main className="flex-1 min-w-0">
                 {children}
               </main>
+              <HelpWidget />
               <SupportChat />
             </div>
           </WorkspaceProvider>
