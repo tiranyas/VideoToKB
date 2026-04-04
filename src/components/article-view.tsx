@@ -4,17 +4,21 @@ import { useState, useRef, useEffect } from 'react';
 import { Copy, Check, FileDown, Code, Eye, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 
+type ReviewTab = 'draft' | 'article';
+
 interface ArticleViewProps {
   article: string;
+  draft?: string;
   onChange: (value: string) => void;
   mode: 'review' | 'final';
   onGenerateHTML?: () => void;
   platformName?: string;
 }
 
-export function ArticleView({ article, onChange, mode, onGenerateHTML, platformName }: ArticleViewProps) {
+export function ArticleView({ article, draft, onChange, mode, onGenerateHTML, platformName }: ArticleViewProps) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [reviewTab, setReviewTab] = useState<ReviewTab>('article');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isFinal = mode === 'final';
@@ -33,7 +37,8 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(article);
+      const text = isReview && reviewTab === 'draft' ? (draft ?? '') : article;
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       toast.success('Copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
@@ -102,6 +107,31 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
         </div>
       </div>
 
+      {isReview && draft && (
+        <div className="flex gap-1 bg-gray-100 rounded-full p-1 w-fit">
+          <button
+            onClick={() => setReviewTab('draft')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+              reviewTab === 'draft'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Draft
+          </button>
+          <button
+            onClick={() => setReviewTab('article')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+              reviewTab === 'article'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Article
+          </button>
+        </div>
+      )}
+
       {showPreview ? (
         <>
           <p className="text-xs text-gray-400">
@@ -114,6 +144,17 @@ export function ArticleView({ article, onChange, mode, onGenerateHTML, platformN
             sandbox="allow-same-origin"
           />
         </>
+      ) : isReview && reviewTab === 'draft' ? (
+        <div className="relative">
+          <div className="absolute top-3 right-3 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-medium text-amber-700">
+            Agent 2 — Raw Draft
+          </div>
+          <textarea
+            readOnly
+            value={draft ?? ''}
+            className="w-full min-h-[400px] rounded-xl border border-amber-200 bg-amber-50/30 px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
+          />
+        </div>
       ) : (
         <textarea
           value={article}

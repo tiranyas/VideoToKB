@@ -499,6 +499,7 @@ export default function Home() {
         <div className="flex w-full flex-col items-center gap-4">
           <ArticleView
             article={structuredArticle}
+            draft={draftArticle}
             onChange={setStructuredArticle}
             mode="review"
             onGenerateHTML={isMarkdownOnly ? undefined : handleGenerateHTML}
