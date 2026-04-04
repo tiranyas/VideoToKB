@@ -145,12 +145,15 @@ function estimateTokens(text: string): number {
 /**
  * Scale max_tokens based on input length.
  * Short content → default limit. Long content → proportionally more output.
- * Uses 0.8x ratio to ensure the AI has enough room for comprehensive coverage.
+ * Ratio varies per agent:
+ *   - Draft (0.8x): summarises transcript, output shorter than input
+ *   - Structure (1.2x): reformats draft, output ≈ same size or slightly larger
+ *   - HTML (1.5x): wraps in tags, output larger than input
  */
-function scaledMaxTokens(inputText: string, base: number, cap: number): number {
+function scaledMaxTokens(inputText: string, base: number, cap: number, ratio = 0.8): number {
   const inputTokens = estimateTokens(inputText);
   if (inputTokens > 2000) {
-    const scaled = Math.min(Math.round(inputTokens * 0.8), cap);
+    const scaled = Math.min(Math.round(inputTokens * ratio), cap);
     return Math.max(scaled, base);
   }
   return base;
@@ -166,7 +169,7 @@ export async function generateDraft(
   draftSystemPrompt: string,
   onToken?: (chunk: string) => void
 ): Promise<string> {
-  const maxTokens = scaledMaxTokens(transcript, 4000, 24000);
+  const maxTokens = scaledMaxTokens(transcript, 4000, 24000, 0.8);
   console.log(`[agent2-draft] input=${estimateTokens(transcript)} tokens, maxOutput=${maxTokens}`);
   const result = await callClaude(
     draftSystemPrompt,
@@ -189,7 +192,7 @@ export async function generateStructured(
   structureSystemPrompt: string,
   onToken?: (chunk: string) => void
 ): Promise<string> {
-  const maxTokens = scaledMaxTokens(draft, 4000, 24000);
+  const maxTokens = scaledMaxTokens(draft, 4000, 24000, 1.2);
   console.log(`[agent3-structure] input=${estimateTokens(draft)} tokens, maxOutput=${maxTokens}`);
   const result = await callClaude(
     structureSystemPrompt,
@@ -212,7 +215,7 @@ export async function generateHTML(
   htmlSystemPrompt: string,
   onToken?: (chunk: string) => void
 ): Promise<string> {
-  const maxTokens = scaledMaxTokens(structuredArticle, 5000, 24000);
+  const maxTokens = scaledMaxTokens(structuredArticle, 5000, 24000, 1.5);
   console.log(`[agent4-html] input=${estimateTokens(structuredArticle)} tokens, maxOutput=${maxTokens}`);
   return callClaude(
     htmlSystemPrompt,
