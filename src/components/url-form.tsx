@@ -185,25 +185,27 @@ export function UrlForm({
   // Client-side YouTube duration via hidden IFrame Player API
   const fetchYouTubeDuration = useCallback((videoId: string): Promise<number | null> => {
     return new Promise((resolve) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let playerInstance: any = null;
       const timeout = setTimeout(() => { cleanup(); resolve(null); }, 8000);
 
       function cleanup() {
         clearTimeout(timeout);
+        // Destroy player properly to stop postMessage intervals
+        try { playerInstance?.destroy(); } catch { /* already destroyed */ }
+        playerInstance = null;
         const el = document.getElementById('yt-duration-player');
         if (el) el.remove();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (window as any)._ytDurationResolve;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any)._ytDurationResolve = (dur: number) => {
+      function onDuration(dur: number) {
         cleanup();
         resolve(dur > 0 ? dur : null);
-      };
+      }
 
       // Load YouTube IFrame API if not already loaded
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!(window as any).YT) {
+      if (!(window as any).YT?.Player) {
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
         document.head.appendChild(tag);
@@ -216,16 +218,15 @@ export function UrlForm({
       function createPlayer(vid: string) {
         // Create a hidden container
         let container = document.getElementById('yt-duration-player');
-        if (!container) {
-          container = document.createElement('div');
-          container.id = 'yt-duration-player';
-          container.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;left:-9999px';
-          document.body.appendChild(container);
-        }
+        if (container) container.remove();
+        container = document.createElement('div');
+        container.id = 'yt-duration-player';
+        container.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;left:-9999px';
+        document.body.appendChild(container);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const YT = (window as any).YT;
-        new YT.Player('yt-duration-player', {
+        playerInstance = new YT.Player('yt-duration-player', {
           videoId: vid,
           width: 1,
           height: 1,
@@ -233,9 +234,7 @@ export function UrlForm({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onReady: (event: any) => {
               const dur = event.target.getDuration?.();
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const cb = (window as any)._ytDurationResolve;
-              if (cb) cb(dur || 0);
+              onDuration(dur || 0);
             },
           },
         });
