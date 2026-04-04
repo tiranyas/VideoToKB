@@ -74,7 +74,9 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
         meta.title = details.title as string;
       }
     }
-  } catch { /* duration is nice-to-have */ }
+  } catch (err) {
+    console.log(`[video-meta] innertube failed: ${err instanceof Error ? err.message : err}`);
+  }
 
   // Method 2: Scrape watch page for duration (embed page doesn't include it)
   if (meta.duration === null) {
@@ -87,18 +89,23 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
             'Accept-Language': 'en-US,en;q=0.9',
             Cookie: CONSENT_COOKIES,
           },
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(10000),
         }
       );
+      console.log(`[video-meta] watch page status=${res.status} size=${res.headers.get('content-length') ?? 'unknown'}`);
       if (res.ok) {
         const html = await res.text();
         // "lengthSeconds":"2539" from ytInitialPlayerResponse
         const lenMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
         if (lenMatch) {
           meta.duration = parseInt(lenMatch[1], 10);
+        } else {
+          console.log(`[video-meta] no lengthSeconds in ${html.length} chars`);
         }
       }
-    } catch { /* non-critical */ }
+    } catch (err) {
+      console.log(`[video-meta] watch page failed: ${err instanceof Error ? err.message : err}`);
+    }
   }
 
   return meta;
@@ -240,7 +247,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Unsupported URL' }, { status: 400 });
     }
 
-    console.log('[video-meta]', { provider: meta.provider, title: meta.title, duration: meta.duration, hasThumbnail: !!meta.thumbnail });
+    console.log(`[video-meta] provider=${meta.provider} duration=${meta.duration} title=${meta.title.slice(0, 30)}`);
     return Response.json(meta);
   } catch {
     return Response.json({ error: 'Failed to fetch video metadata' }, { status: 500 });
