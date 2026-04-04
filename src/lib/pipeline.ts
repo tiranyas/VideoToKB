@@ -154,6 +154,15 @@ export async function runPhaseA(
     return;
   }
 
+  // Log transcript stats for transparency
+  const wordCount = cleanedTranscript.split(/\s+/).filter(Boolean).length;
+  const estimatedMinutes = Math.round(wordCount / 150); // ~150 wpm speaking rate
+  onProgress({
+    step: 'transcribe',
+    status: 'complete',
+    message: `Transcript ready — ${wordCount.toLocaleString()} words (~${estimatedMinutes} min of content)`,
+  });
+
   // Step 3: Agent 2 — Generate draft
   try {
     onProgress({ step: 'draft', status: 'in_progress', message: 'Analyzing transcript...' });

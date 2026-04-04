@@ -623,14 +623,16 @@ export async function saveArticle(
 
   if (error) throw new Error(`Failed to save article: ${error.message}`);
 
-  // Fire-and-forget audit log
-  import('@/lib/audit-log').then(({ logAudit }) =>
-    logAudit(workspaceId, userId, 'article_created', {
-      articleId: data.id,
-      title: article.title,
-      sourceType: article.sourceType,
-    })
-  ).catch(() => {});
+  // Fire-and-forget audit log (server-side only — admin client needs service role key)
+  if (typeof window === 'undefined') {
+    import('@/lib/audit-log').then(({ logAudit }) =>
+      logAudit(workspaceId, userId, 'article_created', {
+        articleId: data.id,
+        title: article.title,
+        sourceType: article.sourceType,
+      })
+    ).catch(() => {});
+  }
 
   return data.id;
 }
