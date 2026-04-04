@@ -42,6 +42,7 @@ export default function Home() {
   const [stepsA, setStepsA] = useState<StepInfo[]>(PHASE_A_STEPS);
   const [stepsB, setStepsB] = useState<StepInfo[]>(PHASE_B_STEPS);
   const [error, setError] = useState<string | null>(null);
+  const [draftArticle, setDraftArticle] = useState('');
   const [structuredArticle, setStructuredArticle] = useState('');
   const [finalHTML, setFinalHTML] = useState('');
   const [savedArticleId, setSavedArticleId] = useState<string | null>(null);
@@ -129,6 +130,7 @@ export default function Home() {
     setPhase('processing-a');
     setError(null);
     setStepsA(PHASE_A_STEPS.map((s) => ({ ...s })));
+    setDraftArticle('');
     setStructuredArticle('');
     setFinalHTML('');
     setSavedArticleId(null);
@@ -206,6 +208,8 @@ export default function Home() {
           );
         } else if (event.step === 'review' && 'article' in event && event.article) {
           setStreamingText('');
+          const eventDraft = 'draft' in event ? event.draft ?? '' : '';
+          setDraftArticle(eventDraft);
           setStructuredArticle(event.article);
           setPhase('review');
           // Auto-save article to DB (guarded against concurrent saves)
@@ -224,6 +228,7 @@ export default function Home() {
               sourceType: sourceType as 'loom' | 'google-drive' | 'youtube' | 'paste',
               articleTypeId: selectedTypeId,
               platformId: selectedPlatformId,
+              draft: eventDraft || undefined,
               markdown: event.article,
             }).then((id) => setSavedArticleId(id)).catch(console.error).finally(() => { isSavingArticle.current = false; });
           }
@@ -358,6 +363,7 @@ export default function Home() {
     setStepsA(PHASE_A_STEPS.map((s) => ({ ...s })));
     setStepsB(PHASE_B_STEPS.map((s) => ({ ...s })));
     setError(null);
+    setDraftArticle('');
     setStructuredArticle('');
     setFinalHTML('');
     setStreamingText('');

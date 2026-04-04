@@ -615,6 +615,7 @@ export async function saveArticle(
       source_type: article.sourceType,
       article_type_id: article.articleTypeId ?? null,
       platform_id: article.platformId ?? null,
+      draft: article.draft ?? null,
       markdown: article.markdown,
       html: article.html ?? null,
     })
@@ -686,6 +687,7 @@ export async function getArticles(
     platformId: row.platform_id ?? undefined,
     articleTypeName: row.article_types?.name,
     platformName: row.platform_profiles?.name,
+    draft: row.draft ?? undefined,
     markdown: row.markdown,
     html: row.html ?? undefined,
     createdAt: row.created_at,
@@ -713,6 +715,7 @@ export async function getArticle(
     sourceType: data.source_type,
     articleTypeId: data.article_type_id ?? undefined,
     platformId: data.platform_id ?? undefined,
+    draft: data.draft ?? undefined,
     markdown: data.markdown,
     html: data.html ?? undefined,
     createdAt: data.created_at,

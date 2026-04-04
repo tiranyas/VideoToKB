@@ -145,12 +145,12 @@ function estimateTokens(text: string): number {
 /**
  * Scale max_tokens based on input length.
  * Short content → default limit. Long content → proportionally more output.
+ * Uses 0.8x ratio to ensure the AI has enough room for comprehensive coverage.
  */
 function scaledMaxTokens(inputText: string, base: number, cap: number): number {
   const inputTokens = estimateTokens(inputText);
-  // For inputs over 3,000 tokens, scale output proportionally
-  if (inputTokens > 3000) {
-    const scaled = Math.min(Math.round(inputTokens * 0.6), cap);
+  if (inputTokens > 2000) {
+    const scaled = Math.min(Math.round(inputTokens * 0.8), cap);
     return Math.max(scaled, base);
   }
   return base;
@@ -159,54 +159,61 @@ function scaledMaxTokens(inputText: string, base: number, cap: number): number {
 /**
  * Agent 2 — Draft Generator
  * Takes a transcript and produces a comprehensive draft article.
- * Output tokens scale with transcript length (2,500 → up to 8,000).
+ * Output tokens scale with transcript length (3,000 → up to 16,000).
  */
 export async function generateDraft(
   transcript: string,
   draftSystemPrompt: string,
   onToken?: (chunk: string) => void
 ): Promise<string> {
-  const maxTokens = scaledMaxTokens(transcript, 2500, 8000);
-  return callClaude(
+  const maxTokens = scaledMaxTokens(transcript, 3000, 16000);
+  console.log(`[agent2-draft] input=${estimateTokens(transcript)} tokens, maxOutput=${maxTokens}`);
+  const result = await callClaude(
     draftSystemPrompt,
     `Create a comprehensive draft article from the following transcript:\n\n${transcript}`,
     maxTokens,
     'draft',
     onToken
   );
+  console.log(`[agent2-draft] output=${estimateTokens(result)} tokens (${result.length} chars)`);
+  return result;
 }
 
 /**
  * Agent 3 — Structure Formatter
  * Takes a draft and structures it according to the article type template.
- * Output tokens scale with draft length (2,000 → up to 6,000).
+ * Output tokens scale with draft length (3,000 → up to 12,000).
  */
 export async function generateStructured(
   draft: string,
   structureSystemPrompt: string,
   onToken?: (chunk: string) => void
 ): Promise<string> {
-  const maxTokens = scaledMaxTokens(draft, 2000, 6000);
-  return callClaude(
+  const maxTokens = scaledMaxTokens(draft, 3000, 12000);
+  console.log(`[agent3-structure] input=${estimateTokens(draft)} tokens, maxOutput=${maxTokens}`);
+  const result = await callClaude(
     structureSystemPrompt,
     `Transform the following draft article into a professionally structured article according to the template:\n\n${draft}`,
     maxTokens,
     'structure',
     onToken
   );
+  console.log(`[agent3-structure] output=${estimateTokens(result)} tokens (${result.length} chars)`);
+  return result;
 }
 
 /**
  * Agent 4 — HTML Generator
  * Takes a structured article and converts it to platform-specific HTML.
- * Output tokens scale with article length (5,000 → up to 10,000).
+ * Output tokens scale with article length (5,000 → up to 16,000).
  */
 export async function generateHTML(
   structuredArticle: string,
   htmlSystemPrompt: string,
   onToken?: (chunk: string) => void
 ): Promise<string> {
-  const maxTokens = scaledMaxTokens(structuredArticle, 5000, 10000);
+  const maxTokens = scaledMaxTokens(structuredArticle, 5000, 16000);
+  console.log(`[agent4-html] input=${estimateTokens(structuredArticle)} tokens, maxOutput=${maxTokens}`);
   return callClaude(
     htmlSystemPrompt,
     `Convert the following structured article into HTML code that matches the reference template exactly:\n\n${structuredArticle}`,

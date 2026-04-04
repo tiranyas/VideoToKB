@@ -6,6 +6,7 @@ export interface ProgressEvent {
   step: PipelineStep | 'error';
   status: StepStatus;
   message?: string;
+  draft?: string;
   article?: string;
   html?: string;
 }
@@ -208,6 +209,7 @@ export interface Article {
   sourceType: 'youtube' | 'loom' | 'google-drive' | 'paste';
   articleTypeId?: string;
   platformId?: string;
+  draft?: string;
   markdown: string;
   html?: string;
   createdAt: string;

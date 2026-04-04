@@ -12,7 +12,7 @@ import { cn } from '@/utils/cn';
 import { useWorkspace } from '@/contexts/workspace-context';
 import type { Article, PlatformProfile } from '@/types';
 
-type Tab = 'markdown' | 'html' | 'preview';
+type Tab = 'draft' | 'markdown' | 'html' | 'preview';
 
 export default function ArticleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -100,7 +100,7 @@ export default function ArticleDetailPage() {
   }
 
   async function handleCopy() {
-    const text = tab === 'markdown' ? markdownDraft : (article?.html ?? '');
+    const text = tab === 'draft' ? (article?.draft ?? '') : tab === 'markdown' ? markdownDraft : (article?.html ?? '');
     if (!text) return;
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -235,7 +235,8 @@ export default function ArticleDetailPage() {
   }
 
   const tabs: { id: Tab; label: string; show: boolean }[] = [
-    { id: 'markdown', label: 'Markdown', show: true },
+    { id: 'draft', label: 'Draft', show: !!article.draft },
+    { id: 'markdown', label: 'Article', show: true },
     { id: 'preview', label: 'Preview', show: !!article.html },
     { id: 'html', label: 'HTML', show: !!article.html },
   ];
@@ -340,7 +341,18 @@ export default function ArticleDetailPage() {
         </div>
 
         {/* Content */}
-        {tab === 'preview' ? (
+        {tab === 'draft' ? (
+          <div className="relative">
+            <div className="absolute top-3 right-3 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-medium text-amber-700">
+              Agent 2 — Raw Draft
+            </div>
+            <textarea
+              readOnly
+              value={article.draft ?? ''}
+              className="w-full min-h-[500px] rounded-2xl border border-amber-200 bg-amber-50/30 px-4 py-3 font-mono text-sm leading-relaxed focus:outline-none"
+            />
+          </div>
+        ) : tab === 'preview' ? (
           <>
             <p className="text-xs text-gray-400 mb-2">
               This is a generic preview. Images and layout may appear differently in your KB platform (e.g. HelpJuice).

@@ -193,8 +193,8 @@ export async function runPhaseA(
     structEmitter.flush();
     onProgress({ step: 'structure', status: 'complete', message: 'Article structured' });
 
-    // Phase A complete — return the structured article for human review
-    onProgress({ step: 'review', status: 'complete', article: structuredArticle });
+    // Phase A complete — return both draft and structured article for human review
+    onProgress({ step: 'review', status: 'complete', draft, article: structuredArticle });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     onProgress({ step: 'error', status: 'error', message: `Article generation failed: ${message}` });
