@@ -76,33 +76,26 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
     }
   } catch { /* duration is nice-to-have */ }
 
-  // Method 2: Scrape embed page for duration (less likely to be blocked than watch page)
+  // Method 2: Scrape watch page for duration (embed page doesn't include it)
   if (meta.duration === null) {
     try {
       const res = await fetch(
-        `https://www.youtube.com/embed/${videoId}`,
+        `https://www.youtube.com/watch?v=${videoId}`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
             Cookie: CONSENT_COOKIES,
           },
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(8000),
         }
       );
       if (res.ok) {
         const html = await res.text();
-        // Try "lengthSeconds":"1234" from embedded player config
+        // "lengthSeconds":"2539" from ytInitialPlayerResponse
         const lenMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
         if (lenMatch) {
           meta.duration = parseInt(lenMatch[1], 10);
-        }
-        // Also try approxDurationMs
-        if (meta.duration === null) {
-          const msMatch = html.match(/"approxDurationMs"\s*:\s*"(\d+)"/);
-          if (msMatch) {
-            meta.duration = Math.round(parseInt(msMatch[1], 10) / 1000);
-          }
         }
       }
     } catch { /* non-critical */ }
