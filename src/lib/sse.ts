@@ -14,9 +14,14 @@ export async function readSSEStream(
 
   const decoder = new TextDecoder();
   let buffer = '';
+  const CHUNK_TIMEOUT_MS = 60_000; // 60s max between chunks
 
   while (true) {
-    const { done, value } = await reader.read();
+    // Race between next chunk and timeout — prevents hanging on network drop
+    const timeout = new Promise<{ done: true; value: undefined }>((_, reject) =>
+      setTimeout(() => reject(new Error('Stream timeout: no data received for 60s')), CHUNK_TIMEOUT_MS)
+    );
+    const { done, value } = await Promise.race([reader.read(), timeout]);
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });

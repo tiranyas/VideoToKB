@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
+import { getActiveWorkspaceId } from '@/lib/supabase/queries';
 
 const limiter = rateLimit({ tokens: 5, interval: 60_000 });
 
@@ -41,15 +42,22 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: 'articleIds must be strings' }), { status: 400 });
   }
 
+  // Scope delete to user's active workspace
+  const workspaceId = await getActiveWorkspaceId(supabase, user.id);
+  if (!workspaceId) {
+    return new Response(JSON.stringify({ error: 'No active workspace' }), { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from('articles')
     .delete()
     .in('id', articleIds)
     .eq('user_id', user.id)
+    .eq('workspace_id', workspaceId)
     .select('id');
 
   if (error) {
-    console.error('Bulk delete error:', error);
+    console.error('[Bulk Delete] Failed:', error.message);
     return new Response(JSON.stringify({ error: 'Failed to delete articles' }), { status: 500 });
   }
 

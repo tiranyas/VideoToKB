@@ -168,7 +168,7 @@ export default function ArticlesPage() {
                   <Link href={`/articles/${article.id}`} className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 mb-1">
                       {sourceIcon(article.sourceType)}
-                      <h3 className="font-medium text-gray-900 truncate">{article.title}</h3>
+                      <h3 className="font-medium text-gray-900 truncate" title={article.title}>{article.title}</h3>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-400 ml-[26px]">
                       {(article as ArticleWithMeta).articleTypeName && (

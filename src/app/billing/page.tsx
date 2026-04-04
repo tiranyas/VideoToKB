@@ -303,7 +303,7 @@ export default function BillingPage() {
   }
 
   const totalLimit = usage ? usage.articleLimit + usage.bonusCredits : 0;
-  const usagePercent = usage ? Math.min(100, (usage.articlesThisPeriod / Math.max(1, totalLimit)) * 100) : 0;
+  const usagePercent = usage ? Math.min(100, Math.round((usage.articlesThisPeriod / Math.max(1, totalLimit)) * 100)) : 0;
   const hasActiveSub = subscription?.lsSubscriptionId && subscription.status !== 'expired';
   const isCanceled = subscription?.status === 'canceled';
   const canResume = isCanceled && subscription?.currentPeriodEnd && new Date(subscription.currentPeriodEnd) > new Date();

@@ -71,7 +71,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setWorkspaces(wsList);
 
     // Determine active workspace: localStorage → DB → first workspace
-    const lsId = localStorage.getItem(LS_KEY);
+    let lsId: string | null = null;
+    try { lsId = localStorage.getItem(LS_KEY); } catch { /* private browsing */ }
     let resolvedId = lsId && wsList.some(w => w.id === lsId) ? lsId : null;
 
     if (!resolvedId) {
@@ -84,7 +85,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
 
     setActiveId(resolvedId);
-    localStorage.setItem(LS_KEY, resolvedId);
+    try { localStorage.setItem(LS_KEY, resolvedId); } catch { /* private browsing */ }
     setIsLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -107,7 +108,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const switchWorkspace = useCallback((id: string) => {
     setActiveId(id);
-    localStorage.setItem(LS_KEY, id);
+    try { localStorage.setItem(LS_KEY, id); } catch { /* private browsing */ }
     if (userId) {
       setActiveWorkspaceId(supabase, userId, id).catch(console.error);
     }
@@ -122,7 +123,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const wsList = await getWorkspaces(supabase, userId);
     setWorkspaces(wsList);
     setActiveId(id);
-    localStorage.setItem(LS_KEY, id);
+    try { localStorage.setItem(LS_KEY, id); } catch { /* private browsing */ }
     return id;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

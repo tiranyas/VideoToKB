@@ -21,6 +21,8 @@ function baseUrl(subdomain: string): string {
   return `https://${subdomain}.helpjuice.com/api/v3`;
 }
 
+const API_TIMEOUT_MS = 10_000; // 10s timeout for Helpjuice API calls
+
 function headers(apiKey: string): HeadersInit {
   return {
     Authorization: apiKey,
@@ -40,6 +42,7 @@ export async function testConnection(
     const res = await fetch(`${baseUrl(subdomain)}/categories`, {
       method: 'GET',
       headers: headers(apiKey),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -66,6 +69,7 @@ export async function fetchCategories(
   const res = await fetch(`${baseUrl(subdomain)}/categories`, {
     method: 'GET',
     headers: headers(apiKey),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -92,6 +96,7 @@ export async function publishDraft(
   const res = await fetch(`${baseUrl(subdomain)}/articles`, {
     method: 'POST',
     headers: headers(apiKey),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
     body: JSON.stringify({
       article: {
         name: opts.title,

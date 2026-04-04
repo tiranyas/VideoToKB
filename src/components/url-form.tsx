@@ -113,8 +113,9 @@ export function UrlForm({
       {/* Config selectors */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">Article Type</label>
+          <label htmlFor="article-type" className="block text-xs font-medium text-gray-400 mb-1.5">Article Type</label>
           <select
+            id="article-type"
             value={selectedTypeId}
             onChange={(e) => onTypeChange(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
@@ -127,8 +128,9 @@ export function UrlForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">Output Platform</label>
+          <label htmlFor="output-platform" className="block text-xs font-medium text-gray-400 mb-1.5">Output Platform</label>
           <select
+            id="output-platform"
             value={selectedPlatformId}
             onChange={(e) => onPlatformChange(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"

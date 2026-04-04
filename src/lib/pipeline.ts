@@ -56,10 +56,11 @@ function createTokenEmitter(
   };
 }
 
-function detectProvider(url: string): 'loom' | 'gdrive' | 'youtube' {
+function detectProvider(url: string): 'loom' | 'gdrive' | 'youtube' | null {
   if (url.includes('drive.google.com')) return 'gdrive';
   if (isYouTubeUrl(url)) return 'youtube';
-  return 'loom';
+  if (url.includes('loom.com')) return 'loom';
+  return null;
 }
 
 async function resolveVideoUrl(url: string, provider: 'loom' | 'gdrive'): Promise<VideoInfo> {
@@ -96,6 +97,11 @@ export async function runPhaseA(
     onProgress({ step: 'transcribe', status: 'complete', message: 'Skipped — using pasted transcript' });
   } else if (videoUrl) {
     const provider = detectProvider(videoUrl);
+
+    if (!provider) {
+      onProgress({ step: 'error', status: 'error', message: 'Unsupported video URL. Please use a Loom, Google Drive, or YouTube link.' });
+      return;
+    }
 
     if (provider === 'youtube') {
       // YouTube: Extract captions directly (no AssemblyAI needed)

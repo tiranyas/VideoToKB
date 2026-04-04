@@ -98,7 +98,10 @@ export function SupportChat() {
             } else if (parsed.type === 'error') {
               throw new Error(parsed.message);
             }
-          } catch { /* skip */ }
+          } catch (e) {
+            if (e instanceof SyntaxError) continue; // skip malformed JSON
+            throw e; // re-throw app errors
+          }
         }
       }
 
