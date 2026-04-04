@@ -13,10 +13,6 @@ interface VideoMeta {
 
 // ── YouTube ─────────────────────────────────────────────
 
-const INNERTUBE_API_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
-const CONSENT_COOKIES =
-  'SOCS=CAISNQgDEitib3FfaWRlbnRpdHlfZnJvbnRlbmRfdWlzZXJ2ZXJfMjAyMzA4MjkuMDdfcDAQAhgCGgJlbg; CONSENT=PENDING+999';
-
 async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
   const meta: VideoMeta = {
     title: 'YouTube Video',
@@ -37,76 +33,8 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
     }
   } catch { /* non-critical */ }
 
-  // Method 1: InnerTube for duration
-  try {
-    const res = await fetch(
-      `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0',
-          Cookie: CONSENT_COOKIES,
-        },
-        body: JSON.stringify({
-          context: {
-            client: {
-              clientName: 'TVHTML5_SIMPLY_EMBEDDED_PLAYER',
-              clientVersion: '2.0',
-              hl: 'en',
-              gl: 'US',
-            },
-            thirdParty: { embedUrl: 'https://www.google.com' },
-          },
-          videoId,
-        }),
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const details = data?.videoDetails as Record<string, unknown> | undefined;
-      if (details?.lengthSeconds) {
-        meta.duration = parseInt(details.lengthSeconds as string, 10);
-      }
-      // InnerTube also has title — use as fallback
-      if (meta.title === 'YouTube Video' && details?.title) {
-        meta.title = details.title as string;
-      }
-    }
-  } catch (err) {
-    console.log(`[video-meta] innertube failed: ${err instanceof Error ? err.message : err}`);
-  }
-
-  // Method 2: Scrape watch page for duration (embed page doesn't include it)
-  if (meta.duration === null) {
-    try {
-      const res = await fetch(
-        `https://www.youtube.com/watch?v=${videoId}`,
-        {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9',
-            Cookie: CONSENT_COOKIES,
-          },
-          signal: AbortSignal.timeout(10000),
-        }
-      );
-      console.log(`[video-meta] watch page status=${res.status} size=${res.headers.get('content-length') ?? 'unknown'}`);
-      if (res.ok) {
-        const html = await res.text();
-        // "lengthSeconds":"2539" from ytInitialPlayerResponse
-        const lenMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
-        if (lenMatch) {
-          meta.duration = parseInt(lenMatch[1], 10);
-        } else {
-          console.log(`[video-meta] no lengthSeconds in ${html.length} chars`);
-        }
-      }
-    } catch (err) {
-      console.log(`[video-meta] watch page failed: ${err instanceof Error ? err.message : err}`);
-    }
-  }
+  // Duration: not fetched server-side — YouTube blocks server IPs.
+  // The client component fetches it via YouTube IFrame API instead.
 
   return meta;
 }
@@ -136,7 +64,6 @@ async function getLoomMeta(url: string): Promise<VideoMeta> {
       const data = await res.json();
       if (data.title) meta.title = data.title;
       if (data.thumbnail_url) meta.thumbnail = data.thumbnail_url;
-      // Loom oEmbed includes duration in some responses
       if (data.duration) meta.duration = Math.round(data.duration);
     }
   } catch { /* non-critical */ }
@@ -247,7 +174,6 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Unsupported URL' }, { status: 400 });
     }
 
-    console.log(`[video-meta] provider=${meta.provider} duration=${meta.duration} title=${meta.title.slice(0, 30)}`);
     return Response.json(meta);
   } catch {
     return Response.json({ error: 'Failed to fetch video metadata' }, { status: 500 });

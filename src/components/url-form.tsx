@@ -167,6 +167,82 @@ export function UrlForm({
 
   const detectedProvider = useMemo(() => detectProvider(videoUrl), [videoUrl]);
 
+  // Extract YouTube video ID for client-side duration fetch
+  const extractYouTubeId = useCallback((url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?.*v=)([a-zA-Z0-9_-]{11})/,
+      /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  }, []);
+
+  // Client-side YouTube duration via hidden IFrame Player API
+  const fetchYouTubeDuration = useCallback((videoId: string): Promise<number | null> => {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => { cleanup(); resolve(null); }, 8000);
+
+      function cleanup() {
+        clearTimeout(timeout);
+        const el = document.getElementById('yt-duration-player');
+        if (el) el.remove();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any)._ytDurationResolve;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any)._ytDurationResolve = (dur: number) => {
+        cleanup();
+        resolve(dur > 0 ? dur : null);
+      };
+
+      // Load YouTube IFrame API if not already loaded
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(window as any).YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).onYouTubeIframeAPIReady = () => createPlayer(videoId);
+      } else {
+        createPlayer(videoId);
+      }
+
+      function createPlayer(vid: string) {
+        // Create a hidden container
+        let container = document.getElementById('yt-duration-player');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'yt-duration-player';
+          container.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;left:-9999px';
+          document.body.appendChild(container);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const YT = (window as any).YT;
+        new YT.Player('yt-duration-player', {
+          videoId: vid,
+          width: 1,
+          height: 1,
+          events: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onReady: (event: any) => {
+              const dur = event.target.getDuration?.();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const cb = (window as any)._ytDurationResolve;
+              if (cb) cb(dur || 0);
+            },
+          },
+        });
+      }
+    });
+  }, []);
+
   // Fetch video metadata when URL changes (debounced)
   const fetchMeta = useCallback(async (url: string) => {
     if (!detectProvider(url)) {
@@ -186,6 +262,18 @@ export function UrlForm({
       if (res.ok) {
         const data: VideoMeta = await res.json();
         setVideoMeta(data);
+
+        // For YouTube: fetch duration client-side if server didn't get it
+        if (data.provider === 'youtube' && data.duration === null) {
+          const videoId = extractYouTubeId(url);
+          if (videoId) {
+            fetchYouTubeDuration(videoId).then((dur) => {
+              if (dur) {
+                setVideoMeta((prev) => prev ? { ...prev, duration: dur } : prev);
+              }
+            });
+          }
+        }
       } else {
         setVideoMeta(null);
       }
@@ -194,7 +282,7 @@ export function UrlForm({
     } finally {
       setMetaLoading(false);
     }
-  }, []);
+  }, [extractYouTubeId, fetchYouTubeDuration]);
 
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
