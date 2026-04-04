@@ -45,13 +45,13 @@ export function TypingHero() {
   }, [charIndex, isDeleting, currentPhrase]);
 
   return (
-    <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">
-      From a short video to a{' '}
-      <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
+    <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.3]">
+      <span className="block">From a short video to a</span>
+      <span className="block bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent min-h-[1.3em]">
         {displayText}
         <span className="animate-blink text-violet-500">|</span>
       </span>
-      {' '}in minutes
+      <span className="block">in minutes</span>
     </h1>
   );
 }
