@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Loader2, Settings } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Loader2, Settings, Clock, Film } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { cn } from '@/utils/cn';
@@ -10,12 +10,27 @@ import type { ArticleType, PlatformProfile } from '@/types';
 type InputMode = 'url' | 'transcript';
 type VideoProvider = 'youtube' | 'loom' | 'gdrive' | null;
 
+interface VideoMeta {
+  title: string;
+  thumbnail: string | null;
+  duration: number | null;
+  provider: 'youtube' | 'loom' | 'gdrive';
+}
+
 function detectProvider(url: string): VideoProvider {
   if (!url.trim()) return null;
   if (url.includes('youtube.com/') || url.includes('youtu.be/')) return 'youtube';
   if (url.includes('loom.com/share/')) return 'loom';
   if (url.includes('drive.google.com')) return 'gdrive';
   return null;
+}
+
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function YouTubeIcon({ className }: { className?: string }) {
@@ -48,6 +63,79 @@ function GDriveIcon({ className }: { className?: string }) {
   );
 }
 
+// ── Video Preview Card ──────────────────────────────────
+
+function VideoPreview({ meta, loading }: { meta: VideoMeta | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 p-3 animate-pulse">
+        <div className="h-16 w-28 shrink-0 rounded-lg bg-gray-200" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-gray-200" />
+          <div className="h-3 w-1/3 rounded bg-gray-200" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!meta) return null;
+
+  const providerColors = {
+    youtube: 'border-red-200 bg-red-50/30',
+    loom: 'border-purple-200 bg-purple-50/30',
+    gdrive: 'border-green-200 bg-green-50/30',
+  };
+
+  const providerLabels = {
+    youtube: 'YouTube',
+    loom: 'Loom',
+    gdrive: 'Google Drive',
+  };
+
+  return (
+    <div className={cn('flex items-center gap-3 rounded-xl border p-3 transition-all', providerColors[meta.provider])}>
+      {/* Thumbnail */}
+      {meta.thumbnail ? (
+        <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-gray-900">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={meta.thumbnail}
+            alt={meta.title}
+            className="h-full w-full object-cover"
+          />
+          {meta.duration != null && (
+            <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              {formatDuration(meta.duration)}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-lg bg-gray-200/50">
+          <Film className="h-6 w-6 text-gray-400" />
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-gray-900" title={meta.title}>
+          {meta.title}
+        </p>
+        <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
+          <span>{providerLabels[meta.provider]}</span>
+          {meta.duration != null && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatDuration(meta.duration)}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Form ───────────────────────────────────────────
+
 interface UrlFormProps {
   onSubmit: (input: { videoUrl?: string; transcript?: string }) => void;
   isProcessing: boolean;
@@ -72,8 +160,60 @@ export function UrlForm({
   const [mode, setMode] = useState<InputMode>('url');
   const [videoUrl, setVideoUrl] = useState('');
   const [transcript, setTranscript] = useState('');
+  const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
+  const [metaLoading, setMetaLoading] = useState(false);
+  const lastFetchedUrl = useRef('');
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const detectedProvider = useMemo(() => detectProvider(videoUrl), [videoUrl]);
+
+  // Fetch video metadata when URL changes (debounced)
+  const fetchMeta = useCallback(async (url: string) => {
+    if (!detectProvider(url)) {
+      setVideoMeta(null);
+      return;
+    }
+    if (url === lastFetchedUrl.current) return;
+    lastFetchedUrl.current = url;
+
+    setMetaLoading(true);
+    try {
+      const res = await fetch('/api/video-meta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      if (res.ok) {
+        const data: VideoMeta = await res.json();
+        setVideoMeta(data);
+      } else {
+        setVideoMeta(null);
+      }
+    } catch {
+      setVideoMeta(null);
+    } finally {
+      setMetaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    const provider = detectProvider(videoUrl);
+    if (!provider) {
+      setVideoMeta(null);
+      lastFetchedUrl.current = '';
+      return;
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      fetchMeta(videoUrl);
+    }, 600);
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [videoUrl, fetchMeta]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -202,30 +342,37 @@ export function UrlForm({
             />
           </div>
 
+          {/* Video Preview Card */}
+          {(metaLoading || videoMeta) && (
+            <VideoPreview meta={videoMeta} loading={metaLoading} />
+          )}
+
           {/* Provider icons — all on by default, only matched one stays colored */}
-          <div className="flex items-center justify-center gap-6">
-            {([
-              { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', defaultColor: 'text-red-400', Icon: YouTubeIcon },
-              { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', defaultColor: 'text-purple-400', Icon: LoomIcon },
-              { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-600', defaultColor: 'text-green-500', Icon: GDriveIcon },
-            ]).map(({ id, label, activeColor, defaultColor, Icon }) => {
-              const hasUrl = detectedProvider !== null;
-              const isActive = detectedProvider === id;
-              return (
-                <div key={id} className={cn(
-                  'flex items-center gap-1.5 transition-all duration-200',
-                  hasUrl
-                    ? isActive
-                      ? `${activeColor} scale-110`
-                      : 'text-gray-200 scale-100'
-                    : defaultColor
-                )}>
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs font-medium">{label}</span>
-                </div>
-              );
-            })}
-          </div>
+          {!videoMeta && !metaLoading && (
+            <div className="flex items-center justify-center gap-6">
+              {([
+                { id: 'youtube' as const, label: 'YouTube', activeColor: 'text-red-500', defaultColor: 'text-red-400', Icon: YouTubeIcon },
+                { id: 'loom' as const, label: 'Loom', activeColor: 'text-purple-500', defaultColor: 'text-purple-400', Icon: LoomIcon },
+                { id: 'gdrive' as const, label: 'Drive', activeColor: 'text-green-600', defaultColor: 'text-green-500', Icon: GDriveIcon },
+              ]).map(({ id, label, activeColor, defaultColor, Icon }) => {
+                const hasUrl = detectedProvider !== null;
+                const isActive = detectedProvider === id;
+                return (
+                  <div key={id} className={cn(
+                    'flex items-center gap-1.5 transition-all duration-200',
+                    hasUrl
+                      ? isActive
+                        ? `${activeColor} scale-110`
+                        : 'text-gray-200 scale-100'
+                      : defaultColor
+                  )}>
+                    <Icon className="h-5 w-5" />
+                    <span className="text-xs font-medium">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       ) : (
         <div>
