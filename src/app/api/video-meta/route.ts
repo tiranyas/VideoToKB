@@ -76,11 +76,11 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
     }
   } catch { /* duration is nice-to-have */ }
 
-  // Method 2: Scrape watch page for duration if InnerTube was blocked
+  // Method 2: Scrape embed page for duration (less likely to be blocked than watch page)
   if (meta.duration === null) {
     try {
       const res = await fetch(
-        `https://www.youtube.com/watch?v=${videoId}`,
+        `https://www.youtube.com/embed/${videoId}`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -92,7 +92,7 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
       );
       if (res.ok) {
         const html = await res.text();
-        // Try "lengthSeconds":"1234" from ytInitialPlayerResponse
+        // Try "lengthSeconds":"1234" from embedded player config
         const lenMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
         if (lenMatch) {
           meta.duration = parseInt(lenMatch[1], 10);
@@ -247,6 +247,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Unsupported URL' }, { status: 400 });
     }
 
+    console.log('[video-meta]', { provider: meta.provider, title: meta.title, duration: meta.duration, hasThumbnail: !!meta.thumbnail });
     return Response.json(meta);
   } catch {
     return Response.json({ error: 'Failed to fetch video metadata' }, { status: 500 });
