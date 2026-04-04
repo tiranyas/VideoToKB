@@ -40,6 +40,7 @@ export async function transcribeVideo(
 
   const transcript = await client.transcripts.transcribe({
     audio: audioUrl,
+    speech_models: ['universal-3-pro', 'universal-2'],
     auto_chapters: true,
     language_detection: true,
   });
