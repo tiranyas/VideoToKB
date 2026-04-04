@@ -12,33 +12,8 @@ interface VideoMeta {
 }
 
 // ── YouTube ─────────────────────────────────────────────
-
-const INNERTUBE_BASE = 'https://www.youtube.com/youtubei/v1';
-const INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
-
-// Try multiple InnerTube client configs — some work from server IPs, some don't
-const INNERTUBE_CLIENTS = [
-  {
-    name: 'ANDROID',
-    context: {
-      client: { clientName: 'ANDROID', clientVersion: '19.29.37', hl: 'en', gl: 'US' },
-    },
-    headers: {
-      'User-Agent': 'com.google.android.youtube/19.29.37 (Linux; U; Android 14) gzip',
-      'Content-Type': 'application/json',
-    },
-  },
-  {
-    name: 'WEB',
-    context: {
-      client: { clientName: 'WEB', clientVersion: '2.20241126.01.00', hl: 'en', gl: 'US' },
-    },
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      'Content-Type': 'application/json',
-    },
-  },
-];
+// Duration is NOT available server-side — YouTube blocks all server IPs.
+// We show title + thumbnail which are reliably available via oEmbed.
 
 async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
   const meta: VideoMeta = {
@@ -48,7 +23,6 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
     provider: 'youtube',
   };
 
-  // oEmbed for title (fast, reliable)
   try {
     const res = await fetch(
       `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
@@ -59,28 +33,6 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
       if (data.title) meta.title = data.title;
     }
   } catch { /* non-critical */ }
-
-  // Duration via InnerTube — try multiple client configs
-  for (const client of INNERTUBE_CLIENTS) {
-    if (meta.duration !== null) break;
-    try {
-      const res = await fetch(`${INNERTUBE_BASE}/player?key=${INNERTUBE_KEY}`, {
-        method: 'POST',
-        headers: client.headers,
-        body: JSON.stringify({ context: client.context, videoId }),
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const details = data?.videoDetails as Record<string, unknown> | undefined;
-      if (details?.lengthSeconds) {
-        meta.duration = parseInt(details.lengthSeconds as string, 10);
-      }
-      if (meta.title === 'YouTube Video' && details?.title) {
-        meta.title = details.title as string;
-      }
-    } catch { /* try next client */ }
-  }
 
   return meta;
 }
@@ -127,12 +79,10 @@ async function getLoomMeta(url: string): Promise<VideoMeta> {
         if (titleMatch) {
           meta.title = titleMatch[1].replace(/\s*[|\-]\s*Loom\s*$/, '').trim() || 'Loom Video';
         }
-        // og:image for thumbnail
         if (!meta.thumbnail) {
           const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
           if (ogMatch) meta.thumbnail = ogMatch[1];
         }
-        // og:video:duration
         if (!meta.duration) {
           const durMatch = html.match(/<meta[^>]*property="og:video:duration"[^>]*content="([^"]+)"/i);
           if (durMatch) meta.duration = parseInt(durMatch[1], 10);
@@ -161,7 +111,6 @@ async function getGDriveMeta(url: string): Promise<VideoMeta> {
 
   const fileId = match[1];
 
-  // Try fetching the file page for title
   try {
     const res = await fetch(
       `https://drive.google.com/file/d/${fileId}/view`,
@@ -179,7 +128,6 @@ async function getGDriveMeta(url: string): Promise<VideoMeta> {
           .replace(/\s*-\s*Google Drive\s*$/, '')
           .trim() || 'Google Drive Video';
       }
-      // og:image for thumbnail
       const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
       if (ogMatch) meta.thumbnail = ogMatch[1];
     }
@@ -191,7 +139,6 @@ async function getGDriveMeta(url: string): Promise<VideoMeta> {
 // ── Route Handler ───────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Auth check
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -210,14 +157,19 @@ export async function POST(req: NextRequest) {
 
     if (url.includes('youtube.com/') || url.includes('youtu.be/')) {
       const videoId = extractYouTubeId(url);
-      if (!videoId) return Response.json({ error: 'Invalid YouTube URL' }, { status: 400 });
-      meta = await getYouTubeMeta(videoId);
-    } else if (url.includes('loom.com/share/')) {
+      if (!videoId) {
+        // Return graceful response instead of 400 — client handles null duration
+        meta = { title: 'YouTube Video', thumbnail: null, duration: null, provider: 'youtube' };
+      } else {
+        meta = await getYouTubeMeta(videoId);
+      }
+    } else if (url.includes('loom.com/share/') || url.includes('loom.com')) {
       meta = await getLoomMeta(url);
     } else if (url.includes('drive.google.com')) {
       meta = await getGDriveMeta(url);
     } else {
-      return Response.json({ error: 'Unsupported URL' }, { status: 400 });
+      // Unknown provider — return minimal response instead of 400
+      meta = { title: 'Video', thumbnail: null, duration: null, provider: 'youtube' };
     }
 
     return Response.json(meta);
