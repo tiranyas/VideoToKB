@@ -13,6 +13,33 @@ interface VideoMeta {
 
 // ── YouTube ─────────────────────────────────────────────
 
+const INNERTUBE_BASE = 'https://www.youtube.com/youtubei/v1';
+const INNERTUBE_KEY = 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
+
+// Try multiple InnerTube client configs — some work from server IPs, some don't
+const INNERTUBE_CLIENTS = [
+  {
+    name: 'ANDROID',
+    context: {
+      client: { clientName: 'ANDROID', clientVersion: '19.29.37', hl: 'en', gl: 'US' },
+    },
+    headers: {
+      'User-Agent': 'com.google.android.youtube/19.29.37 (Linux; U; Android 14) gzip',
+      'Content-Type': 'application/json',
+    },
+  },
+  {
+    name: 'WEB',
+    context: {
+      client: { clientName: 'WEB', clientVersion: '2.20241126.01.00', hl: 'en', gl: 'US' },
+    },
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      'Content-Type': 'application/json',
+    },
+  },
+];
+
 async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
   const meta: VideoMeta = {
     title: 'YouTube Video',
@@ -33,8 +60,27 @@ async function getYouTubeMeta(videoId: string): Promise<VideoMeta> {
     }
   } catch { /* non-critical */ }
 
-  // Duration: not fetched server-side — YouTube blocks server IPs.
-  // The client component fetches it via YouTube IFrame API instead.
+  // Duration via InnerTube — try multiple client configs
+  for (const client of INNERTUBE_CLIENTS) {
+    if (meta.duration !== null) break;
+    try {
+      const res = await fetch(`${INNERTUBE_BASE}/player?key=${INNERTUBE_KEY}`, {
+        method: 'POST',
+        headers: client.headers,
+        body: JSON.stringify({ context: client.context, videoId }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const details = data?.videoDetails as Record<string, unknown> | undefined;
+      if (details?.lengthSeconds) {
+        meta.duration = parseInt(details.lengthSeconds as string, 10);
+      }
+      if (meta.title === 'YouTube Video' && details?.title) {
+        meta.title = details.title as string;
+      }
+    } catch { /* try next client */ }
+  }
 
   return meta;
 }
