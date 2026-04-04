@@ -11,7 +11,7 @@ interface UseCase {
 const useCases: UseCase[] = [
   {
     role: 'Customer Success Teams',
-    pain: "You record Loom walkthroughs for customers all day — but those videos aren't searchable or reusable.",
+    pain: "You record Loom walkthroughs for customers all day, but those videos aren't searchable or reusable.",
     solution: 'Turn every Loom into a help center article automatically.',
   },
   {

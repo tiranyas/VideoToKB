@@ -20,6 +20,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Typing cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
 /* Subtle dot grid background */
 .bg-grid {
   background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);

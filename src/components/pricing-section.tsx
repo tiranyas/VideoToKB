@@ -242,7 +242,7 @@ export function PricingSection() {
         {/* FAQ-style note */}
         <ScrollReveal delay={400}>
           <p className="text-center text-sm text-gray-400 mt-10">
-            Start free — upgrade anytime. All prices exclude applicable taxes.
+            Start free, upgrade anytime. All prices exclude applicable taxes.
           </p>
         </ScrollReveal>
       </div>

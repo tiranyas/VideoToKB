@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { ScrollReveal, StaggerReveal } from '@/components/scroll-reveal';
 import { UseCaseCarousel } from '@/components/use-case-carousel';
 import { PricingSection } from '@/components/pricing-section';
+import { TypingHero } from '@/components/typing-hero';
 
 export default function LandingPage() {
   return (
@@ -50,19 +51,13 @@ export default function LandingPage() {
           </ScrollReveal>
 
           <ScrollReveal duration={900} delay={100}>
-            <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">
-              From a short video to a{' '}
-              <span className="bg-gradient-to-r from-violet-600 to-blue-500 bg-clip-text text-transparent">
-                publish-ready KB article
-              </span>
-              {' '}— in minutes
-            </h1>
+            <TypingHero />
           </ScrollReveal>
 
           <ScrollReveal delay={250} duration={800}>
             <p className="mt-6 text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-              Paste a Loom, YouTube, or Google Drive URL — or any text like user stories,
-              specs, and meeting notes. KBPipe generates a fully structured article —
+              Paste a Loom, YouTube, or Google Drive URL, or any text like user stories,
+              specs, and meeting notes. KBPipe generates a fully structured article
               in your template, your format, styled for your KB platform.
             </p>
           </ScrollReveal>
@@ -73,7 +68,7 @@ export default function LandingPage() {
                 href="/login?signup=true"
                 className="w-full sm:w-auto text-base font-medium text-white bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-700 hover:to-blue-600 rounded-full px-8 py-3.5 transition-all shadow-lg shadow-violet-500/25"
               >
-                Start Creating — It&apos;s Free
+                Start Creating for Free
               </Link>
               <a
                 href="#how-it-works"
@@ -109,7 +104,7 @@ export default function LandingPage() {
                 <div className="h-28 bg-gray-200 rounded-lg flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-3xl mb-1 opacity-40">&#9654;</div>
-                    <div className="text-xs text-gray-400">Raw video — not searchable, not reusable</div>
+                    <div className="text-xs text-gray-400">Raw video, not searchable, not reusable</div>
                   </div>
                 </div>
               </div>
@@ -166,17 +161,17 @@ export default function LandingPage() {
               <div className="text-center p-4">
                 <div className="text-2xl mb-2">&#9998;</div>
                 <div className="text-sm font-semibold text-gray-900 mb-1">Your templates</div>
-                <p className="text-xs text-gray-500">Define custom article types with your own AI prompts — how-to guides, troubleshooting, release notes, or anything you need.</p>
+                <p className="text-xs text-gray-500">Define custom article types with your own AI prompts: how-to guides, troubleshooting, release notes, or anything you need.</p>
               </div>
               <div className="text-center p-4">
                 <div className="text-2xl mb-2">&#127912;</div>
                 <div className="text-sm font-semibold text-gray-900 mb-1">Your platform format</div>
-                <p className="text-xs text-gray-500">Output HTML styled exactly for HelpJuice, Zendesk, Intercom, or your custom KB — not a one-size-fits-all doc.</p>
+                <p className="text-xs text-gray-500">Output HTML styled exactly for HelpJuice, Zendesk, Intercom, or your custom KB. Not a one-size-fits-all doc.</p>
               </div>
               <div className="text-center p-4">
                 <div className="text-2xl mb-2">&#127981;</div>
                 <div className="text-sm font-semibold text-gray-900 mb-1">Your brand voice</div>
-                <p className="text-xs text-gray-500">Set company context, terminology, and tone once — every article sounds like your team wrote it.</p>
+                <p className="text-xs text-gray-500">Set company context, terminology, and tone once. Every article sounds like your team wrote it.</p>
               </div>
             </StaggerReveal>
           </div>
@@ -231,7 +226,7 @@ export default function LandingPage() {
                 {
                   step: '1',
                   title: 'Paste Your Content',
-                  desc: 'Drop a video URL from Loom, YouTube, or Google Drive. Or paste any text — user stories, meeting notes, specifications.',
+                  desc: 'Drop a video URL from Loom, YouTube, or Google Drive. Or paste any text: user stories, meeting notes, specifications.',
                   icon: (
                     <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
@@ -241,7 +236,7 @@ export default function LandingPage() {
                 {
                   step: '2',
                   title: 'Choose a Template',
-                  desc: 'Pick the article type: How-to Guide, Feature Explainer, Troubleshooting, Onboarding — or create your own.',
+                  desc: 'Pick the article type: How-to Guide, Feature Explainer, Troubleshooting, Onboarding, or create your own.',
                   icon: (
                     <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 3h1a2.25 2.25 0 012.236 2.028" />
@@ -299,7 +294,7 @@ export default function LandingPage() {
                 },
                 {
                   title: 'Platform Profiles',
-                  desc: 'Generate HTML styled exactly for your KB platform — HelpJuice, Zendesk, Intercom, or custom.',
+                  desc: 'Generate HTML styled exactly for your KB platform: HelpJuice, Zendesk, Intercom, or custom.',
                   icon: '🎯',
                 },
                 {
@@ -427,7 +422,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-violet-100 text-lg mb-8 max-w-md mx-auto">
                 Your content already exists in videos, meetings, and docs.
-                Let KBPipe structure it into publish-ready articles — in your format, your style.
+                Let KBPipe structure it into publish-ready articles, in your format, your style.
               </p>
               <Link
                 href="/login?signup=true"
