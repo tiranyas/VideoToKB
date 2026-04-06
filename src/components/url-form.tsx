@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { cn } from '@/utils/cn';
 import type { ArticleType, PlatformProfile } from '@/types';
 import { OUTPUT_LANGUAGES } from '@/lib/languages';
+import { Tooltip } from '@/components/tooltip';
 
 type InputMode = 'url' | 'transcript';
 type VideoProvider = 'youtube' | 'loom' | 'gdrive' | null;
@@ -258,7 +259,9 @@ export function UrlForm({
       {/* Config selectors */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="article-type" className="block text-xs font-medium text-gray-400 mb-1.5">Article Type</label>
+          <Tooltip text="Controls how the AI drafts and structures your article" position="bottom">
+            <label htmlFor="article-type" className="block text-xs font-medium text-gray-400 mb-1.5">Article Type</label>
+          </Tooltip>
           <select
             id="article-type"
             value={selectedTypeId}
@@ -273,7 +276,9 @@ export function UrlForm({
           </select>
         </div>
         <div>
-          <label htmlFor="output-platform" className="block text-xs font-medium text-gray-400 mb-1.5">Output Platform</label>
+          <Tooltip text="Determines the HTML format and styling of the final output" position="bottom">
+            <label htmlFor="output-platform" className="block text-xs font-medium text-gray-400 mb-1.5">Output Platform</label>
+          </Tooltip>
           <select
             id="output-platform"
             value={selectedPlatformId}
@@ -291,7 +296,9 @@ export function UrlForm({
 
       {/* Output language */}
       <div>
-        <label htmlFor="output-language" className="block text-xs font-medium text-gray-400 mb-1.5">Output Language</label>
+        <Tooltip text="Override the output language instead of matching the transcript" position="bottom">
+          <label htmlFor="output-language" className="block text-xs font-medium text-gray-400 mb-1.5">Output Language</label>
+        </Tooltip>
         <select
           id="output-language"
           value={outputLanguage}
@@ -317,41 +324,47 @@ export function UrlForm({
 
       {/* Mode toggle */}
       <div className="bg-gray-100 rounded-full p-1 flex">
-        <button
-          type="button"
-          onClick={() => setMode('url')}
-          className={cn(
-            'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
-            mode === 'url'
-              ? 'bg-violet-600 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          )}
-          disabled={isProcessing}
-        >
-          Video URL
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('transcript')}
-          className={cn(
-            'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
-            mode === 'transcript'
-              ? 'bg-violet-600 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          )}
-          disabled={isProcessing}
-        >
-          Paste Content
-        </button>
+        <Tooltip text="Paste a link to auto-extract the transcript">
+          <button
+            type="button"
+            onClick={() => setMode('url')}
+            className={cn(
+              'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
+              mode === 'url'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            )}
+            disabled={isProcessing}
+          >
+            Video URL
+          </button>
+        </Tooltip>
+        <Tooltip text="Manually paste text, meeting notes, or any content">
+          <button
+            type="button"
+            onClick={() => setMode('transcript')}
+            className={cn(
+              'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
+              mode === 'transcript'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            )}
+            disabled={isProcessing}
+          >
+            Paste Content
+          </button>
+        </Tooltip>
       </div>
 
       {/* Input area */}
       {mode === 'url' ? (
         <div className="space-y-3">
           <div>
-            <label htmlFor="video-url" className="block text-xs font-medium text-gray-400 mb-1.5">
-              Video URL
-            </label>
+            <Tooltip text="Supports YouTube, Loom, and Google Drive links" position="bottom">
+              <label htmlFor="video-url" className="block text-xs font-medium text-gray-400 mb-1.5">
+                Video URL
+              </label>
+            </Tooltip>
             <input
               id="video-url"
               type="url"
@@ -397,9 +410,11 @@ export function UrlForm({
         </div>
       ) : (
         <div>
-          <label htmlFor="transcript" className="block text-xs font-medium text-gray-400 mb-1.5">
-            Your Content
-          </label>
+          <Tooltip text="Paste any text — transcripts, specs, user stories, meeting notes" position="bottom">
+            <label htmlFor="transcript" className="block text-xs font-medium text-gray-400 mb-1.5">
+              Your Content
+            </label>
+          </Tooltip>
           <textarea
             id="transcript"
             value={transcript}
