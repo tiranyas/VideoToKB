@@ -14,10 +14,10 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // unsafe-eval only needed in dev (Next.js HMR); stripped in production
               `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.lemonsqueezy.com`,
-              "style-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com https://translate.googleapis.com",
               "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://*.helpjuice.com https://*.lemonsqueezy.com",
+              "font-src 'self' data: https://fonts.gstatic.com https://www.gstatic.com",
+              "connect-src 'self' https://*.supabase.co https://*.helpjuice.com https://*.lemonsqueezy.com https://translate.googleapis.com https://*.google.com https://*.gstatic.com",
               "frame-src 'self' https://*.lemonsqueezy.com",
               "object-src 'none'",
               "base-uri 'self'",
