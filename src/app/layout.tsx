@@ -86,6 +86,32 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof Node === 'function' && Node.prototype) {
+                const origRemoveChild = Node.prototype.removeChild;
+                Node.prototype.removeChild = function(child) {
+                  if (child.parentNode !== this) {
+                    if (console) console.warn('removeChild: node not a child', child);
+                    return child;
+                  }
+                  return origRemoveChild.apply(this, arguments);
+                };
+                const origInsertBefore = Node.prototype.insertBefore;
+                Node.prototype.insertBefore = function(newNode, refNode) {
+                  if (refNode && refNode.parentNode !== this) {
+                    if (console) console.warn('insertBefore: ref node not a child', refNode);
+                    return newNode;
+                  }
+                  return origInsertBefore.apply(this, arguments);
+                };
+              }
+            `,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
