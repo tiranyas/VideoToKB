@@ -15,7 +15,9 @@ import {
   getPlatformProfiles, addPlatformProfile, updatePlatformProfile, deletePlatformProfile,
   getWorkspaceMembers, getWorkspaceInvites, removeWorkspaceMember, revokeInvite,
   getUserSubscription,
+  getWorkspacePreferences, upsertWorkspacePreferences,
 } from '@/lib/supabase/queries';
+import { OUTPUT_LANGUAGES } from '@/lib/languages';
 
 type Tab = 'brand' | 'agents' | 'integrations' | 'team';
 
@@ -132,7 +134,65 @@ function BrandContextTab() {
     <div className="space-y-10">
       <CompanyContextTab />
       <div className="border-t border-gray-100" />
+      <OutputLanguageSetting />
+      <div className="border-t border-gray-100" />
       <BrandingTab />
+    </div>
+  );
+}
+
+// ── Output Language Setting ─────────────────────────────
+
+function OutputLanguageSetting() {
+  const { activeWorkspace } = useWorkspace();
+  const supabase = createClient();
+  const [language, setLanguage] = useState<string>('auto');
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!activeWorkspace) return;
+    getWorkspacePreferences(supabase, activeWorkspace.id)
+      .then((prefs) => {
+        setLanguage(prefs.outputLanguage ?? 'auto');
+        setLoaded(true);
+      })
+      .catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id]);
+
+  async function handleChange(value: string) {
+    if (!activeWorkspace) return;
+    setLanguage(value);
+    try {
+      await upsertWorkspacePreferences(supabase, activeWorkspace.id, {
+        outputLanguage: value === 'auto' ? null : value,
+      });
+      toast.success('Default output language updated');
+    } catch (err) {
+      toast.error('Failed to save language preference');
+      console.error(err);
+    }
+  }
+
+  if (!activeWorkspace || !loaded) return null;
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-lg font-semibold tracking-tight text-gray-900">Default Output Language</h3>
+        <p className="text-sm text-gray-400 mt-0.5">
+          Set the default language for generated articles. By default, articles are written in the same language as the transcript. You can override this per-article on the generate page.
+        </p>
+      </div>
+      <select
+        value={language}
+        onChange={(e) => handleChange(e.target.value)}
+        className="w-full max-w-sm rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+      >
+        {OUTPUT_LANGUAGES.map((lang) => (
+          <option key={lang.value} value={lang.value}>{lang.label}</option>
+        ))}
+      </select>
     </div>
   );
 }

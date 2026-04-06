@@ -18,6 +18,7 @@ interface GenerateRequest {
   articleType?: string;   // article type ID (optional — uses workspace default)
   platform?: string;      // platform profile ID (optional — uses workspace default)
   workspace?: string;     // workspace ID (optional — uses active workspace)
+  outputLanguage?: string; // output language override (optional — uses workspace default, then auto-detect)
 }
 
 interface GenerateResponse {
@@ -173,12 +174,13 @@ export async function POST(req: Request) {
   // ── Load workspace preferences ────────────────────
   const { data: prefs } = await getAdminClient()
     .from('workspace_preferences')
-    .select('selected_article_type_id, selected_platform_id')
+    .select('selected_article_type_id, selected_platform_id, output_language')
     .eq('workspace_id', workspaceId)
     .maybeSingle();
 
   const articleTypeId = body.articleType || prefs?.selected_article_type_id;
   const platformId = body.platform || prefs?.selected_platform_id;
+  const outputLanguage = body.outputLanguage || prefs?.output_language || undefined;
 
   if (!articleTypeId) {
     return Response.json(
@@ -226,6 +228,7 @@ export async function POST(req: Request) {
       draftPrompt: articleType.draft_prompt,
       structurePrompt: articleType.structure_prompt,
       companyContext,
+      outputLanguage,
     },
     (event: SSEEvent) => {
       // Skip streaming token events in synchronous v1 endpoint

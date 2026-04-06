@@ -81,13 +81,14 @@ export interface PhaseAInput {
   draftPrompt: string;
   structurePrompt: string;
   companyContext?: string;
+  outputLanguage?: string;
 }
 
 export async function runPhaseA(
   input: PhaseAInput,
   onProgress: (event: SSEEvent) => void
 ): Promise<void> {
-  const { videoUrl, transcript, draftPrompt, structurePrompt, companyContext } = input;
+  const { videoUrl, transcript, draftPrompt, structurePrompt, companyContext, outputLanguage } = input;
 
   let cleanedTranscript = transcript ?? '';
 
@@ -172,7 +173,11 @@ export async function runPhaseA(
     if (companyContext) {
       fullDraftPrompt += `\n\n## Company Context\n${companyContext}`;
     }
-    fullDraftPrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- DETECT the language of the transcript below.\n- Write the ENTIRE output in that SAME language — every heading, sentence, and bullet point.\n- If the transcript is in English, write in English. If in Hebrew, write in Hebrew. If in Spanish, write in Spanish. Etc.\n- The Company Context may be in a DIFFERENT language — that's fine, still write the output in the transcript's language.\n- Never refuse to process a transcript because of its language.`;
+    if (outputLanguage && outputLanguage !== 'auto') {
+      fullDraftPrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- Write the ENTIRE output in **${outputLanguage}** — every heading, sentence, and bullet point.\n- The transcript may be in a different language — translate and adapt the content to ${outputLanguage}.\n- The Company Context may also be in a different language — still write the output in ${outputLanguage}.\n- Never refuse to process a transcript because of its language.`;
+    } else {
+      fullDraftPrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- DETECT the language of the transcript below.\n- Write the ENTIRE output in that SAME language — every heading, sentence, and bullet point.\n- If the transcript is in English, write in English. If in Hebrew, write in Hebrew. If in Spanish, write in Spanish. Etc.\n- The Company Context may be in a DIFFERENT language — that's fine, still write the output in the transcript's language.\n- Never refuse to process a transcript because of its language.`;
+    }
 
     const draftEmitter = createTokenEmitter('draft', onProgress);
     const draft = await generateDraft(cleanedTranscript, fullDraftPrompt, (chunk) => draftEmitter.push(chunk));
@@ -186,7 +191,11 @@ export async function runPhaseA(
     if (companyContext) {
       fullStructurePrompt += `\n\n## Company Context\n${companyContext}`;
     }
-    fullStructurePrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- The output MUST be in the SAME language as the input draft.\n- Do NOT switch languages. If the draft is in English, output in English. If in Hebrew, output in Hebrew.\n- The Company Context may be in a different language — ignore that, match the draft's language.`;
+    if (outputLanguage && outputLanguage !== 'auto') {
+      fullStructurePrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- The output MUST be in **${outputLanguage}**.\n- Do NOT switch languages. Keep every heading, sentence, and bullet in ${outputLanguage}.\n- The Company Context may be in a different language — ignore that, output in ${outputLanguage}.`;
+    } else {
+      fullStructurePrompt += `\n\n## CRITICAL — Language Rule (HIGHEST PRIORITY)\n- The output MUST be in the SAME language as the input draft.\n- Do NOT switch languages. If the draft is in English, output in English. If in Hebrew, output in Hebrew.\n- The Company Context may be in a different language — ignore that, match the draft's language.`;
+    }
 
     const structEmitter = createTokenEmitter('structure', onProgress);
     const structuredArticle = await generateStructured(draft, fullStructurePrompt, (chunk) => structEmitter.push(chunk));

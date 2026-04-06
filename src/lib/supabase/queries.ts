@@ -181,6 +181,7 @@ export async function setActiveWorkspaceId(
 export interface WorkspacePreferences {
   selectedArticleTypeId: string | null;
   selectedPlatformId: string | null;
+  outputLanguage: string | null;
 }
 
 export async function getWorkspacePreferences(
@@ -189,13 +190,14 @@ export async function getWorkspacePreferences(
 ): Promise<WorkspacePreferences> {
   const { data } = await supabase
     .from('workspace_preferences')
-    .select('selected_article_type_id, selected_platform_id')
+    .select('selected_article_type_id, selected_platform_id, output_language')
     .eq('workspace_id', workspaceId)
     .maybeSingle();
 
   return {
     selectedArticleTypeId: data?.selected_article_type_id ?? null,
     selectedPlatformId: data?.selected_platform_id ?? null,
+    outputLanguage: data?.output_language ?? null,
   };
 }
 
@@ -209,6 +211,8 @@ export async function upsertWorkspacePreferences(
     row.selected_article_type_id = prefs.selectedArticleTypeId;
   if (prefs.selectedPlatformId !== undefined)
     row.selected_platform_id = prefs.selectedPlatformId;
+  if (prefs.outputLanguage !== undefined)
+    row.output_language = prefs.outputLanguage;
 
   const { error } = await supabase
     .from('workspace_preferences')

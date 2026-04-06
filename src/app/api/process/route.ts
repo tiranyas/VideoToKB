@@ -21,6 +21,7 @@ interface RequestBody {
   draftPrompt?: string;
   structurePrompt?: string;
   companyContext?: string;
+  outputLanguage?: string;
 
   // Phase B inputs
   article?: string;
@@ -189,6 +190,7 @@ export async function POST(req: Request) {
                 draftPrompt: body.draftPrompt!,
                 structurePrompt: body.structurePrompt!,
                 companyContext: body.companyContext,
+                outputLanguage: body.outputLanguage,
               },
               send
             );

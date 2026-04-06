@@ -61,6 +61,7 @@ export default function Home() {
   const [platforms, setPlatforms] = useState<PlatformProfile[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState('');
   const [selectedPlatformId, setSelectedPlatId] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('auto');
   const [userId, setUserId] = useState<string | null>(null);
 
   const supabase = createClient();
@@ -86,6 +87,7 @@ export default function Home() {
           const prefs = await getWorkspacePreferences(supabase, activeWorkspace.id);
           setSelectedTypeId(prefs.selectedArticleTypeId ?? types[0]?.id ?? '');
           setSelectedPlatId(prefs.selectedPlatformId ?? profs[0]?.id ?? '');
+          setSelectedLanguage(prefs.outputLanguage ?? 'auto');
         } else {
           setSelectedTypeId(types[0]?.id ?? '');
           setSelectedPlatId(profs[0]?.id ?? '');
@@ -158,6 +160,7 @@ export default function Home() {
           draftPrompt: articleType.draftPrompt,
           structurePrompt: articleType.structurePrompt,
           companyContext,
+          outputLanguage: selectedLanguage !== 'auto' ? selectedLanguage : undefined,
         }),
         signal: abortController.signal,
       });
@@ -253,7 +256,7 @@ export default function Home() {
       isProcessing.current = false;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, userId, activeWorkspace]);
+  }, [articleTypes, platforms, selectedTypeId, selectedPlatformId, selectedLanguage, userId, activeWorkspace]);
 
   // ── Phase B: Generate HTML ───────────────────────────
 
@@ -398,6 +401,8 @@ export default function Home() {
             selectedPlatformId={selectedPlatformId}
             onTypeChange={setSelectedTypeId}
             onPlatformChange={setSelectedPlatId}
+            outputLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
           />
         </div>
       )}

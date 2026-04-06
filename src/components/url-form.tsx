@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { cn } from '@/utils/cn';
 import type { ArticleType, PlatformProfile } from '@/types';
+import { OUTPUT_LANGUAGES } from '@/lib/languages';
 
 type InputMode = 'url' | 'transcript';
 type VideoProvider = 'youtube' | 'loom' | 'gdrive' | null;
@@ -145,6 +146,8 @@ interface UrlFormProps {
   selectedPlatformId: string;
   onTypeChange: (id: string) => void;
   onPlatformChange: (id: string) => void;
+  outputLanguage: string;
+  onLanguageChange: (lang: string) => void;
 }
 
 export function UrlForm({
@@ -156,6 +159,8 @@ export function UrlForm({
   selectedPlatformId,
   onTypeChange,
   onPlatformChange,
+  outputLanguage,
+  onLanguageChange,
 }: UrlFormProps) {
   const [mode, setMode] = useState<InputMode>('url');
   const [videoUrl, setVideoUrl] = useState('');
@@ -282,6 +287,22 @@ export function UrlForm({
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Output language */}
+      <div>
+        <label htmlFor="output-language" className="block text-xs font-medium text-gray-400 mb-1.5">Output Language</label>
+        <select
+          id="output-language"
+          value={outputLanguage}
+          onChange={(e) => onLanguageChange(e.target.value)}
+          className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5 text-sm text-gray-900 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+          disabled={isProcessing}
+        >
+          {OUTPUT_LANGUAGES.map((lang) => (
+            <option key={lang.value} value={lang.value}>{lang.label}</option>
+          ))}
+        </select>
       </div>
 
       {noConfig && (
