@@ -6,11 +6,12 @@ interface TooltipProps {
   text: string;
   children: ReactNode;
   position?: 'top' | 'bottom';
+  className?: string;
 }
 
-export function Tooltip({ text, children, position = 'top' }: TooltipProps) {
+export function Tooltip({ text, children, position = 'top', className }: TooltipProps) {
   return (
-    <span className="relative group/tip inline-flex">
+    <span className={`relative group/tip inline-flex ${className ?? ''}`}>
       {children}
       <span
         className={`

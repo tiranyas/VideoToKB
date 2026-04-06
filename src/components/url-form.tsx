@@ -324,12 +324,12 @@ export function UrlForm({
 
       {/* Mode toggle */}
       <div className="bg-gray-100 rounded-full p-1 flex">
-        <Tooltip text="Paste a link to auto-extract the transcript">
+        <Tooltip text="Paste a link to auto-extract the transcript" className="flex-1">
           <button
             type="button"
             onClick={() => setMode('url')}
             className={cn(
-              'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
+              'w-full rounded-full px-3 py-2 text-sm font-medium transition-all',
               mode === 'url'
                 ? 'bg-violet-600 text-white shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -339,12 +339,12 @@ export function UrlForm({
             Video URL
           </button>
         </Tooltip>
-        <Tooltip text="Manually paste text, meeting notes, or any content">
+        <Tooltip text="Manually paste text, meeting notes, or any content" className="flex-1">
           <button
             type="button"
             onClick={() => setMode('transcript')}
             className={cn(
-              'flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all',
+              'w-full rounded-full px-3 py-2 text-sm font-medium transition-all',
               mode === 'transcript'
                 ? 'bg-violet-600 text-white shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
